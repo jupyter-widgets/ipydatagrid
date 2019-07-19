@@ -1,10 +1,6 @@
 
 # ipydatagrid
 
-[![Build Status](https://travis-ci.org/QuantStack/ipydatagrid.svg?branch=master)](https://travis-ci.org/QuantStack/ipydatagrid)
-[![codecov](https://codecov.io/gh/QuantStack/ipydatagrid/branch/master/graph/badge.svg)](https://codecov.io/gh/QuantStack/ipydatagrid)
-
-
 Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 
 ## Installation
