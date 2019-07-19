@@ -74,10 +74,11 @@ class GridView extends DOMWidgetView {
 
     this.grid = new DataGrid({
       style: greenStripeStyle,
-      baseRowSize: 32,
-      baseColumnSize: 128,
-      baseRowHeaderSize: 64,
-      baseColumnHeaderSize: 32
+      baseRowSize: this.model.get('base_row_size'),
+      baseColumnSize: this.model.get('base_column_size'),
+      baseRowHeaderSize: this.model.get('base_row_header_size'),
+      baseColumnHeaderSize: this.model.get('base_column_header_size'),
+      headerVisibility: this.model.get('header_visibility')
     });
     this.grid.model = this.model.data_model;
   }
