@@ -8,10 +8,11 @@
 TODO: Add module docstring
 """
 
-from ipywidgets import DOMWidget, Widget, widget_serialization
 from traitlets import (
     Any, Bool, Dict, Enum, Instance, Int, List, Unicode
 )
+from ipywidgets import DOMWidget, Widget, widget_serialization, Color
+
 from ._frontend import module_name, module_version
 
 
@@ -29,6 +30,10 @@ class GridBase(DOMWidget):
     base_column_header_size = Int(20).tag(sync=True)
 
     header_visibility = Enum(default_value='all', values=['all', 'row', 'column', 'none']).tag(sync=True)
+
+    formatters = Dict().tag(sync=True, **widget_serialization)
+
+    default_background_color = Color('white').tag(sync=True)
 
 
 class JSONGrid(GridBase):
