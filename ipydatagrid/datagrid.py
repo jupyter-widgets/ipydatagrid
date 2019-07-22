@@ -34,6 +34,7 @@ class GridBase(DOMWidget):
     formatters = Dict().tag(sync=True, **widget_serialization)
 
     default_background_color = Color('white').tag(sync=True)
+    default_text_color = Color('black').tag(sync=True)
 
 
 class JSONGrid(GridBase):

@@ -50,7 +50,8 @@ abstract class GridModel extends DOMWidgetModel {
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       formatters: {},
-      default_background_color: 'white'
+      default_background_color: 'white',
+      default_text_color: 'black',
     };
   }
 
@@ -95,6 +96,7 @@ class GridView extends DOMWidgetView {
 
       const body_renderer = new TextRenderer({
         backgroundColor: this._computeBackgroundColor.bind(this),
+        textColor: this._computeTextColor.bind(this)
       });
 
       this.grid.cellRenderers.set('body', {}, body_renderer);
@@ -137,6 +139,19 @@ class GridView extends DOMWidgetView {
     }
 
     return this.model.get('default_background_color');
+  }
+
+  _computeTextColor(config: CellRenderer.ICellConfig) {
+    const formatters = this.model.get('formatters');
+
+    if (formatters[config.metadata.name] && formatters[config.metadata.name]['text_color']) {
+      const text_color = formatters[config.metadata.name]['text_color'];
+
+      // If text_color is not a string, assuming it is a color scale
+      return typeof text_color === 'string' ? text_color : this.scales[config.metadata.name]['text_color'].scale(config.value);
+    }
+
+    return this.model.get('default_text_color');
   }
 
   processPhosphorMessage(msg: Message) {
