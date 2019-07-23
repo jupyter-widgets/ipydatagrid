@@ -26,8 +26,7 @@ import {
 } from './core/viewbasedjsonmodel'
 
 // Import CSS
-import '@phosphor/default-theme/style/index.css';
-import './datagrid.css'
+import '../css/datagrid.css'
 
 import {
   MODULE_NAME, MODULE_VERSION
