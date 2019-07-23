@@ -8,10 +8,12 @@
 TODO: Add module docstring
 """
 
-from ipywidgets import DOMWidget, Widget, widget_serialization
 from traitlets import (
     Any, Bool, Dict, Enum, Instance, Int, List, Unicode
 )
+
+from ipywidgets import DOMWidget, Widget, widget_serialization, Color
+
 from ._frontend import module_name, module_version
 
 
@@ -59,6 +61,11 @@ class DataGrid(DOMWidget):
     data = Dict().tag(sync=True)
 
     transforms = List(Instance(Transform)).tag(sync=True, **widget_serialization)
+
+    formatters = Dict().tag(sync=True, **widget_serialization)
+
+    default_background_color = Color('white').tag(sync=True)
+    default_text_color = Color('black').tag(sync=True)
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
