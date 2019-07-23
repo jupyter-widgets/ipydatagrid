@@ -15,31 +15,6 @@ from traitlets import (
 from ._frontend import module_name, module_version
 
 
-class GridBase(DOMWidget):
-    _model_name = Unicode('GridModel').tag(sync=True)
-    _model_module = Unicode(module_name).tag(sync=True)
-    _model_module_version = Unicode(module_version).tag(sync=True)
-    _view_name = Unicode('GridView').tag(sync=True)
-    _view_module = Unicode(module_name).tag(sync=True)
-    _view_module_version = Unicode(module_version).tag(sync=True)
-
-    base_row_size = Int(20).tag(sync=True)
-    base_column_size = Int(64).tag(sync=True)
-    base_row_header_size = Int(64).tag(sync=True)
-    base_column_header_size = Int(20).tag(sync=True)
-
-    header_visibility = Enum(default_value='all', values=['all', 'row', 'column', 'none']).tag(sync=True)
-
-
-class JSONGrid(GridBase):
-    _model_name = Unicode('JSONGridModel').tag(sync=True)
-
-    data = Dict().tag(sync=True)
-
-    def view(self, transforms):
-        return JSONGridView(jsongrid=self, transforms=transforms)
-
-
 class Transform(Widget):
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
@@ -66,8 +41,30 @@ class Sort(Transform):
         super(Sort, self).__init__(*args, field=field, desc=desc, **kwargs)
 
 
-class JSONGridView(GridBase):
-    _model_name = Unicode('JSONGridViewModel').tag(sync=True)
+class DataGrid(DOMWidget):
+    _model_name = Unicode('DataGridModel').tag(sync=True)
+    _model_module = Unicode(module_name).tag(sync=True)
+    _model_module_version = Unicode(module_version).tag(sync=True)
+    _view_name = Unicode('DataGridView').tag(sync=True)
+    _view_module = Unicode(module_name).tag(sync=True)
+    _view_module_version = Unicode(module_version).tag(sync=True)
 
-    jsongrid = Instance(JSONGrid).tag(sync=True, **widget_serialization)
+    base_row_size = Int(20).tag(sync=True)
+    base_column_size = Int(64).tag(sync=True)
+    base_row_header_size = Int(64).tag(sync=True)
+    base_column_header_size = Int(20).tag(sync=True)
+
+    header_visibility = Enum(default_value='all', values=['all', 'row', 'column', 'none']).tag(sync=True)
+
+    data = Dict().tag(sync=True)
+
     transforms = List(Instance(Transform)).tag(sync=True, **widget_serialization)
+
+    def transform(self, transforms):
+        """Apply a list of transformation to this DataGrid."""
+        transforms = self.transforms + transforms
+        self.transforms = transforms[:]
+
+    def revert(self):
+        """Revert all transformations."""
+        self.transforms = []

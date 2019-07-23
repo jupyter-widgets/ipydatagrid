@@ -14,7 +14,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  DataGrid, JSONModel
+  DataGrid
 } from '@phosphor/datagrid';
 
 import {
@@ -31,88 +31,6 @@ import '../css/datagrid.css'
 import {
   MODULE_NAME, MODULE_VERSION
 } from './version';
-
-
-abstract class GridModel extends DOMWidgetModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_module: GridModel.model_module,
-      _model_module_version: GridModel.model_module_version,
-      _view_name: GridModel.view_name,
-      _view_module: GridModel.view_module,
-      _view_module_version: GridModel.view_module_version
-    };
-  }
-
-  initialize(attributes: any, options: any) {
-    super.initialize(attributes, options);
-
-    this.initialize_data_model();
-  }
-
-  abstract initialize_data_model(): any;
-
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
-
-  static view_name = 'GridView';
-  static view_module = MODULE_NAME;
-  static view_module_version = MODULE_VERSION;
-
-  data_model: any;
-}
-
-
-export
-class GridView extends DOMWidgetView {
-  render() {
-    let greenStripeStyle: DataGrid.IStyle = {
-      ...DataGrid.defaultStyle,
-      rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
-    };
-
-    this.grid = new DataGrid({
-      style: greenStripeStyle,
-      baseRowSize: this.model.get('base_row_size'),
-      baseColumnSize: this.model.get('base_column_size'),
-      baseRowHeaderSize: this.model.get('base_row_header_size'),
-      baseColumnHeaderSize: this.model.get('base_column_header_size'),
-      headerVisibility: this.model.get('header_visibility')
-    });
-    this.grid.model = this.model.data_model;
-  }
-
-  processPhosphorMessage(msg: Message) {
-    super.processPhosphorMessage(msg);
-    switch (msg.type) {
-    case 'after-attach':
-      Widget.attach(this.grid, this.el);
-      break;
-    }
-  }
-
-  model: GridModel;
-  grid: DataGrid;
-}
-
-
-export
-class JSONGridModel extends GridModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: JSONGridModel.model_name,
-      data: {}
-    };
-  }
-
-  initialize_data_model() {
-    this.data_model = new JSONModel(this.get('data'));
-  }
-
-  static model_name = 'JSONGridModel';
-
-  data_model: JSONModel;
-}
 
 
 abstract class TransformModel extends WidgetModel {
@@ -188,29 +106,84 @@ class SortModel extends TransformModel {
 
 
 export
-class JSONGridViewModel extends GridModel {
+class DataGridModel extends DOMWidgetModel {
   defaults() {
     return {...super.defaults(),
-      _model_name: JSONGridViewModel.model_name,
-      jsongrid: null,
+      _model_module: DataGridModel.model_module,
+      _model_module_version: DataGridModel.model_module_version,
+      _view_name: DataGridModel.view_name,
+      _view_module: DataGridModel.view_module,
+      _view_module_version: DataGridModel.view_module_version,
+      baseRowSize: 20,
+      baseColumnSize: 64,
+      baseRowHeaderSize: 64,
+      baseColumnHeaderSize: 20,
+      headerVisibility: 'all',
+      data: {},
       transforms: []
     };
   }
 
-  initialize_data_model() {
-    this.data_model = new ViewBasedJSONModel(this.get('jsongrid').get('data'));
+  initialize(attributes: any, options: any) {
+    super.initialize(attributes, options);
 
+    this.data_model = new ViewBasedJSONModel(this.get('data'));
+
+    this.on('change:transforms', this.update_transforms.bind(this));
+    this.update_transforms();
+  }
+
+  update_transforms() {
     const transforms = this.get('transforms').map((x: TransformModel) => x.transform);
+
     this.data_model.updateView(transforms);
   }
 
   static serializers: ISerializers = {
     ...DOMWidgetModel.serializers,
-    jsongrid: { deserialize: (unpack_models as any) },
     transforms: { deserialize: (unpack_models as any) }
   }
 
-  static model_name = 'JSONGridViewModel';
+  static model_name = 'DataGridModel';
+  static model_module = MODULE_NAME;
+  static model_module_version = MODULE_VERSION;
+
+  static view_name = 'DataGridView';
+  static view_module = MODULE_NAME;
+  static view_module_version = MODULE_VERSION;
 
   data_model: ViewBasedJSONModel;
+}
+
+
+export
+class DataGridView extends DOMWidgetView {
+  render() {
+    let greenStripeStyle: DataGrid.IStyle = {
+      ...DataGrid.defaultStyle,
+      rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
+    };
+
+    this.grid = new DataGrid({
+      style: greenStripeStyle,
+      baseRowSize: this.model.get('base_row_size'),
+      baseColumnSize: this.model.get('base_column_size'),
+      baseRowHeaderSize: this.model.get('base_row_header_size'),
+      baseColumnHeaderSize: this.model.get('base_column_header_size'),
+      headerVisibility: this.model.get('header_visibility')
+    });
+    this.grid.model = this.model.data_model;
+  }
+
+  processPhosphorMessage(msg: Message) {
+    super.processPhosphorMessage(msg);
+    switch (msg.type) {
+    case 'after-attach':
+      Widget.attach(this.grid, this.el);
+      break;
+    }
+  }
+
+  model: DataGridModel;
+  grid: DataGrid;
 }
