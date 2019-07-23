@@ -62,7 +62,7 @@ class DataGrid(DOMWidget):
 
     transforms = List(Instance(Transform)).tag(sync=True, **widget_serialization)
 
-    formatters = Dict().tag(sync=True, **widget_serialization)
+    renderers = Dict().tag(sync=True, **widget_serialization)
 
     default_background_color = Union((Color(), Instance(Widget)), default_value='white').tag(sync=True, **widget_serialization)
     default_text_color = Union((Color(), Instance(Widget)), default_value='black').tag(sync=True, **widget_serialization)

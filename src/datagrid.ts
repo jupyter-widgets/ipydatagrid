@@ -34,8 +34,17 @@ import {
   MODULE_NAME, MODULE_VERSION
 } from './version';
 
+// Temporary, will be removed when the scales are exported from bqplot
+type ColorScale = any;
+
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
+
+// Function that computes a color depending on a given renderer (color scale, conditional renderer) and a value
+function compute_color(renderer: string, value: any): string;
+function compute_color(renderer: ColorScale, value: any): string {
+  return typeof renderer === 'string' ? renderer : renderer.scale(value);
+};
 
 
 abstract class TransformModel extends WidgetModel {
@@ -126,7 +135,7 @@ class DataGridModel extends DOMWidgetModel {
       headerVisibility: 'all',
       data: {},
       transforms: [],
-      formatters: {},
+      renderers: {},
       default_background_color: 'white',
       default_text_color: 'black',
     };
@@ -150,7 +159,7 @@ class DataGridModel extends DOMWidgetModel {
   static serializers: ISerializers = {
     ...DOMWidgetModel.serializers,
     transforms: { deserialize: (unpack_models as any) },
-    formatters: { deserialize: (unpack_models as any) },
+    renderers: { deserialize: (unpack_models as any) },
     default_background_color: { deserialize: (unpack_models as any) },
     default_text_color: { deserialize: (unpack_models as any) },
   }
@@ -191,23 +200,28 @@ class DataGridView extends DOMWidgetView {
   }
 
   _initializeScaleViews() {
-    const formatters = this.model.get('formatters');
+    const renderers = this.model.get('renderers');
     let scalesPromises: Dict<Dict<Promise<any>>> = {};
     this.scales = {};
 
-    _.each(formatters, (attrs: Dict<any>, header: string) => {
+    // Create scale views
+    _.each(renderers, (attrs: Dict<any>, header: string) => {
       scalesPromises[header] = {};
-      _.each(attrs, (scaleModel: any, attr: string) => {
-        // If scaleModel is not a string, assuming it is a scale
-        if (typeof scaleModel !== 'string') {
-          // Listen to change on the scale model and trigger rerender
-          this.listenTo(scaleModel, 'change', this._repaint.bind(this));
+      _.each(attrs, (scaleModel: string | ColorScale, attr: string) => {
+        if (typeof scaleModel === 'string') {
+          scalesPromises[header][attr] = Promise.resolve(scaleModel);
 
-          scalesPromises[header][attr] = this.create_child_view(scaleModel);
+          return;
         }
+        // If scaleModel is not a string, assuming it is a scale or a conditional renderer
+        // Listen to change on the scale model and trigger rerender
+        this.listenTo(scaleModel, 'change', this._repaint.bind(this));
+
+        scalesPromises[header][attr] = this.create_child_view(scaleModel);
       });
     });
 
+    // Resolve all promises
     let promises: Promise<any>[] = [];
     _.each(scalesPromises, (attrs, header) => {
       promises.push(resolvePromisesDict(attrs).then((scales) => {
@@ -215,57 +229,50 @@ class DataGridView extends DOMWidgetView {
       }));
     });
 
+    // Create views for default renderers if needed
     const default_background_color = this.model.get('default_background_color');
-    if (typeof default_background_color !== 'string') {
+    if (typeof default_background_color === 'string') {
+      this.default_background_color_renderer = default_background_color;
+    } else {
       // Listen to change on the scale model and trigger rerender
       this.listenTo(default_background_color, 'change', this._repaint.bind(this));
 
       promises.push(this.create_child_view(default_background_color).then((scaleView) => {
-        this.default_background_color = scaleView;
+        this.default_background_color_renderer = scaleView;
       }));
-    } else {
-      this.default_background_color = default_background_color;
     }
 
     const default_text_color = this.model.get('default_text_color');
-    if (typeof default_text_color !== 'string') {
+    if (typeof default_text_color === 'string') {
+      this.default_text_color_renderer = default_text_color;
+    } else {
       // Listen to change on the scale model and trigger rerender
       this.listenTo(default_text_color, 'change', this._repaint.bind(this));
 
       promises.push(this.create_child_view(default_text_color).then((scaleView) => {
-        this.default_text_color = scaleView;
+        this.default_text_color_renderer = scaleView;
       }));
-    } else {
-      this.default_text_color = default_text_color;
     }
 
     return Promise.all(promises);
   }
 
   _computeBackgroundColor(config: CellRenderer.ICellConfig) {
-    const formatters = this.model.get('formatters');
+    const renderers = this.model.get('renderers');
 
-    if (formatters[config.metadata.name] && formatters[config.metadata.name]['background_color']) {
-      const background_color = formatters[config.metadata.name]['background_color'];
+    const has_renderer = renderers[config.metadata.name] && renderers[config.metadata.name]['background_color'];
+    const background_color_renderer = has_renderer ? this.scales[config.metadata.name]['background_color'] : this.default_background_color_renderer;
 
-      // If background_color is not a string, assuming it is a color scale
-      return typeof background_color === 'string' ? background_color : this.scales[config.metadata.name]['background_color'].scale(config.value);
-    }
-
-    return typeof this.default_background_color === 'string' ? this.default_background_color : this.default_background_color.scale(config.value);
+    return compute_color(background_color_renderer, config.value);
   }
 
   _computeTextColor(config: CellRenderer.ICellConfig) {
-    const formatters = this.model.get('formatters');
+    const renderers = this.model.get('renderers');
 
-    if (formatters[config.metadata.name] && formatters[config.metadata.name]['text_color']) {
-      const text_color = formatters[config.metadata.name]['text_color'];
+    const has_renderer = renderers[config.metadata.name] && renderers[config.metadata.name]['text_color'];
+    const text_color_renderer = has_renderer ? this.scales[config.metadata.name]['text_color'] : this.default_text_color_renderer;
 
-      // If text_color is not a string, assuming it is a color scale
-      return typeof text_color === 'string' ? text_color : this.scales[config.metadata.name]['text_color'].scale(config.value);
-    }
-
-    return typeof this.default_text_color === 'string' ? this.default_text_color : this.default_text_color.scale(config.value);
+    return compute_color(text_color_renderer, config.value);
   }
 
   _repaint() {
@@ -281,8 +288,8 @@ class DataGridView extends DOMWidgetView {
     }
   }
 
-  default_background_color: any;
-  default_text_color: any;
+  default_background_color_renderer: string | ColorScale;
+  default_text_color_renderer: string | ColorScale;
   scales: Dict<Dict<any>>;
   model: DataGridModel;
   grid: DataGrid;
