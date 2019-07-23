@@ -9,7 +9,7 @@ TODO: Add module docstring
 """
 
 from traitlets import (
-    Any, Bool, Dict, Enum, Instance, Int, List, Unicode
+    Any, Bool, Dict, Enum, Instance, Int, List, Unicode, Union
 )
 
 from ipywidgets import DOMWidget, Widget, widget_serialization, Color
@@ -64,8 +64,8 @@ class DataGrid(DOMWidget):
 
     formatters = Dict().tag(sync=True, **widget_serialization)
 
-    default_background_color = Color('white').tag(sync=True)
-    default_text_color = Color('black').tag(sync=True)
+    default_background_color = Union((Color(), Instance(Widget)), default_value='white').tag(sync=True, **widget_serialization)
+    default_text_color = Union((Color(), Instance(Widget)), default_value='black').tag(sync=True, **widget_serialization)
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
