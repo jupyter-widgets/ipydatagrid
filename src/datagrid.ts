@@ -198,6 +198,10 @@ class DataGridView extends DOMWidgetView {
       _.each(attrs, (scaleModel: any, attr: string) => {
         // If scaleModel is not a string, assuming it is a scale
         if (typeof scaleModel !== 'string') {
+          // In case already listening to this model, removes listeners before listening to it
+          this.stopListening(scaleModel, 'change');
+          this.listenTo(scaleModel, 'change', this._repaint.bind(this));
+
           scalesPromises[header][attr] = this.create_child_view(scaleModel);
         }
       });
@@ -237,6 +241,10 @@ class DataGridView extends DOMWidgetView {
     }
 
     return this.model.get('default_text_color');
+  }
+
+  _repaint() {
+    this.grid.repaint();
   }
 
   processPhosphorMessage(msg: Message) {
