@@ -34,91 +34,12 @@ import {
   MODULE_NAME, MODULE_VERSION
 } from './version';
 
-// Temporary, will be removed when the scales are exported from bqplot
-type ColorScale = any;
+import {
+  CellRendererModel, CellRendererView
+} from './cellrenderer'
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
-
-// Function that computes a color depending on a given renderer (color scale, conditional renderer) and a value
-function compute_color(renderer: string, config: CellRenderer.ICellConfig): string;
-function compute_color(renderer: ConditionalRendererBaseModel, config: CellRenderer.ICellConfig): string;
-function compute_color(renderer: ColorScale, config: CellRenderer.ICellConfig): string {
-  if (typeof renderer === 'string') {
-    return renderer;
-  }
-
-  if (renderer instanceof ConditionalRendererBaseModel) {
-    return renderer.process(config);
-  }
-
-  return renderer.scale(config.value);
-};
-
-
-abstract class ConditionalRendererBaseModel extends WidgetModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_module: ConditionalRendererBaseModel.model_module,
-      _model_module_version: ConditionalRendererBaseModel.model_module_version
-    };
-  }
-
-  abstract process(config: CellRenderer.ICellConfig): string;
-
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
-}
-
-
-export
-class ConditionalRendererModel extends ConditionalRendererBaseModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: ConditionalRendererModel.model_name,
-      cell_field: 'value',
-      operator: '<',
-      reference_value: null,
-      output_if_true: null,
-      output_if_false: null
-    };
-  }
-
-  process(config: CellRenderer.ICellConfig) {
-    const cell_field: keyof CellRenderer.ICellConfig = this.get('cell_field');
-    const cell_value = config[cell_field];
-    const reference_value = this.get('reference_value');
-
-    let condition: boolean;
-    switch (this.get('operator')) {
-      case '<':
-        condition = cell_value < reference_value;
-        break;
-      case '>':
-        condition = cell_value > reference_value;
-        break;
-      case '=':
-        condition = cell_value == reference_value;
-        break;
-      case '>=':
-        condition = cell_value >= reference_value;
-        break;
-      case '<=':
-        condition = cell_value <= reference_value;
-        break;
-      case 'contains':
-        condition = cell_value.toString().includes(reference_value.toString());
-        break;
-      default:
-        condition = false;
-        break;
-    }
-
-    return condition ? this.get('output_if_true') : this.get('output_if_false');
-  }
-
-  static model_name = 'ConditionalRendererModel';
-}
 
 
 abstract class TransformModel extends WidgetModel {
@@ -210,8 +131,7 @@ class DataGridModel extends DOMWidgetModel {
       data: {},
       transforms: [],
       renderers: {},
-      default_background_color_renderer: 'white',
-      default_text_color_renderer: 'black',
+      default_renderer: null
     };
   }
 
@@ -234,8 +154,7 @@ class DataGridModel extends DOMWidgetModel {
     ...DOMWidgetModel.serializers,
     transforms: { deserialize: (unpack_models as any) },
     renderers: { deserialize: (unpack_models as any) },
-    default_background_color_renderer: { deserialize: (unpack_models as any) },
-    default_text_color_renderer: { deserialize: (unpack_models as any) },
+    default_renderer: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'DataGridModel';
@@ -253,7 +172,7 @@ class DataGridModel extends DOMWidgetModel {
 export
 class DataGridView extends DOMWidgetView {
   render() {
-    return this._initializeScaleViews().then(() => {
+    return this._update_renderers().then(() => {
       this.grid = new DataGrid({
         baseRowSize: this.model.get('base_row_size'),
         baseColumnSize: this.model.get('base_column_size'),
@@ -265,103 +184,41 @@ class DataGridView extends DOMWidgetView {
       this.grid.model = this.model.data_model;
 
       const body_renderer = new TextRenderer({
-        backgroundColor: this._computeBackgroundColor.bind(this),
-        textColor: this._computeTextColor.bind(this)
+        backgroundColor: this._compute_background_color.bind(this),
+        textColor: this._compute_text_color.bind(this)
       });
 
       this.grid.cellRenderers.set('body', {}, body_renderer);
     });
   }
 
-  _initializeScaleViews() {
-    const renderers = this.model.get('renderers');
-    let rendererPromises: Dict<Dict<Promise<any>>> = {};
-    this.renderers = {};
+  _compute_background_color(config: CellRenderer.ICellConfig): string {
+    return 'red';
+  }
 
-    // Create renderers
-    _.each(renderers, (attrs: Dict<any>, header: string) => {
-      rendererPromises[header] = {};
-      _.each(attrs, (renderer: string | ConditionalRendererBaseModel | ColorScale, attr: string) => {
-        if (typeof renderer === 'string') {
-          rendererPromises[header][attr] = Promise.resolve(renderer);
+  _compute_text_color(config: CellRenderer.ICellConfig): string {
+    return 'white';
+  }
 
-          return;
-        }
+  _update_renderers() {
+    let promises = [];
 
-        // Listen to change on the renderer model and trigger rerender
-        this.listenTo(renderer, 'change', this._repaint.bind(this));
-
-        if (renderer instanceof ConditionalRendererBaseModel) {
-          rendererPromises[header][attr] = Promise.resolve(renderer);
-
-          return;
-        }
-
-        // If it is a scale, create a view
-        rendererPromises[header][attr] = this.create_child_view(renderer);
-      });
-    });
-
-    // Resolve all promises
-    let promises: Promise<any>[] = [];
-    _.each(rendererPromises, (attrs, header) => {
-      promises.push(resolvePromisesDict(attrs).then((renderers) => {
-        this.renderers[header] = renderers;
+    const default_renderer: CellRendererModel = this.model.get('default_renderer');
+    if (default_renderer) {
+      promises.push(this.create_child_view(default_renderer).then((default_renderer_view: CellRendererView) => {
+        this.default_renderer = default_renderer_view;
       }));
+    }
+
+    let renderer_promises: Dict<Promise<CellRendererView>> = {};
+    _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
+        renderer_promises[key] = this.create_child_view(model);
     });
-
-    // Create views for default renderers if needed
-    const default_background_color_renderer = this.model.get('default_background_color_renderer');
-    if (typeof default_background_color_renderer === 'string') {
-      this.default_background_color_renderer = default_background_color_renderer;
-    } else {
-      // Listen to change on the scale model and trigger rerender
-      this.listenTo(default_background_color_renderer, 'change', this._repaint.bind(this));
-
-      if (default_background_color_renderer instanceof ConditionalRendererBaseModel) {
-        this.default_background_color_renderer = default_background_color_renderer;
-      } else {
-        promises.push(this.create_child_view(default_background_color_renderer).then((scaleView) => {
-          this.default_background_color_renderer = scaleView;
-        }));
-      }
-    }
-
-    const default_text_color_renderer = this.model.get('default_text_color_renderer');
-    if (typeof default_text_color_renderer === 'string') {
-      this.default_text_color_renderer = default_text_color_renderer;
-    } else {
-      // Listen to change on the scale model and trigger rerender
-      this.listenTo(default_text_color_renderer, 'change', this._repaint.bind(this));
-
-      if (default_text_color_renderer instanceof ConditionalRendererBaseModel) {
-        this.default_text_color_renderer = default_text_color_renderer;
-      } else {
-        promises.push(this.create_child_view(default_text_color_renderer).then((scaleView) => {
-          this.default_text_color_renderer = scaleView;
-        }));
-      }
-    }
+    promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
+      this.renderers = renderer_views;
+    }));
 
     return Promise.all(promises);
-  }
-
-  _computeBackgroundColor(config: CellRenderer.ICellConfig) {
-    const renderers = this.model.get('renderers');
-
-    const has_renderer = renderers[config.metadata.name] && renderers[config.metadata.name]['background_color'];
-    const background_color_renderer = has_renderer ? this.renderers[config.metadata.name]['background_color'] : this.default_background_color_renderer;
-
-    return compute_color(background_color_renderer, config);
-  }
-
-  _computeTextColor(config: CellRenderer.ICellConfig) {
-    const renderers = this.model.get('renderers');
-
-    const has_renderer = renderers[config.metadata.name] && renderers[config.metadata.name]['text_color'];
-    const text_color_renderer = has_renderer ? this.renderers[config.metadata.name]['text_color'] : this.default_text_color_renderer;
-
-    return compute_color(text_color_renderer, config);
   }
 
   _repaint() {
@@ -377,9 +234,12 @@ class DataGridView extends DOMWidgetView {
     }
   }
 
-  default_background_color_renderer: string | ConditionalRendererBaseModel | ColorScale;
-  default_text_color_renderer: string | ConditionalRendererBaseModel | ColorScale;
-  renderers: Dict<Dict<any>>;
-  model: DataGridModel;
+  renderers: Dict<CellRendererView>;
+  default_renderer: CellRendererView;
+
   grid: DataGrid;
+
+  model: DataGridModel;
 }
+
+export * from './cellrenderer';
