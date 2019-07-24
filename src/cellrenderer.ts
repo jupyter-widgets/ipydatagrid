@@ -43,7 +43,6 @@ class OperatorModel extends OperatorBaseModel {
   defaults() {
     return {...super.defaults(),
       _model_name: OperatorModel.model_name,
-      output_if_false: '',
     };
   }
 
@@ -89,11 +88,12 @@ class TernaryOperatorModel extends OperatorModel {
   defaults() {
     return {...super.defaults(),
       _model_name: TernaryOperatorModel.model_name,
+      output_if_false: null,
     };
   }
 
   process(config: CellRenderer.ICellConfig, current: string) {
-    super.process(config, this.get('output_if_false'));
+    return super.process(config, this.get('output_if_false'));
   }
 
   static model_name = 'TernaryOperatorModel';
@@ -116,6 +116,12 @@ class CellRendererModel extends WidgetModel {
       text_color: 'black',
       background_color: 'white',
     };
+  }
+
+  static serializers: ISerializers = {
+    ...WidgetModel.serializers,
+    text_color: { deserialize: (unpack_models as any) },
+    background_color: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'CellRendererModel';
@@ -196,12 +202,6 @@ class CellRendererView extends WidgetView {
 
     // Assuming it is a ColorScale view
     return processor.scale(config.value);
-  }
-
-  static serializers: ISerializers = {
-    ...WidgetModel.serializers,
-    text_color: { deserialize: (unpack_models as any) },
-    background_color: { deserialize: (unpack_models as any) },
   }
 
   ready: Promise<void[]>;

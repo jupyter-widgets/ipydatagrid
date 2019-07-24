@@ -193,11 +193,17 @@ class DataGridView extends DOMWidgetView {
   }
 
   _compute_background_color(config: CellRenderer.ICellConfig): string {
-    return 'red';
+    if (this.renderers[config.metadata.name]) {
+      return this.renderers[config.metadata.name].compute_background_color(config);
+    }
+    return this.default_renderer.compute_background_color(config);
   }
 
   _compute_text_color(config: CellRenderer.ICellConfig): string {
-    return 'white';
+    if (this.renderers[config.metadata.name]) {
+      return this.renderers[config.metadata.name].compute_text_color(config);
+    }
+    return this.default_renderer.compute_text_color(config);
   }
 
   _update_renderers() {
@@ -205,14 +211,18 @@ class DataGridView extends DOMWidgetView {
 
     const default_renderer = this.model.get('default_renderer');
     if (default_renderer) {
-      promises.push(this.create_child_view(default_renderer).then((default_renderer_view) => {
-        this.default_renderer = (default_renderer_view as any); // TypeScript thinks it's a DOMWidgetView here
+      promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
+        default_renderer_view.ready.then(() => {
+          this.default_renderer = default_renderer_view;
+        });
       }));
     }
 
-    let renderer_promises: Dict<Promise<CellRendererView>> = {};
+    let renderer_promises: Dict<Promise<any>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
-        renderer_promises[key] = (this.create_child_view(model) as any); // TypeScript thinks it's a Dict<DOMWidgetView> here
+        renderer_promises[key] = this.create_child_view(model).then((renderer_view: any) => {
+          return renderer_view.ready.then(() => { return renderer_view; });
+        });
     });
     promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
       this.renderers = renderer_views;
