@@ -4,31 +4,12 @@
 import * as _ from 'underscore';
 
 import {
-    Message
-} from '@phosphor/messaging';
-
-import {
-    Widget
-} from '@phosphor/widgets';
-
-import {
-  DataGrid, TextRenderer, CellRenderer
+  CellRenderer
 } from '@phosphor/datagrid';
 
 import {
-  WidgetModel, DOMWidgetModel, DOMWidgetView, ISerializers, resolvePromisesDict, unpack_models
+  WidgetModel, WidgetView, ISerializers, unpack_models
 } from '@jupyter-widgets/base';
-
-import {
-  Transform, Sort, Filter
-} from './core/transform'
-
-import {
-  ViewBasedJSONModel
-} from './core/viewbasedjsonmodel'
-
-// Import CSS
-import '../css/datagrid.css'
 
 import {
   MODULE_NAME, MODULE_VERSION
@@ -36,21 +17,6 @@ import {
 
 // Temporary, will be removed when the scales are exported from bqplot
 type ColorScale = any;
-
-// Function that computes a color depending on a given renderer (color scale, conditional renderer) and a value
-function compute_color(renderer: string, config: CellRenderer.ICellConfig): string;
-function compute_color(renderer: ConditionalRendererBaseModel, config: CellRenderer.ICellConfig): string;
-function compute_color(renderer: ColorScale, config: CellRenderer.ICellConfig): string {
-  if (typeof renderer === 'string') {
-    return renderer;
-  }
-
-  if (renderer instanceof ConditionalRendererBaseModel) {
-    return renderer.process(config);
-  }
-
-  return renderer.scale(config.value);
-};
 
 
 abstract class OperatorBaseModel extends WidgetModel {
@@ -133,20 +99,113 @@ class TernaryOperatorModel extends OperatorModel {
   static model_name = 'TernaryOperatorModel';
 }
 
-class OperatorBaseModel extends WidgetModel {
+
+type ColorProcessor = string | OperatorBaseModel[] | ColorScale;
+
+
+export
+class CellRendererModel extends WidgetModel {
   defaults() {
     return {...super.defaults(),
-      _model_module: OperatorBaseModel.model_module,
-      _model_module_version: OperatorBaseModel.model_module_version,
-      cell_field: 'value',
-      operator: '<',
-      reference_value: null,
-      output_if_true: '',
+      _model_name: CellRendererModel.model_name,
+      _model_module: CellRendererModel.model_module,
+      _model_module_version: CellRendererModel.model_module_version,
+      _view_name: CellRendererModel.view_name,
+      _view_module: CellRendererModel.view_module,
+      _view_module_version: CellRendererModel.view_module_version,
+      text_color: 'black',
+      background_color: 'white',
     };
   }
 
-  abstract process(config: CellRenderer.ICellConfig, current: string): string;
-
+  static model_name = 'CellRendererModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
+  static view_name = 'CellRendererView';
+  static view_module = MODULE_NAME;
+  static view_module_version = MODULE_VERSION;
+}
+
+
+export
+class CellRendererView extends WidgetView {
+  render() {
+    return this.ready = Promise.all([
+      this._initialize_color_processor('text_color').then((processor: ColorProcessor) => {
+        this._text_color = processor;
+      }),
+      this._initialize_color_processor('background_color').then((processor: ColorProcessor) => {
+        this._background_color = processor;
+      })
+    ]);
+  }
+
+  compute_text_color(config: CellRenderer.ICellConfig): string {
+    // Not using this.ready promise, this method MUST be synchronous.
+    // The caller needs to check that the renderer is ready before calling this.
+    return this._compute_color(this._text_color, config, 'black');
+  }
+
+  compute_background_color(config: CellRenderer.ICellConfig): string {
+    // Not using this.ready promise, this method MUST be synchronous.
+    // The caller needs to check that the renderer is ready before calling this.
+    return this._compute_color(this._background_color, config, 'white');
+  }
+
+  _initialize_color_processor(name: string): Promise<any> {
+    let color_processor = this.model.get(name);
+
+    if (typeof color_processor === 'string') {
+      return Promise.resolve(color_processor);
+    }
+
+    if (color_processor instanceof OperatorBaseModel) {
+      color_processor = [color_processor];
+    }
+
+    // If it's an Array, assuming it's OperatorBaseModel[]
+    if (color_processor instanceof Array) {
+      for (const operator of color_processor) {
+        this.listenTo(operator, 'change', () => { this.trigger('renderer_changed'); });
+      }
+
+      return Promise.resolve(color_processor);
+    }
+
+    // Assuming it is a ColorScale model
+    this.listenTo(color_processor, 'change', () => { this.trigger('renderer_changed'); });
+
+    return this.create_child_view(color_processor);
+  }
+
+  _compute_color(processor: ColorProcessor, config: CellRenderer.ICellConfig, default_value: string) {
+    if (typeof processor === 'string') {
+      return processor;
+    }
+
+    // If it's an Array, assuming it's OperatorBaseModel[]
+    if (processor instanceof Array) {
+      let color = default_value;
+
+      for (const operator of processor) {
+        color = operator.process(config, color);
+      }
+
+      return color;
+    }
+
+    // Assuming it is a ColorScale view
+    return processor.scale(config.value);
+  }
+
+  static serializers: ISerializers = {
+    ...WidgetModel.serializers,
+    text_color: { deserialize: (unpack_models as any) },
+    background_color: { deserialize: (unpack_models as any) },
+  }
+
+  ready: Promise<void[]>;
+
+  _text_color: ColorProcessor;
+  _background_color: ColorProcessor;
 }
