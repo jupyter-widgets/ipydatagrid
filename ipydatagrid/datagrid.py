@@ -20,6 +20,31 @@ from bqplot import ColorScale
 from ._frontend import module_name, module_version
 
 
+class ConditionalRendererBase(Widget):
+    _model_module = Unicode(module_name).tag(sync=True)
+    _model_module_version = Unicode(module_version).tag(sync=True)
+
+
+class ConditionalRenderer(ConditionalRendererBase):
+    _model_name = Unicode('ConditionalRendererModel').tag(sync=True)
+
+    cell_field = Enum(values=['value', 'x', 'y', 'height', 'width', 'row', 'column']).tag(sync=True)
+    operator = Enum(values=['<', '>', '=']).tag(sync=True)
+    reference_value = Any().tag(sync=True)
+    output_if_true = Unicode().tag(sync=True)
+    output_if_false = Unicode().tag(sync=True)
+
+    def __init__(self, cell_field, operator, reference_value, output_if_true, output_if_false, *args, **kwargs):
+        super(ConditionalRenderer, self).__init__(
+            *args,
+            cell_field=cell_field, operator=operator, reference_value=reference_value,
+            output_if_true=output_if_true, output_if_false=output_if_false, **kwargs
+        )
+
+
+# class RangeRenderer(Widget):
+
+
 class Transform(Widget):
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
@@ -67,9 +92,9 @@ class DataGrid(DOMWidget):
 
     renderers = Dict().tag(sync=True, **widget_serialization)
 
-    default_background_color = Union((Color(), Instance(ColorScale)), default_value='white').tag(
+    default_background_color_renderer = Union((Color(), Instance(ColorScale), Instance(ConditionalRendererBase)), default_value='white').tag(
         sync=True, **widget_serialization)
-    default_text_color = Union((Color(), Instance(ColorScale)), default_value='black').tag(
+    default_text_color_renderer = Union((Color(), Instance(ColorScale), Instance(ConditionalRendererBase)), default_value='black').tag(
         sync=True, **widget_serialization)
 
     def transform(self, transforms):
