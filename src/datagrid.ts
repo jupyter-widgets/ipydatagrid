@@ -214,6 +214,8 @@ class DataGridView extends DOMWidgetView {
       promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
         default_renderer_view.ready.then(() => {
           this.default_renderer = default_renderer_view;
+
+          this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
         });
       }));
     }
@@ -226,6 +228,10 @@ class DataGridView extends DOMWidgetView {
     });
     promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
       this.renderers = renderer_views;
+
+      for (const key in renderer_views) {
+        this.listenTo(renderer_views[key], 'renderer_changed', this._repaint.bind(this));
+      }
     }));
 
     return Promise.all(promises);
