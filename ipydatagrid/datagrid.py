@@ -29,7 +29,7 @@ class ConditionalRenderer(ConditionalRendererBase):
     _model_name = Unicode('ConditionalRendererModel').tag(sync=True)
 
     cell_field = Enum(values=['value', 'x', 'y', 'height', 'width', 'row', 'column']).tag(sync=True)
-    operator = Enum(values=['<', '>', '=']).tag(sync=True)
+    operator = Enum(values=['<', '>', '<=', '>=', '=', 'contains']).tag(sync=True)
     reference_value = Any().tag(sync=True)
     output_if_true = Unicode().tag(sync=True)
     output_if_false = Unicode().tag(sync=True)

@@ -100,6 +100,15 @@ class ConditionalRendererModel extends ConditionalRendererBaseModel {
       case '=':
         condition = cell_value == reference_value;
         break;
+      case '>=':
+        condition = cell_value >= reference_value;
+        break;
+      case '<=':
+        condition = cell_value <= reference_value;
+        break;
+      case 'contains':
+        condition = cell_value.toString().includes(reference_value.toString());
+        break;
       default:
         condition = false;
         break;
