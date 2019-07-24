@@ -9,40 +9,13 @@ TODO: Add module docstring
 """
 
 from traitlets import (
-    Any, Bool, Dict, Enum, Instance, Int, List, Unicode, Union
+    Any, Bool, Dict, Enum, Instance, Int, List, Unicode
 )
 
-from ipywidgets import DOMWidget, Widget, widget_serialization, Color
-
-# Dependency to bqplot is temporary, we should remove this dependency once scales are extracted from bqplot
-from bqplot import ColorScale
+from ipywidgets import DOMWidget, Widget, widget_serialization
 
 from ._frontend import module_name, module_version
-
-
-class ConditionalRendererBase(Widget):
-    _model_module = Unicode(module_name).tag(sync=True)
-    _model_module_version = Unicode(module_version).tag(sync=True)
-
-
-class ConditionalRenderer(ConditionalRendererBase):
-    _model_name = Unicode('ConditionalRendererModel').tag(sync=True)
-
-    cell_field = Enum(values=['value', 'x', 'y', 'height', 'width', 'row', 'column']).tag(sync=True)
-    operator = Enum(values=['<', '>', '<=', '>=', '=', 'contains']).tag(sync=True)
-    reference_value = Any().tag(sync=True)
-    output_if_true = Unicode().tag(sync=True)
-    output_if_false = Unicode().tag(sync=True)
-
-    def __init__(self, cell_field, operator, reference_value, output_if_true, output_if_false, *args, **kwargs):
-        super(ConditionalRenderer, self).__init__(
-            *args,
-            cell_field=cell_field, operator=operator, reference_value=reference_value,
-            output_if_true=output_if_true, output_if_false=output_if_false, **kwargs
-        )
-
-
-# class RangeRenderer(Widget):
+from .cellrenderer import CellRenderer
 
 
 class Transform(Widget):
@@ -90,12 +63,8 @@ class DataGrid(DOMWidget):
 
     transforms = List(Instance(Transform)).tag(sync=True, **widget_serialization)
 
-    renderers = Dict().tag(sync=True, **widget_serialization)
-
-    default_background_color_renderer = Union((Color(), Instance(ColorScale), Instance(ConditionalRendererBase)), default_value='white').tag(
-        sync=True, **widget_serialization)
-    default_text_color_renderer = Union((Color(), Instance(ColorScale), Instance(ConditionalRendererBase)), default_value='black').tag(
-        sync=True, **widget_serialization)
+    renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
+    default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""

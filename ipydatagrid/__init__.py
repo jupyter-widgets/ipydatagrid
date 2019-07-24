@@ -4,7 +4,8 @@
 # Copyright (c) QuantStack.
 # Distributed under the terms of the Modified BSD License.
 
-from .datagrid import DataGrid, Filter, Sort, ConditionalRenderer
-from ._version import __version__, version_info
+from .cellrenderer import CellRenderer, Operator, TernaryOperator  # noqa
+from .datagrid import DataGrid, Filter, Sort  # noqa
+from ._version import __version__, version_info  # noqa
 
-from .nbextension import _jupyter_nbextension_paths
+from .nbextension import _jupyter_nbextension_paths  # noqa
