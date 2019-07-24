@@ -58,6 +58,9 @@ class CellRenderer(Widget):
     _model_name = Unicode('CellRendererModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
+    _view_name = Unicode('CellRendererView').tag(sync=True)
+    _view_module = Unicode(module_name).tag(sync=True)
+    _view_module_version = Unicode(module_version).tag(sync=True)
 
     # font = Unicode('12px sans-serif').tag(sync=True)
     text_color = Union((
