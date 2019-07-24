@@ -14,6 +14,9 @@ from traitlets import (
 
 from ipywidgets import DOMWidget, Widget, widget_serialization, Color
 
+# Dependency to bqplot is temporary, we should remove this dependency once scales are extracted from bqplot
+from bqplot import ColorScale
+
 from ._frontend import module_name, module_version
 
 
@@ -64,8 +67,10 @@ class DataGrid(DOMWidget):
 
     renderers = Dict().tag(sync=True, **widget_serialization)
 
-    default_background_color = Union((Color(), Instance(Widget)), default_value='white').tag(sync=True, **widget_serialization)
-    default_text_color = Union((Color(), Instance(Widget)), default_value='black').tag(sync=True, **widget_serialization)
+    default_background_color = Union((Color(), Instance(ColorScale)), default_value='white').tag(
+        sync=True, **widget_serialization)
+    default_text_color = Union((Color(), Instance(ColorScale)), default_value='black').tag(
+        sync=True, **widget_serialization)
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
