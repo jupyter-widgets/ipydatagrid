@@ -203,16 +203,16 @@ class DataGridView extends DOMWidgetView {
   _update_renderers() {
     let promises = [];
 
-    const default_renderer: CellRendererModel = this.model.get('default_renderer');
+    const default_renderer = this.model.get('default_renderer');
     if (default_renderer) {
-      promises.push(this.create_child_view(default_renderer).then((default_renderer_view: CellRendererView) => {
-        this.default_renderer = default_renderer_view;
+      promises.push(this.create_child_view(default_renderer).then((default_renderer_view) => {
+        this.default_renderer = (default_renderer_view as any); // TypeScript thinks it's a DOMWidgetView here
       }));
     }
 
     let renderer_promises: Dict<Promise<CellRendererView>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
-        renderer_promises[key] = this.create_child_view(model);
+        renderer_promises[key] = (this.create_child_view(model) as any); // TypeScript thinks it's a Dict<DOMWidgetView> here
     });
     promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
       this.renderers = renderer_views;
