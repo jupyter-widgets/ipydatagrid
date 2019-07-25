@@ -20,7 +20,8 @@ from bqplot import Scale, ColorScale
 from ._frontend import module_name, module_version
 
 
-class OperatorBase(Widget):
+class Predicate(Widget):
+    _model_name = Unicode('PredicateModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
 
@@ -28,61 +29,44 @@ class OperatorBase(Widget):
     operator = Enum(values=['<', '>', '<=', '>=', '=', 'contains']).tag(sync=True)
     reference_value = Any().tag(sync=True)
     output_if_true = Any().tag(sync=True)
+    output_if_false = Any(allow_none=True, default_value=None).tag(sync=True)
 
-
-class Operator(OperatorBase):
-    _model_name = Unicode('OperatorModel').tag(sync=True)
-
-    def __init__(self, cell_field, operator, reference_value, output_if_true, *args, **kwargs):
-        super(Operator, self).__init__(
-            *args,
-            cell_field=cell_field, operator=operator, reference_value=reference_value,
-            output_if_true=output_if_true, **kwargs
-        )
-
-
-class TernaryOperator(OperatorBase):
-    _model_name = Unicode('TernaryOperatorModel').tag(sync=True)
-
-    output_if_false = Any().tag(sync=True)
-
-    def __init__(self, cell_field, operator, reference_value, output_if_true, output_if_false, *args, **kwargs):
-        super(TernaryOperator, self).__init__(
+    def __init__(self, cell_field, operator, reference_value, output_if_true, output_if_false=None, *args, **kwargs):
+        super(Predicate, self).__init__(
             *args,
             cell_field=cell_field, operator=operator, reference_value=reference_value,
             output_if_true=output_if_true, output_if_false=output_if_false, **kwargs
         )
 
 
-class Operation(TraitType):
-    """A custom trait for a list of Operators returning a specified valid TraitType value."""
+class Predicates(TraitType):
+    """A custom trait for a list of Predicates returning a specified valid TraitType value."""
     default_value = []
 
     def __init__(self, output_trait, **kwargs):
         self.output_trait = output_trait
 
-        super(Operation, self).__init__(**kwargs)
+        super(Predicates, self).__init__(**kwargs)
 
     def validate(self, obj, value):
-        if isinstance(value, OperatorBase):
-            self._validate_operator(value)
+        if isinstance(value, Predicate):
+            self._validate_predicate(value)
             return value
 
         if isinstance(value, list):
             for element in value:
-                self._validate_operator(element)
+                self._validate_predicate(element)
             return value
 
         self.error(obj, value)
 
-    def _validate_operator(self, operator):
-        self.output_trait.validate(operator, operator.output_if_true)
-
-        if isinstance(operator, TernaryOperator):
-            self.output_trait.validate(operator, operator.output_if_false)
+    def _validate_predicate(self, predicate):
+        self.output_trait.validate(predicate, predicate.output_if_true)
+        if predicate.output_if_false is not None:
+            self.output_trait.validate(predicate, predicate.output_if_false)
 
     def info(self):
-        return 'an Operator/list of Operators returning {}'.format(self.output_trait.info())
+        return 'a Predicate/list of Predicates returning {}'.format(self.output_trait.info())
 
 
 class CellRenderer(Widget):
@@ -94,18 +78,18 @@ class CellRenderer(Widget):
     _view_module_version = Unicode(module_version).tag(sync=True)
 
     font = Union((
-        Unicode(), Operation(Unicode()), Instance(Scale)
+        Unicode(), Predicates(Unicode()), Instance(Scale)
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)
     text_color = Union((
-        Color(), Operation(Color()), Instance(ColorScale)
+        Color(), Predicates(Color()), Instance(ColorScale)
     ), default_value='black').tag(sync=True, **widget_serialization)
     background_color = Union((
-        Color(), Operation(Color()), Instance(ColorScale)
+        Color(), Predicates(Color()), Instance(ColorScale)
     ), default_value='white').tag(sync=True, **widget_serialization)
     vertical_alignment = Union((
-        Enum(values=['top', 'center', 'bottom']), Operation(Enum(values=['top', 'center', 'bottom'])), Instance(Scale)
+        Enum(values=['top', 'center', 'bottom']), Predicates(Enum(values=['top', 'center', 'bottom'])), Instance(Scale)
     ), default_value='center').tag(sync=True, **widget_serialization)
     horizontal_alignment = Union((
-        Enum(values=['left', 'center', 'right']), Operation(Enum(values=['left', 'center', 'right'])), Instance(Scale)
+        Enum(values=['left', 'center', 'right']), Predicates(Enum(values=['left', 'center', 'right'])), Instance(Scale)
     ), default_value='left').tag(sync=True, **widget_serialization)
     # format = Unicode(allow_none=True, default_value=None).tag(sync=True)

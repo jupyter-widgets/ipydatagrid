@@ -19,30 +19,18 @@ import {
 type Scale = any;
 
 
-abstract class OperatorBaseModel extends WidgetModel {
+export
+class PredicateModel extends WidgetModel {
   defaults() {
     return {...super.defaults(),
-      _model_module: OperatorBaseModel.model_module,
-      _model_module_version: OperatorBaseModel.model_module_version,
+      _model_name: PredicateModel.model_name,
+      _model_module: PredicateModel.model_module,
+      _model_module_version: PredicateModel.model_module_version,
       cell_field: 'value',
       operator: '<',
       reference_value: null,
       output_if_true: '',
-    };
-  }
-
-  abstract process(config: CellRenderer.ICellConfig, current: string): string;
-
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
-}
-
-
-export
-class OperatorModel extends OperatorBaseModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: OperatorModel.model_name,
+      output_if_false: null,
     };
   }
 
@@ -76,31 +64,17 @@ class OperatorModel extends OperatorBaseModel {
         break;
     }
 
-    return condition ? this.get('output_if_true') : current;
+    const output_if_false = this.get('output_if_false') ? this.get('output_if_false') : current;
+    return condition ? this.get('output_if_true') : output_if_false;
   }
 
-  static model_name = 'OperatorModel';
+  static model_name = 'PredicateModel';
+  static model_module = MODULE_NAME;
+  static model_module_version = MODULE_VERSION;
 }
 
 
-export
-class TernaryOperatorModel extends OperatorModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: TernaryOperatorModel.model_name,
-      output_if_false: null,
-    };
-  }
-
-  process(config: CellRenderer.ICellConfig, current: string) {
-    return super.process(config, this.get('output_if_false'));
-  }
-
-  static model_name = 'TernaryOperatorModel';
-}
-
-
-type Processor = string | OperatorBaseModel[] | Scale;
+type Processor = string | PredicateModel[] | Scale;
 
 
 export
@@ -190,14 +164,14 @@ class CellRendererView extends WidgetView {
       return Promise.resolve(processor);
     }
 
-    if (processor instanceof OperatorBaseModel) {
+    if (processor instanceof PredicateModel) {
       processor = [processor];
     }
 
-    // If it's an Array, assuming it's OperatorBaseModel[]
+    // If it's an Array, assuming it's PredicateModel[]
     if (processor instanceof Array) {
-      for (const operator of processor) {
-        this.listenTo(operator, 'change', () => { this.trigger('renderer_changed'); });
+      for (const predicate of processor) {
+        this.listenTo(predicate, 'change', () => { this.trigger('renderer_changed'); });
       }
 
       return Promise.resolve(processor);
@@ -214,12 +188,12 @@ class CellRendererView extends WidgetView {
       return processor;
     }
 
-    // If it's an Array, assuming it's OperatorBaseModel[]
+    // If it's an Array, assuming it's PredicateModel[]
     if (processor instanceof Array) {
       let value = default_value;
 
-      for (const operator of processor) {
-        value = operator.process(config, value);
+      for (const predicate of processor) {
+        value = predicate.process(config, value);
       }
 
       return value;
