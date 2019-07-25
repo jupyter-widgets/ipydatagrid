@@ -16,7 +16,7 @@ import {
 } from './version';
 
 // Temporary, will be removed when the scales are exported from bqplot
-type ColorScale = any;
+type Scale = any;
 
 
 abstract class OperatorBaseModel extends WidgetModel {
@@ -100,8 +100,7 @@ class TernaryOperatorModel extends OperatorModel {
 }
 
 
-type Processor = string | OperatorBaseModel[];
-type ColorProcessor = Processor | ColorScale;
+type Processor = string | OperatorBaseModel[] | Scale;
 
 
 export
@@ -117,6 +116,8 @@ class CellRendererModel extends WidgetModel {
       font: '12px sans-serif',
       text_color: 'black',
       background_color: 'white',
+      vertical_alignment: 'center',
+      horizontal_alignment: 'left',
     };
   }
 
@@ -125,6 +126,8 @@ class CellRendererModel extends WidgetModel {
     font: { deserialize: (unpack_models as any) },
     text_color: { deserialize: (unpack_models as any) },
     background_color: { deserialize: (unpack_models as any) },
+    vertical_alignment: { deserialize: (unpack_models as any) },
+    horizontal_alignment: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'CellRendererModel';
@@ -143,31 +146,41 @@ class CellRendererView extends WidgetView {
       this._initialize_processor('font').then((processor: Processor) => {
         this._font = processor;
       }),
-      this._initialize_processor('text_color').then((processor: ColorProcessor) => {
+      this._initialize_processor('text_color').then((processor: Processor) => {
         this._text_color = processor;
       }),
-      this._initialize_processor('background_color').then((processor: ColorProcessor) => {
+      this._initialize_processor('background_color').then((processor: Processor) => {
         this._background_color = processor;
+      }),
+      this._initialize_processor('vertical_alignment').then((processor: Processor) => {
+        this._vertical_alignment = processor;
+      }),
+      this._initialize_processor('horizontal_alignment').then((processor: Processor) => {
+        this._horizontal_alignment = processor;
       })
     ]);
   }
 
+  // Not using this.ready promise, those methods MUST be synchronous.
+  // The caller needs to check that the renderer is ready before calling those methods.
   compute_font(config: CellRenderer.ICellConfig): string {
-    // Not using this.ready promise, this method MUST be synchronous.
-    // The caller needs to check that the renderer is ready before calling this.
     return this._process(this._font, config, '12px sans-serif');
   }
 
   compute_text_color(config: CellRenderer.ICellConfig): string {
-    // Not using this.ready promise, this method MUST be synchronous.
-    // The caller needs to check that the renderer is ready before calling this.
     return this._process(this._text_color, config, 'black');
   }
 
   compute_background_color(config: CellRenderer.ICellConfig): string {
-    // Not using this.ready promise, this method MUST be synchronous.
-    // The caller needs to check that the renderer is ready before calling this.
     return this._process(this._background_color, config, 'white');
+  }
+
+  compute_vertical_alignment(config: CellRenderer.ICellConfig): string {
+    return this._process(this._vertical_alignment, config, 'center');
+  }
+
+  compute_horizontal_alignment(config: CellRenderer.ICellConfig): string {
+    return this._process(this._horizontal_alignment, config, 'left');
   }
 
   _initialize_processor(name: string): Promise<any> {
@@ -190,13 +203,13 @@ class CellRendererView extends WidgetView {
       return Promise.resolve(processor);
     }
 
-    // Assuming it is a ColorScale model
+    // Assuming it is a Scale model
     this.listenTo(processor, 'change', () => { this.trigger('renderer_changed'); });
 
     return this.create_child_view(processor);
   }
 
-  _process(processor: Processor | ColorProcessor, config: CellRenderer.ICellConfig, default_value: string) {
+  _process(processor: Processor, config: CellRenderer.ICellConfig, default_value: string) {
     if (typeof processor === 'string') {
       return processor;
     }
@@ -212,13 +225,15 @@ class CellRendererView extends WidgetView {
       return value;
     }
 
-    // Assuming it is a ColorScale view
+    // Assuming it is a Scale view
     return processor.scale(config.value);
   }
 
   ready: Promise<void[]>;
 
   _font: Processor;
-  _text_color: ColorProcessor;
-  _background_color: ColorProcessor;
+  _text_color: Processor;
+  _background_color: Processor;
+  _vertical_alignment: Processor;
+  _horizontal_alignment: Processor;
 }

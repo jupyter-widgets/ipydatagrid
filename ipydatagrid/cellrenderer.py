@@ -15,7 +15,7 @@ from traitlets import (
 from ipywidgets import Widget, widget_serialization, Color
 
 # Dependency to bqplot is temporary, we should remove this dependency once scales are extracted from bqplot
-from bqplot import ColorScale
+from bqplot import Scale, ColorScale
 
 from ._frontend import module_name, module_version
 
@@ -94,14 +94,18 @@ class CellRenderer(Widget):
     _view_module_version = Unicode(module_version).tag(sync=True)
 
     font = Union((
-        Unicode(), Operation(Unicode())
+        Unicode(), Operation(Unicode()), Instance(Scale)
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)
     text_color = Union((
-        Color(), Instance(ColorScale), Operation(Color())
+        Color(), Operation(Color()), Instance(ColorScale)
     ), default_value='black').tag(sync=True, **widget_serialization)
     background_color = Union((
-        Color(), Instance(ColorScale), Operation(Color())
+        Color(), Operation(Color()), Instance(ColorScale)
     ), default_value='white').tag(sync=True, **widget_serialization)
-    # vertical_alignment = Enum(values=['top', 'center', 'bottom']).tag(sync=True)
-    # horizontal_alignment = Enum(values=['left', 'center', 'right']).tag(sync=True)
+    vertical_alignment = Union((
+        Enum(values=['top', 'center', 'bottom']), Operation(Enum(values=['top', 'center', 'bottom'])), Instance(Scale)
+    ), default_value='center').tag(sync=True, **widget_serialization)
+    horizontal_alignment = Union((
+        Enum(values=['left', 'center', 'right']), Operation(Enum(values=['left', 'center', 'right'])), Instance(Scale)
+    ), default_value='left').tag(sync=True, **widget_serialization)
     # format = Unicode(allow_none=True, default_value=None).tag(sync=True)

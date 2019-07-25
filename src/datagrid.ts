@@ -186,7 +186,9 @@ class DataGridView extends DOMWidgetView {
       const body_renderer = new TextRenderer({
         font: this._compute_font.bind(this),
         backgroundColor: this._compute_background_color.bind(this),
-        textColor: this._compute_text_color.bind(this)
+        textColor: this._compute_text_color.bind(this),
+        verticalAlignment: this._compute_vertical_alignment.bind(this),
+        horizontalAlignment: this._compute_horizontal_alignment.bind(this),
       });
 
       this.grid.cellRenderers.set('body', {}, body_renderer);
@@ -212,6 +214,20 @@ class DataGridView extends DOMWidgetView {
       return this.renderers[config.metadata.name].compute_text_color(config);
     }
     return this.default_renderer.compute_text_color(config);
+  }
+
+  _compute_vertical_alignment(config: CellRenderer.ICellConfig): any {
+    if (this.renderers[config.metadata.name]) {
+      return this.renderers[config.metadata.name].compute_vertical_alignment(config);
+    }
+    return this.default_renderer.compute_vertical_alignment(config);
+  }
+
+  _compute_horizontal_alignment(config: CellRenderer.ICellConfig): any {
+    if (this.renderers[config.metadata.name]) {
+      return this.renderers[config.metadata.name].compute_horizontal_alignment(config);
+    }
+    return this.default_renderer.compute_horizontal_alignment(config);
   }
 
   _update_renderers() {
