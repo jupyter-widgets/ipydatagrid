@@ -275,4 +275,8 @@ class DataGridView extends DOMWidgetView {
   model: DataGridModel;
 }
 
-export * from './cellrenderer';
+export {
+  PredicateModel,
+  TextRendererModel, TextRendererView,
+  BarRendererModel, BarRendererView,
+} from './cellrenderer';
