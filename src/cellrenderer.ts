@@ -16,33 +16,21 @@ import {
 } from './version';
 
 // Temporary, will be removed when the scales are exported from bqplot
-type ColorScale = any;
+type Scale = any;
 
 
-abstract class OperatorBaseModel extends WidgetModel {
+export
+class PredicateModel extends WidgetModel {
   defaults() {
     return {...super.defaults(),
-      _model_module: OperatorBaseModel.model_module,
-      _model_module_version: OperatorBaseModel.model_module_version,
+      _model_name: PredicateModel.model_name,
+      _model_module: PredicateModel.model_module,
+      _model_module_version: PredicateModel.model_module_version,
       cell_field: 'value',
       operator: '<',
       reference_value: null,
       output_if_true: '',
-    };
-  }
-
-  abstract process(config: CellRenderer.ICellConfig, current: string): string;
-
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
-}
-
-
-export
-class OperatorModel extends OperatorBaseModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: OperatorModel.model_name,
+      output_if_false: null,
     };
   }
 
@@ -76,31 +64,17 @@ class OperatorModel extends OperatorBaseModel {
         break;
     }
 
-    return condition ? this.get('output_if_true') : current;
+    const output_if_false = this.get('output_if_false') ? this.get('output_if_false') : current;
+    return condition ? this.get('output_if_true') : output_if_false;
   }
 
-  static model_name = 'OperatorModel';
+  static model_name = 'PredicateModel';
+  static model_module = MODULE_NAME;
+  static model_module_version = MODULE_VERSION;
 }
 
 
-export
-class TernaryOperatorModel extends OperatorModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: TernaryOperatorModel.model_name,
-      output_if_false: null,
-    };
-  }
-
-  process(config: CellRenderer.ICellConfig, current: string) {
-    return super.process(config, this.get('output_if_false'));
-  }
-
-  static model_name = 'TernaryOperatorModel';
-}
-
-
-type ColorProcessor = string | OperatorBaseModel[] | ColorScale;
+type Processor = string | PredicateModel[] | Scale;
 
 
 export
@@ -113,15 +87,21 @@ class CellRendererModel extends WidgetModel {
       _view_name: CellRendererModel.view_name,
       _view_module: CellRendererModel.view_module,
       _view_module_version: CellRendererModel.view_module_version,
+      font: '12px sans-serif',
       text_color: 'black',
       background_color: 'white',
+      vertical_alignment: 'center',
+      horizontal_alignment: 'left',
     };
   }
 
   static serializers: ISerializers = {
     ...WidgetModel.serializers,
+    font: { deserialize: (unpack_models as any) },
     text_color: { deserialize: (unpack_models as any) },
     background_color: { deserialize: (unpack_models as any) },
+    vertical_alignment: { deserialize: (unpack_models as any) },
+    horizontal_alignment: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'CellRendererModel';
@@ -137,75 +117,97 @@ export
 class CellRendererView extends WidgetView {
   render() {
     return this.ready = Promise.all([
-      this._initialize_color_processor('text_color').then((processor: ColorProcessor) => {
+      this._initialize_processor('font').then((processor: Processor) => {
+        this._font = processor;
+      }),
+      this._initialize_processor('text_color').then((processor: Processor) => {
         this._text_color = processor;
       }),
-      this._initialize_color_processor('background_color').then((processor: ColorProcessor) => {
+      this._initialize_processor('background_color').then((processor: Processor) => {
         this._background_color = processor;
+      }),
+      this._initialize_processor('vertical_alignment').then((processor: Processor) => {
+        this._vertical_alignment = processor;
+      }),
+      this._initialize_processor('horizontal_alignment').then((processor: Processor) => {
+        this._horizontal_alignment = processor;
       })
     ]);
   }
 
+  // Not using this.ready promise, those methods MUST be synchronous.
+  // The caller needs to check that the renderer is ready before calling those methods.
+  compute_font(config: CellRenderer.ICellConfig): string {
+    return this._process(this._font, config, '12px sans-serif');
+  }
+
   compute_text_color(config: CellRenderer.ICellConfig): string {
-    // Not using this.ready promise, this method MUST be synchronous.
-    // The caller needs to check that the renderer is ready before calling this.
-    return this._compute_color(this._text_color, config, 'black');
+    return this._process(this._text_color, config, 'black');
   }
 
   compute_background_color(config: CellRenderer.ICellConfig): string {
-    // Not using this.ready promise, this method MUST be synchronous.
-    // The caller needs to check that the renderer is ready before calling this.
-    return this._compute_color(this._background_color, config, 'white');
+    return this._process(this._background_color, config, 'white');
   }
 
-  _initialize_color_processor(name: string): Promise<any> {
-    let color_processor = this.model.get(name);
+  compute_vertical_alignment(config: CellRenderer.ICellConfig): string {
+    return this._process(this._vertical_alignment, config, 'center');
+  }
 
-    if (typeof color_processor === 'string') {
-      return Promise.resolve(color_processor);
+  compute_horizontal_alignment(config: CellRenderer.ICellConfig): string {
+    return this._process(this._horizontal_alignment, config, 'left');
+  }
+
+  _initialize_processor(name: string): Promise<any> {
+    let processor = this.model.get(name);
+
+    if (typeof processor === 'string') {
+      return Promise.resolve(processor);
     }
 
-    if (color_processor instanceof OperatorBaseModel) {
-      color_processor = [color_processor];
+    if (processor instanceof PredicateModel) {
+      processor = [processor];
     }
 
-    // If it's an Array, assuming it's OperatorBaseModel[]
-    if (color_processor instanceof Array) {
-      for (const operator of color_processor) {
-        this.listenTo(operator, 'change', () => { this.trigger('renderer_changed'); });
+    // If it's an Array, assuming it's PredicateModel[]
+    if (processor instanceof Array) {
+      for (const predicate of processor) {
+        this.listenTo(predicate, 'change', () => { this.trigger('renderer_changed'); });
       }
 
-      return Promise.resolve(color_processor);
+      return Promise.resolve(processor);
     }
 
-    // Assuming it is a ColorScale model
-    this.listenTo(color_processor, 'change', () => { this.trigger('renderer_changed'); });
+    // Assuming it is a Scale model
+    this.listenTo(processor, 'change', () => { this.trigger('renderer_changed'); });
 
-    return this.create_child_view(color_processor);
+    return this.create_child_view(processor);
   }
 
-  _compute_color(processor: ColorProcessor, config: CellRenderer.ICellConfig, default_value: string) {
+  _process(processor: Processor, config: CellRenderer.ICellConfig, default_value: string) {
     if (typeof processor === 'string') {
       return processor;
     }
 
-    // If it's an Array, assuming it's OperatorBaseModel[]
+    // If it's an Array, assuming it's PredicateModel[]
     if (processor instanceof Array) {
-      let color = default_value;
+      let value = default_value;
 
-      for (const operator of processor) {
-        color = operator.process(config, color);
+      for (const predicate of processor) {
+        value = predicate.process(config, value);
       }
 
-      return color;
+      return value;
     }
 
-    // Assuming it is a ColorScale view
+    // Assuming it is a Scale view
     return processor.scale(config.value);
   }
 
   ready: Promise<void[]>;
 
-  _text_color: ColorProcessor;
-  _background_color: ColorProcessor;
+  _font: Processor;
+  _text_color: Processor;
+  _background_color: Processor;
+  _vertical_alignment: Processor;
+  _horizontal_alignment: Processor;
 }
