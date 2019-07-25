@@ -4,7 +4,7 @@
 import * as _ from 'underscore';
 
 import {
-  CellRenderer
+  CellRenderer, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -87,21 +87,7 @@ class CellRendererModel extends WidgetModel {
       _view_name: CellRendererModel.view_name,
       _view_module: CellRendererModel.view_module,
       _view_module_version: CellRendererModel.view_module_version,
-      font: '12px sans-serif',
-      text_color: 'black',
-      background_color: 'white',
-      vertical_alignment: 'center',
-      horizontal_alignment: 'left',
     };
-  }
-
-  static serializers: ISerializers = {
-    ...WidgetModel.serializers,
-    font: { deserialize: (unpack_models as any) },
-    text_color: { deserialize: (unpack_models as any) },
-    background_color: { deserialize: (unpack_models as any) },
-    vertical_alignment: { deserialize: (unpack_models as any) },
-    horizontal_alignment: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'CellRendererModel';
@@ -115,8 +101,42 @@ class CellRendererModel extends WidgetModel {
 
 export
 class CellRendererView extends WidgetView {
+  renderer: CellRenderer;
+}
+
+
+export
+class TextRendererModel extends CellRendererModel {
+  defaults() {
+    return {...super.defaults(),
+      _model_name: TextRendererModel.model_name,
+      _view_name: TextRendererModel.view_name,
+      font: '12px sans-serif',
+      text_color: 'black',
+      background_color: 'white',
+      vertical_alignment: 'center',
+      horizontal_alignment: 'left',
+    };
+  }
+
+  static serializers: ISerializers = {
+    ...CellRendererModel.serializers,
+    font: { deserialize: (unpack_models as any) },
+    text_color: { deserialize: (unpack_models as any) },
+    background_color: { deserialize: (unpack_models as any) },
+    vertical_alignment: { deserialize: (unpack_models as any) },
+    horizontal_alignment: { deserialize: (unpack_models as any) },
+  }
+
+  static model_name = 'TextRendererModel';
+  static view_name = 'TextRendererView';
+}
+
+
+export
+class TextRendererView extends CellRendererView {
   render() {
-    return this.ready = Promise.all([
+    return Promise.all([
       this._initialize_processor('font').then((processor: Processor) => {
         this._font = processor;
       }),
@@ -132,11 +152,17 @@ class CellRendererView extends WidgetView {
       this._initialize_processor('horizontal_alignment').then((processor: Processor) => {
         this._horizontal_alignment = processor;
       })
-    ]);
+    ]).then(() => {
+      this.renderer = new TextRenderer({
+        font: this.compute_font.bind(this),
+        backgroundColor: this.compute_background_color.bind(this),
+        textColor: this.compute_text_color.bind(this),
+        verticalAlignment: this.compute_vertical_alignment.bind(this),
+        horizontalAlignment: this.compute_horizontal_alignment.bind(this),
+      });
+    });
   }
 
-  // Not using this.ready promise, those methods MUST be synchronous.
-  // The caller needs to check that the renderer is ready before calling those methods.
   compute_font(config: CellRenderer.ICellConfig): string {
     return this._process(this._font, config, '12px sans-serif');
   }
@@ -149,11 +175,11 @@ class CellRendererView extends WidgetView {
     return this._process(this._background_color, config, 'white');
   }
 
-  compute_vertical_alignment(config: CellRenderer.ICellConfig): string {
+  compute_vertical_alignment(config: CellRenderer.ICellConfig): any {
     return this._process(this._vertical_alignment, config, 'center');
   }
 
-  compute_horizontal_alignment(config: CellRenderer.ICellConfig): string {
+  compute_horizontal_alignment(config: CellRenderer.ICellConfig): any {
     return this._process(this._horizontal_alignment, config, 'left');
   }
 
@@ -203,7 +229,7 @@ class CellRendererView extends WidgetView {
     return processor.scale(config.value);
   }
 
-  ready: Promise<void[]>;
+  renderer: TextRenderer;
 
   _font: Processor;
   _text_color: Processor;

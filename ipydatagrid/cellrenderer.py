@@ -77,6 +77,11 @@ class CellRenderer(Widget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
+
+class TextRenderer(CellRenderer):
+    _model_name = Unicode('TextRendererModel').tag(sync=True)
+    _view_name = Unicode('TextRendererView').tag(sync=True)
+
     font = Union((
         Unicode(), Predicates(Unicode()), Instance(Scale)
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)

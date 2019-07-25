@@ -12,7 +12,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  DataGrid, TextRenderer, CellRenderer
+  DataGrid
 } from '@phosphor/datagrid';
 
 import {
@@ -183,51 +183,12 @@ class DataGridView extends DOMWidgetView {
 
       this.grid.model = this.model.data_model;
 
-      const body_renderer = new TextRenderer({
-        font: this._compute_font.bind(this),
-        backgroundColor: this._compute_background_color.bind(this),
-        textColor: this._compute_text_color.bind(this),
-        verticalAlignment: this._compute_vertical_alignment.bind(this),
-        horizontalAlignment: this._compute_horizontal_alignment.bind(this),
-      });
+      this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
 
-      this.grid.cellRenderers.set('body', {}, body_renderer);
+      for (const key in this.renderers) {
+        this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+      }
     });
-  }
-
-  _compute_font(config: CellRenderer.ICellConfig): string {
-    if (this.renderers[config.metadata.name]) {
-      return this.renderers[config.metadata.name].compute_font(config);
-    }
-    return this.default_renderer.compute_font(config);
-  }
-
-  _compute_background_color(config: CellRenderer.ICellConfig): string {
-    if (this.renderers[config.metadata.name]) {
-      return this.renderers[config.metadata.name].compute_background_color(config);
-    }
-    return this.default_renderer.compute_background_color(config);
-  }
-
-  _compute_text_color(config: CellRenderer.ICellConfig): string {
-    if (this.renderers[config.metadata.name]) {
-      return this.renderers[config.metadata.name].compute_text_color(config);
-    }
-    return this.default_renderer.compute_text_color(config);
-  }
-
-  _compute_vertical_alignment(config: CellRenderer.ICellConfig): any {
-    if (this.renderers[config.metadata.name]) {
-      return this.renderers[config.metadata.name].compute_vertical_alignment(config);
-    }
-    return this.default_renderer.compute_vertical_alignment(config);
-  }
-
-  _compute_horizontal_alignment(config: CellRenderer.ICellConfig): any {
-    if (this.renderers[config.metadata.name]) {
-      return this.renderers[config.metadata.name].compute_horizontal_alignment(config);
-    }
-    return this.default_renderer.compute_horizontal_alignment(config);
   }
 
   _update_renderers() {
@@ -236,19 +197,15 @@ class DataGridView extends DOMWidgetView {
     const default_renderer = this.model.get('default_renderer');
     if (default_renderer) {
       promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
-        default_renderer_view.ready.then(() => {
-          this.default_renderer = default_renderer_view;
+        this.default_renderer = default_renderer_view;
 
-          this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
-        });
+        this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
       }));
     }
 
     let renderer_promises: Dict<Promise<any>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
-        renderer_promises[key] = this.create_child_view(model).then((renderer_view: any) => {
-          return renderer_view.ready.then(() => { return renderer_view; });
-        });
+        renderer_promises[key] = this.create_child_view(model);
     });
     promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
       this.renderers = renderer_views;
