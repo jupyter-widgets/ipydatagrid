@@ -64,7 +64,7 @@ class DataGrid(DOMWidget):
     transforms = List(Instance(Transform)).tag(sync=True, **widget_serialization)
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
-    default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
+    default_renderer = Instance(CellRenderer, args=()).tag(sync=True, **widget_serialization)
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
@@ -74,7 +74,3 @@ class DataGrid(DOMWidget):
     def revert(self):
         """Revert all transformations."""
         self.transforms = []
-
-    @default('default_renderer')
-    def _default_default_renderer(self):
-        return CellRenderer()
