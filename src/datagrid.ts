@@ -8,7 +8,7 @@ import {
 } from '@phosphor/datagrid';
 
 import {
-  WidgetModel, DOMWidgetModel, DOMWidgetView, ISerializers, resolvePromisesDict, unpack_models
+  WidgetModel, DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -164,8 +164,7 @@ class DataGridModel extends DOMWidgetModel {
 export
 class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
-    this.pWidget = new DataGrid();
-
+    this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
   }
 
@@ -179,38 +178,43 @@ class DataGridView extends DOMWidgetView {
 
   render() {
     return this._update_renderers().then(() => {
-      this.pWidget.model = this.model.data_model;
+      this.grid = new DataGrid({
+        baseRowSize: this.model.get('base_row_size'),
+        baseColumnSize: this.model.get('base_column_size'),
+        baseRowHeaderSize: this.model.get('base_row_header_size'),
+        baseColumnHeaderSize: this.model.get('base_column_header_size'),
+        headerVisibility: this.model.get('header_visibility'),
+      });
 
-      this.pWidget.cellRenderers.set('body', {}, this.default_renderer.renderer);
+      this.grid.model = this.model.data_model;
+
+      this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
 
       for (const key in this.renderers) {
-        this.pWidget.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+        this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
       }
 
-      this.pWidget.baseRowSize = this.model.get('base_row_size');
       this.model.on('change:base_row_size', () => {
-        this.pWidget.baseRowSize = this.model.get('base_row_size');
+        this.grid.baseRowSize = this.model.get('base_row_size');
       });
 
-      this.pWidget.baseColumnSize = this.model.get('base_column_size');
       this.model.on('change:base_column_size', () => {
-        this.pWidget.baseColumnSize = this.model.get('base_column_size');
+        this.grid.baseColumnSize = this.model.get('base_column_size');
       });
 
-      this.pWidget.baseRowHeaderSize = this.model.get('base_row_header_size');
       this.model.on('change:base_row_header_size', () => {
-        this.pWidget.baseRowHeaderSize = this.model.get('base_row_header_size');
+        this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
       });
 
-      this.pWidget.baseColumnHeaderSize = this.model.get('base_column_header_size');
       this.model.on('change:base_column_header_size', () => {
-        this.pWidget.baseColumnHeaderSize = this.model.get('base_column_header_size');
+        this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
       });
 
-      this.pWidget.headerVisibility = this.model.get('header_visibility');
       this.model.on('change:header_visibility', () => {
-        this.pWidget.headerVisibility = this.model.get('header_visibility');
+        this.grid.headerVisibility = this.model.get('header_visibility');
       });
+
+      this.pWidget.addWidget(this.grid);
     });
   }
 
@@ -242,13 +246,15 @@ class DataGridView extends DOMWidgetView {
   }
 
   _repaint() {
-    this.pWidget.repaint();
+    this.grid.repaint();
   }
 
   renderers: Dict<CellRendererView>;
   default_renderer: CellRendererView;
 
-  pWidget: DataGrid;
+  grid: DataGrid;
+
+  pWidget: JupyterPhosphorPanelWidget;
 
   model: DataGridModel;
 }
