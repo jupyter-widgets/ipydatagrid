@@ -187,12 +187,7 @@ class DataGridView extends DOMWidgetView {
       });
 
       this.grid.model = this.model.data_model;
-
-      this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
-
-      for (const key in this.renderers) {
-        this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
-      }
+      this._update_grid_renderers();
 
       this.model.on('change:base_row_size', () => {
         this.grid.baseRowSize = this.model.get('base_row_size');
@@ -214,21 +209,32 @@ class DataGridView extends DOMWidgetView {
         this.grid.headerVisibility = this.model.get('header_visibility');
       });
 
+      this.model.on_some_change(['default_renderer', 'renderers'], () => {
+        this._update_renderers().then(this._update_grid_renderers.bind(this));
+      }, this);
+
       this.pWidget.addWidget(this.grid);
     });
   }
 
   _update_renderers() {
+    // Unlisten to previous renderers
+    if (this.default_renderer) {
+      this.stopListening(this.default_renderer, 'renderer_changed');
+    }
+    for (const key in this.renderers) {
+      this.stopListening(this.renderers[key], 'renderer_changed');
+    }
+
+    // And create views for new renderers
     let promises = [];
 
     const default_renderer = this.model.get('default_renderer');
-    if (default_renderer) {
-      promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
-        this.default_renderer = default_renderer_view;
+    promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
+      this.default_renderer = default_renderer_view;
 
-        this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
-      }));
-    }
+      this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
+    }));
 
     let renderer_promises: Dict<Promise<any>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
@@ -243,6 +249,16 @@ class DataGridView extends DOMWidgetView {
     }));
 
     return Promise.all(promises);
+  }
+
+  _update_grid_renderers() {
+    this.grid.cellRenderers.clear();
+
+    this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
+
+    for (const key in this.renderers) {
+      this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+    }
   }
 
   _repaint() {
