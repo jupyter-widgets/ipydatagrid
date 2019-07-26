@@ -1,9 +1,7 @@
 // Copyright (c) QuantStack
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  WidgetModel, DOMWidgetModel, DOMWidgetView, ISerializers, unpack_models
-} from '@jupyter-widgets/base';
+import * as _ from 'underscore';
 
 import {
     Message
@@ -16,6 +14,10 @@ import {
 import {
   DataGrid
 } from '@phosphor/datagrid';
+
+import {
+  WidgetModel, DOMWidgetModel, DOMWidgetView, ISerializers, resolvePromisesDict, unpack_models
+} from '@jupyter-widgets/base';
 
 import {
   Transform, Sort, Filter
@@ -31,6 +33,13 @@ import '../css/datagrid.css'
 import {
   MODULE_NAME, MODULE_VERSION
 } from './version';
+
+import {
+  CellRendererModel, CellRendererView
+} from './cellrenderer'
+
+// Shorthand for a string->T mapping
+type Dict<T> = { [keys: string]: T; };
 
 
 abstract class TransformModel extends WidgetModel {
@@ -120,7 +129,9 @@ class DataGridModel extends DOMWidgetModel {
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       data: {},
-      transforms: []
+      transforms: [],
+      renderers: {},
+      default_renderer: null
     };
   }
 
@@ -141,7 +152,9 @@ class DataGridModel extends DOMWidgetModel {
 
   static serializers: ISerializers = {
     ...DOMWidgetModel.serializers,
-    transforms: { deserialize: (unpack_models as any) }
+    transforms: { deserialize: (unpack_models as any) },
+    renderers: { deserialize: (unpack_models as any) },
+    default_renderer: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'DataGridModel';
@@ -159,20 +172,54 @@ class DataGridModel extends DOMWidgetModel {
 export
 class DataGridView extends DOMWidgetView {
   render() {
-    let greenStripeStyle: DataGrid.IStyle = {
-      ...DataGrid.defaultStyle,
-      rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
-    };
+    return this._update_renderers().then(() => {
+      this.grid = new DataGrid({
+        baseRowSize: this.model.get('base_row_size'),
+        baseColumnSize: this.model.get('base_column_size'),
+        baseRowHeaderSize: this.model.get('base_row_header_size'),
+        baseColumnHeaderSize: this.model.get('base_column_header_size'),
+        headerVisibility: this.model.get('header_visibility')
+      });
 
-    this.grid = new DataGrid({
-      style: greenStripeStyle,
-      baseRowSize: this.model.get('base_row_size'),
-      baseColumnSize: this.model.get('base_column_size'),
-      baseRowHeaderSize: this.model.get('base_row_header_size'),
-      baseColumnHeaderSize: this.model.get('base_column_header_size'),
-      headerVisibility: this.model.get('header_visibility')
+      this.grid.model = this.model.data_model;
+
+      this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
+
+      for (const key in this.renderers) {
+        this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+      }
     });
-    this.grid.model = this.model.data_model;
+  }
+
+  _update_renderers() {
+    let promises = [];
+
+    const default_renderer = this.model.get('default_renderer');
+    if (default_renderer) {
+      promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
+        this.default_renderer = default_renderer_view;
+
+        this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
+      }));
+    }
+
+    let renderer_promises: Dict<Promise<any>> = {};
+    _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
+        renderer_promises[key] = this.create_child_view(model);
+    });
+    promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
+      this.renderers = renderer_views;
+
+      for (const key in renderer_views) {
+        this.listenTo(renderer_views[key], 'renderer_changed', this._repaint.bind(this));
+      }
+    }));
+
+    return Promise.all(promises);
+  }
+
+  _repaint() {
+    this.grid.repaint();
   }
 
   processPhosphorMessage(msg: Message) {
@@ -184,6 +231,12 @@ class DataGridView extends DOMWidgetView {
     }
   }
 
-  model: DataGridModel;
+  renderers: Dict<CellRendererView>;
+  default_renderer: CellRendererView;
+
   grid: DataGrid;
+
+  model: DataGridModel;
 }
+
+export * from './cellrenderer';
