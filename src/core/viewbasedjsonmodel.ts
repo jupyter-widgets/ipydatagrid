@@ -1,11 +1,3 @@
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-
 import {
   DataModel,
 } from '@phosphor/datagrid';
@@ -15,22 +7,22 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  each
-} from '@phosphor/algorithm';
-
-import {
   Transform
-} from './transform'
+} from './transform';
 
 import {
   View
-} from './view'
+} from './view';
+
+import {
+  TransformStateManager
+} from './transformStateManager';
 
 /**
  * A view based data model implementation for in-memory JSON data.
  */
-export
-class ViewBasedJSONModel extends DataModel {
+export class ViewBasedJSONModel extends DataModel {
+
   /**
    * Create a data model with static JSON data.
    *
@@ -40,6 +32,13 @@ class ViewBasedJSONModel extends DataModel {
     super();
     this._dataset = data;
     this._currentView = new View(this._dataset);
+    this._transformState = new TransformStateManager();
+
+    // Repaint grid on transform state update
+    // Note: This will also result in the `model-reset` signal being sent.
+    this._transformState.changed.connect((sender, value) => {
+      this.currentView = this._transformState.createView(this._dataset);
+    })
   }
 
   /**
@@ -93,21 +92,6 @@ class ViewBasedJSONModel extends DataModel {
   }
 
   /**
-   * Apply an array of transformations to the dataset and update the current
-   * View
-   *
-   * @param transforms - Array of transformations to apply to the dataset
-   */
-  updateView(transforms: Transform[]): void {
-    let transformedData = this._dataset;
-    each(transforms, (transform: Transform) => {
-      transformedData = transform.apply(transformedData);
-    });
-    this.currentView = new View(transformedData);
-    this.emitChanged({ type: 'model-reset' });
-  }
-
-  /**
    * Get the current View for the model.
    */
   protected get currentView(): View {
@@ -122,8 +106,55 @@ class ViewBasedJSONModel extends DataModel {
     this.emitChanged({ type: 'model-reset' });
   }
 
+  /**
+   * Add a new transform to the currently active transforms.
+   *
+   * @param transform - The transform to be added.
+   */
+  addTransform(transform: Transform.TransformSpec): void {
+    this._transformState.add(transform);
+  }
+
+  /**
+   * Removes the provided transformation from the active state.
+   *
+   * @param columnIndex - The index of the column state to be removed.
+   *
+   * @param transformType - The type of the transform to be removed from state.
+   */
+  removeTransform(columnIndex: number, transformType: string): void {
+    this._transformState.remove(columnIndex, transformType);
+  }
+
+  /**
+   * Apply an array of transformations to the dataset and update the current
+   * View. The provided transforms will replace any existing ones.
+   *
+   * @param transforms - Array of transformations to apply to the dataset
+   */
+  replaceTransforms(transforms: Transform.TransformSpec[]): void {
+    this._transformState.replace(transforms);
+  }
+
+  /**
+   * Removes all active transforms.
+   */
+  clearTransforms(): void {
+    this._transformState.clear();
+  }
+
+  /**
+   * Returns the transform metadata for the provided column.
+   *
+   * @param columnIndex - The column index of the metadata to be retrieved.
+   */
+  transformMetadata(columnIndex: number): TransformStateManager.IColumn | undefined {
+    return this._transformState.metadata(columnIndex);
+  }
+
   private _currentView: View;
   protected readonly _dataset: ViewBasedJSONModel.IData;
+  protected readonly _transformState: TransformStateManager;
 }
 
 /**
@@ -134,8 +165,7 @@ namespace ViewBasedJSONModel {
   /**
    *
    */
-  export
-  interface IField {
+  export interface IField {
     /**
      * The name of the column.
      *
@@ -157,8 +187,7 @@ namespace ViewBasedJSONModel {
    * This is based on the JSON Table Schema specification:
    * https://specs.frictionlessdata.io/table-schema/
    */
-  export
-  interface ISchema {
+  export interface ISchema {
     /**
      * The fields which describe the data model columns.
      *
@@ -181,14 +210,12 @@ namespace ViewBasedJSONModel {
    * the rows of the table. The keys of the records correspond to the
    * field names of the columns.
    */
-  export
-  type DataSource = ReadonlyArray<ReadonlyJSONObject>;
+  export type DataSource = ReadonlyArray<ReadonlyJSONObject>;
 
   /**
    * An options object for initializing the data model.
    */
-  export
-  interface IData {
+  export interface IData {
     /**
      * The schema for the for the data model.
      *

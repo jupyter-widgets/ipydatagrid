@@ -58,13 +58,14 @@ class DataGrid(DOMWidget):
 
     data = Dict().tag(sync=True)
 
-    transforms = List(Instance(Transform)).tag(sync=True, **widget_serialization)
+    _transforms = List(Dict).tag(sync=True, **widget_serialization)
 
-    def transform(self, transforms):
+    def transforms(self, transforms):
         """Apply a list of transformation to this DataGrid."""
-        transforms = self.transforms + transforms
-        self.transforms = transforms[:]
+
+        # TODO: Validate this input, or let it fail on view side?
+        self._transforms = transforms
 
     def revert(self):
         """Revert all transformations."""
-        self.transforms = []
+        self._transforms = []

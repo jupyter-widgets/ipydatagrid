@@ -18,7 +18,7 @@ import {
 } from '@phosphor/datagrid';
 
 import {
-  Transform, Sort, Filter
+  Transform
 } from './core/transform'
 
 import {
@@ -38,14 +38,14 @@ abstract class TransformModel extends WidgetModel {
     return {...super.defaults(),
       _model_module: TransformModel.model_module,
       _model_module_version: TransformModel.model_module_version,
-      field: ''
+      columnIndex: null
     };
   }
 
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
 
-  abstract transform: Transform;
+  abstract transform: Transform.TransformSpec;
 }
 
 
@@ -54,6 +54,7 @@ class FilterModel extends TransformModel {
   defaults() {
     return {...super.defaults(),
       _model_name: FilterModel.model_name,
+      type: 'filter',
       operator: '<',
       value: null
     };
@@ -62,22 +63,17 @@ class FilterModel extends TransformModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    const operators_map: any = {
-      '<': Filter.Operators.LessThan,
-      '>': Filter.Operators.GreaterThan,
-      '=': Filter.Operators.Equals
-    };
-
-    this.transform = new Filter({
-      field: this.get('field'),
-      operator: operators_map[this.get('operator')],
+    this.transform = {
+      type: this.get('type'),
+      columnIndex: this.get('column_index'),
+      operator: this.get('operator'),
       value: this.get('value')
-    });
+    };
   }
 
   static model_name = 'FilterModel';
 
-  transform: Filter;
+  transform: Transform.Filter;
 }
 
 
@@ -86,6 +82,7 @@ class SortModel extends TransformModel {
   defaults() {
     return {...super.defaults(),
       _model_name: SortModel.model_name,
+      type: 'sort',
       desc: true
     };
   }
@@ -93,15 +90,16 @@ class SortModel extends TransformModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    this.transform = new Sort({
-      field: this.get('field'),
+    this.transform = {
+      type: this.get('type'),
+      columnIndex: this.get('column_index'),
       desc: this.get('desc')
-    });
+    };
   }
 
   static model_name = 'SortModel';
 
-  transform: Sort;
+  transform: Transform.Sort;
 }
 
 
@@ -120,7 +118,7 @@ class DataGridModel extends DOMWidgetModel {
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       data: {},
-      transforms: []
+      _transforms: []
     };
   }
 
@@ -129,14 +127,12 @@ class DataGridModel extends DOMWidgetModel {
 
     this.data_model = new ViewBasedJSONModel(this.get('data'));
 
-    this.on('change:transforms', this.update_transforms.bind(this));
+    this.on('change:_transforms', this.update_transforms.bind(this));
     this.update_transforms();
   }
 
   update_transforms() {
-    const transforms = this.get('transforms').map((x: TransformModel) => x.transform);
-
-    this.data_model.updateView(transforms);
+    this.data_model.replaceTransforms(this.get('_transforms'));
   }
 
   static serializers: ISerializers = {
