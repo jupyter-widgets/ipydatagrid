@@ -8,11 +8,14 @@
 TODO: Add module docstring
 """
 
-from ipywidgets import DOMWidget, Widget, widget_serialization
 from traitlets import (
-    Any, Bool, Dict, Enum, Instance, Int, List, Unicode
+    Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default
 )
+
+from ipywidgets import DOMWidget, Widget, widget_serialization
+
 from ._frontend import module_name, module_version
+from .cellrenderer import CellRenderer, TextRenderer
 
 
 class Transform(Widget):
@@ -60,7 +63,10 @@ class DataGrid(DOMWidget):
 
     _transforms = List(Dict).tag(sync=True, **widget_serialization)
 
-    def transforms(self, transforms):
+    renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
+    default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
+
+    def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
 
         # TODO: Validate this input, or let it fail on view side?
@@ -69,3 +75,7 @@ class DataGrid(DOMWidget):
     def revert(self):
         """Revert all transformations."""
         self._transforms = []
+
+    @default('default_renderer')
+    def _default_renderer(self):
+        return TextRenderer()
