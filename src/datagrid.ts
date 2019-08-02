@@ -5,7 +5,7 @@ import * as _ from 'underscore';
 
 import {
   DataGrid
-} from '@phosphor/datagrid';
+} from './core/ipydatagrid';
 
 import {
   WidgetModel, DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
@@ -19,6 +19,14 @@ import {
   ViewBasedJSONModel
 } from './core/viewbasedjsonmodel'
 
+import {
+  IPyDataGridContextMenu
+} from './core/gridContextMenu';
+
+import {
+  InteractiveFilterDialog
+} from './core/filterMenu';
+
 // Import CSS
 import '../css/datagrid.css'
 
@@ -29,6 +37,7 @@ import {
 import {
   CellRendererModel, CellRendererView
 } from './cellrenderer'
+import { CommandRegistry } from '@phosphor/commands';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -182,6 +191,15 @@ class DataGridView extends DOMWidgetView {
         headerVisibility: this.model.get('header_visibility'),
       });
 
+      this.filterDialog = new InteractiveFilterDialog({
+        model: this.model.data_model
+      });
+
+      this.contextMenu = new IPyDataGridContextMenu({
+        grid: this.grid,
+        commands: this._createCommandRegistry()
+      })
+
       this.grid.model = this.model.data_model;
 
       this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
@@ -245,6 +263,64 @@ class DataGridView extends DOMWidgetView {
     this.grid.repaint();
   }
 
+  _createCommandRegistry(): CommandRegistry {
+    const commands = new CommandRegistry();
+    commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
+      label: 'Sort ASC',
+      mnemonic: 1,
+      iconClass: 'fa fa-arrow-up',
+      execute: (args): void => {
+        // @ts-ignore
+        const cellClick: DataGrid.ICellHit = <DataGrid.ICellHit>args;
+        this.model.data_model.addTransform({
+          type: 'sort',
+          columnIndex: cellClick.columnIndex + 1,
+          desc: false
+        })
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.SortDescending, {
+      label: 'Sort DESC',
+      mnemonic: 1,
+      iconClass: 'fa fa-arrow-down',
+      execute: (args) => {
+        // @ts-ignore
+        const cellClick: DataGrid.ICellHit = <DataGrid.ICellHit>args;
+        this.model.data_model.addTransform({
+          type: 'sort',
+          columnIndex: cellClick.columnIndex + 1,
+          desc: true
+        })
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.RevertGrid, {
+      label: 'Revert grid',
+      mnemonic: 8,
+      iconClass: 'fa fa-refresh',
+      execute: (args) => {
+        this.model.data_model.clearTransforms();
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterDialog, {
+      label: 'Filter...',
+      mnemonic: 4,
+      iconClass: 'fa fa-filter',
+      execute: (args) => {
+        let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
+        this.filterDialog.open({
+          x: commandArgs.clientX,
+          y: commandArgs.clientY,
+          region: commandArgs.region,
+          columnIndex: commandArgs.columnIndex,
+          forceX: false,
+          forceY: false
+        });
+      }
+    });
+    return commands;
+
+  }
+
   renderers: Dict<CellRendererView>;
   default_renderer: CellRendererView;
 
@@ -253,6 +329,9 @@ class DataGridView extends DOMWidgetView {
   pWidget: JupyterPhosphorPanelWidget;
 
   model: DataGridModel;
+
+  contextMenu: IPyDataGridContextMenu;
+  filterDialog: InteractiveFilterDialog;
 }
 
 export * from './cellrenderer';

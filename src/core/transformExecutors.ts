@@ -133,10 +133,17 @@ export class SortExecutor extends TransformExecutor {
    * @param input - The data to be operated on.
    */
   public apply(input: TransformExecutor.IData) : TransformExecutor.IData {
-    // Note: currently ignores the `desc` parameter
-    let sortFunc = (a: any, b: any) : number => {
-      return (a[this._options.field] > b[this._options.field]) ? 1 : -1
-    };
+    let sortFunc: (a: any, b: any) => number;
+
+    if (this._options.desc) {
+      sortFunc = (a: any, b: any) : number => {
+        return (a[this._options.field] < b[this._options.field]) ? 1 : -1
+      };
+    } else {
+      sortFunc = (a: any, b: any) : number => {
+        return (a[this._options.field] > b[this._options.field]) ? 1 : -1
+      };
+    }
     return {'schema': input.schema,
             'data': input.data.slice(0).sort(sortFunc)};
   }
