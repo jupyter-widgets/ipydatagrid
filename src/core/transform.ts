@@ -26,7 +26,7 @@ export namespace Transform {
   }
 
   /**
-   * A declarative spec for the `Sort` transformation. 
+   * A declarative spec for the `Filter` transformation. 
    */
   export type Filter = {
 
@@ -43,11 +43,13 @@ export namespace Transform {
     /**
      * The operator for this trasformation.
      */
-    operator: "<" | ">" | "=",
+    operator: FilterOperators,
 
     /**
      * The value(s) to apply for this transformation.
      */
     value: string | string[] | number | number[]
   }
+
+  export type FilterOperators = '<' | '>' | '=';
 }
