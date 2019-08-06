@@ -27,6 +27,10 @@ import {
   InteractiveFilterDialog
 } from './core/filterMenu';
 
+import {
+  HeaderRenderer
+} from './core/headerRenderer';
+
 // Import CSS
 import '../css/datagrid.css'
 
@@ -203,6 +207,16 @@ class DataGridView extends DOMWidgetView {
       this.grid.model = this.model.data_model;
 
       this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
+
+      // Set ipydatagrid header renderer
+      const headerRenderer = new HeaderRenderer({
+        textColor: '#000000',
+        backgroundColor: 'rgb(243, 243, 243)',
+        horizontalAlignment: 'center'
+      });
+
+      this.grid.cellRenderers.set('column-header', {}, headerRenderer);
+      this.grid.cellRenderers.set('corner-header', {}, headerRenderer)
 
       for (const key in this.renderers) {
         this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);

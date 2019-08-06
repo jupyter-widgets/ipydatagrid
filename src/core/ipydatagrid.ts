@@ -54,6 +54,8 @@ import {
 } from '@phosphor/signaling';
 import { GridContextMenu } from './gridContextMenu';
 
+import { HeaderRenderer} from './headerRenderer';
+
 
 /**
  * A widget which implements a high-performance tabular data grid.
@@ -1527,10 +1529,31 @@ class DataGrid extends Widget {
       const columnIndex = this._rowHeaderSections.sectionIndex(x);
 
       if (rowIndex !== -1 && columnIndex !== -1) {
+
+       // Test for menu click
+       const xOffset = this._rowHeaderSections.sectionOffset(columnIndex);
+       const xSize = this._rowHeaderSections.sectionSize(columnIndex);
+       const xThresh = xOffset + xSize - HeaderRenderer.buttonSize - 2;
+       const yOffset = this._columnHeaderSections.sectionOffset(rowIndex);
+       const ySize = this._columnHeaderSections.sectionSize(rowIndex);
+       const yThresh = yOffset + ySize - HeaderRenderer.buttonSize - 4;
+
+       console.log(x,y, xThresh, yThresh)
+
+       if (x > xThresh && y > yThresh) {
         return {
           region: 'corner-header',
           rowIndex: rowIndex,
-          columnIndex: columnIndex
+          columnIndex: columnIndex,
+          menuClick: true
+        };
+       }
+
+        return {
+          region: 'corner-header',
+          rowIndex: rowIndex,
+          columnIndex: columnIndex,
+          menuClick: false
         };
       }
     }
@@ -1547,7 +1570,8 @@ class DataGrid extends Widget {
         return {
           region: 'row-header',
           rowIndex: bodyRowIndex,
-          columnIndex: columnIndex
+          columnIndex: columnIndex,
+          menuClick: false
         };
       }
     }
@@ -1558,10 +1582,28 @@ class DataGrid extends Widget {
     if (y > 0 && y <= this._columnHeaderSections.totalSize) {
       const rowIndex = this._columnHeaderSections.sectionIndex(y);
 
+      // Test for menu button click
+      const xOffset = this._columnSections.sectionOffset(bodyColumnIndex);
+      const xSize = this._columnSections.sectionSize(bodyColumnIndex);
+      const xThresh = xOffset + xSize + this._rowHeaderSections.totalSize - HeaderRenderer.buttonSize - 2;
+      const yOffset = this._columnHeaderSections.sectionOffset(rowIndex);
+      const ySize = this._columnHeaderSections.sectionSize(rowIndex);
+      const yThresh = yOffset + ySize - HeaderRenderer.buttonSize - 4;
+
+      if (x > xThresh && y > yThresh) {
+        return {
+          region: 'column-header',
+          rowIndex: rowIndex,
+          columnIndex: bodyColumnIndex,
+          menuClick: true
+        }
+      }
+
       return {
         region: 'column-header',
         rowIndex: rowIndex,
-        columnIndex: bodyColumnIndex
+        columnIndex: bodyColumnIndex,
+        menuClick: false
       };
     }
 
@@ -1570,7 +1612,8 @@ class DataGrid extends Widget {
       return {
         region: 'body',
         rowIndex: bodyRowIndex,
-        columnIndex: bodyColumnIndex
+        columnIndex: bodyColumnIndex,
+        menuClick: false
       };
     }
 
@@ -3627,6 +3670,11 @@ namespace DataGrid {
      * The column index of the cell hit.
      */
     readonly columnIndex: number;
+
+    /**
+     * Indicates if the click was on an area intended to open a menu.
+     */
+    readonly menuClick: boolean;
   }
 
   /**

@@ -100,6 +100,12 @@ export class IPyDataGridContextMenu extends GridContextMenu {
    * @param cellClick  - The "value" of the signal.
    */
   open(grid: DataGrid, cellClick: DataGrid.ICellClick): void {
+
+    // Bail if this click wasn't intended to open a menu
+    if (!cellClick.cell.menuClick) {
+      return;
+    }
+
     // Discard the current menu items.
     this._menu.clearItems();
 
