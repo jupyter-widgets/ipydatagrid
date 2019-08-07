@@ -1533,7 +1533,7 @@ class DataGrid extends Widget {
        // Test for menu click
        const xOffset = this._rowHeaderSections.sectionOffset(columnIndex);
        const xSize = this._rowHeaderSections.sectionSize(columnIndex);
-       const xThresh = xOffset + xSize - HeaderRenderer.buttonSize - 2;
+       const xThresh = xOffset + xSize - HeaderRenderer.buttonSize - 2 - this._scrollX;
        const yOffset = this._columnHeaderSections.sectionOffset(rowIndex);
        const ySize = this._columnHeaderSections.sectionSize(rowIndex);
        const yThresh = yOffset + ySize - HeaderRenderer.buttonSize - 4;
@@ -1583,7 +1583,7 @@ class DataGrid extends Widget {
       // Test for menu button click
       const xOffset = this._columnSections.sectionOffset(bodyColumnIndex);
       const xSize = this._columnSections.sectionSize(bodyColumnIndex);
-      const xThresh = xOffset + xSize + this._rowHeaderSections.totalSize - HeaderRenderer.buttonSize - 2;
+      const xThresh = xOffset + xSize + this._rowHeaderSections.totalSize - HeaderRenderer.buttonSize - 2 - this._scrollX;
       const yOffset = this._columnHeaderSections.sectionOffset(rowIndex);
       const ySize = this._columnHeaderSections.sectionSize(rowIndex);
       const yThresh = yOffset + ySize - HeaderRenderer.buttonSize - 4;
