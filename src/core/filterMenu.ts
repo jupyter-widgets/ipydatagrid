@@ -330,6 +330,31 @@ export namespace Private {
     optionEqualTo.setAttribute('value', '=');
     optionEqualTo.innerText = 'Value equal to:';
     selectElem.appendChild(optionEqualTo); 
+
+    const optionNotEqualTo = document.createElement('option');
+    optionNotEqualTo.setAttribute('value', '!=');
+    optionNotEqualTo.innerText = 'Value not equal to:';
+    selectElem.appendChild(optionNotEqualTo);
+
+    const optionLessThanOrEqualTo = document.createElement('option');
+    optionLessThanOrEqualTo.setAttribute('value', '<=');
+    optionLessThanOrEqualTo.innerText = 'Value less than or equal to:';
+    selectElem.appendChild(optionLessThanOrEqualTo);
+
+    const optionGreaterThanOrEqualTo = document.createElement('option');
+    optionGreaterThanOrEqualTo.setAttribute('value', '>=');
+    optionGreaterThanOrEqualTo.innerText = 'Value greather than or equal to:';
+    selectElem.appendChild(optionGreaterThanOrEqualTo);
+
+    const optionIsEmpty = document.createElement('option');
+    optionIsEmpty.setAttribute('value', 'empty');
+    optionIsEmpty.innerText = 'Value is empty:';
+    selectElem.appendChild(optionIsEmpty);
+
+    const optionIsNotEmpty = document.createElement('option');
+    optionIsNotEmpty.setAttribute('value', 'notempty');
+    optionIsNotEmpty.innerText = 'Value is not empty:';
+    selectElem.appendChild(optionIsNotEmpty);
     
     return selectElem;
   }

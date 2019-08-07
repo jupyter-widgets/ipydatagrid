@@ -6,6 +6,10 @@ import {
   toArray, filter
 } from '@phosphor/algorithm';
 
+import {
+  Transform
+} from './transform';
+
 /**
  * An object that defines a data transformation executor.
  */
@@ -65,12 +69,38 @@ class FilterExecutor extends TransformExecutor {
           return item[this._options.field] < this._options.value
         };
         break;
+      case "<=":
+        filterFunc = (item: any) => {
+          return item[this._options.field] <= this._options.value
+        };
+        break;
+      case ">=":
+        filterFunc = (item: any) => {
+          return item[this._options.field] >= this._options.value
+        };
+        break;
       case "=":
-          filterFunc = (item: any) => {
-            // If a user inputs a number, will it be cast as a string?
-            return item[this._options.field] == this._options.value
-          };
-          break;
+        filterFunc = (item: any) => {
+          // If a user inputs a number, will it be cast as a string?
+          return item[this._options.field] == this._options.value
+        };
+        break;
+      case "!=":
+        filterFunc = (item: any) => {
+          // If a user inputs a number, will it be cast as a string?
+          return item[this._options.field] !== this._options.value;
+        };
+        break;
+      case "empty":
+        filterFunc = (item: any) => {
+          return item[this._options.field] === null;
+        };
+        break;
+      case "notempty":
+        filterFunc = (item: any) => {
+          return item[this._options.field] !== null;
+        };
+        break;
       default:
         throw 'unreachable';
     }
@@ -87,6 +117,7 @@ class FilterExecutor extends TransformExecutor {
  */
 export
 namespace FilterExecutor {
+
   /**
    * An options object for initializing a Filter.
    */
@@ -100,7 +131,7 @@ namespace FilterExecutor {
     /**
      * The operator to use for the comparison.
      */
-    operator: "<" | ">" | "=",
+    operator: Transform.FilterOperators,
 
     /**
      * The value(s) to filter by.

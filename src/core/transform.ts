@@ -51,5 +51,10 @@ export namespace Transform {
     value: string | string[] | number | number[]
   }
 
-  export type FilterOperators = '<' | '>' | '=';
+  /**
+   * The available operators for this transform.
+   */
+  export type FilterOperators = (
+    '<' | '>' | '=' | '<=' | '>=' | '!=' | 'empty' | 'notempty'
+  );
 }

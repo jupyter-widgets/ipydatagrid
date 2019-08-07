@@ -1538,8 +1538,6 @@ class DataGrid extends Widget {
        const ySize = this._columnHeaderSections.sectionSize(rowIndex);
        const yThresh = yOffset + ySize - HeaderRenderer.buttonSize - 4;
 
-       console.log(x,y, xThresh, yThresh)
-
        if (x > xThresh && y > yThresh) {
         return {
           region: 'corner-header',
