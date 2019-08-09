@@ -152,6 +152,15 @@ export class ViewBasedJSONModel extends DataModel {
     return this._transformState.metadata(columnIndex);
   }
 
+  /**
+   * Returns an array of unique values contained in the provided column index.
+   * 
+   * @param columnIndex - The index to retrieve unique values for.
+   */
+  uniqueValues(columnIndex: number): any[]{
+    return this.currentView.uniqueValues(columnIndex);
+  }
+
   private _currentView: View;
   protected readonly _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;

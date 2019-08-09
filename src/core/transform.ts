@@ -43,7 +43,7 @@ export namespace Transform {
     /**
      * The operator for this trasformation.
      */
-    operator: FilterOperators,
+    operator: FilterOperator,
 
     /**
      * The value(s) to apply for this transformation.
@@ -52,9 +52,14 @@ export namespace Transform {
   }
 
   /**
+   * A type to represent valid filter values.
+   */
+  export type FilterValue = string | string[] | number | number[]
+
+  /**
    * The available operators for this transform.
    */
-  export type FilterOperators = (
-    '<' | '>' | '=' | '<=' | '>=' | '!=' | 'empty' | 'notempty'
+  export type FilterOperator = (
+    '<' | '>' | '=' | '<=' | '>=' | '!=' | 'empty' | 'notempty' | 'in'
   );
 }

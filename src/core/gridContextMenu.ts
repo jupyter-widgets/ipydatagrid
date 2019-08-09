@@ -128,7 +128,11 @@ export class IPyDataGridContextMenu extends GridContextMenu {
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.OpenFilterDialog,
+          command: IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog,
+          args: args
+        });
+        this._menu.addItem({
+          command: IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog,
           args: args
         });
         this._menu.addItem({
@@ -146,7 +150,11 @@ export class IPyDataGridContextMenu extends GridContextMenu {
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.OpenFilterDialog,
+          command: IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog,
+          args: args
+        });
+        this._menu.addItem({
+          command: IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog,
           args: args
         });
         this._menu.addItem({
@@ -196,7 +204,8 @@ export namespace IPyDataGridContextMenu {
   export enum CommandID {
     SortAscending = 'sort:Asc',
     SortDescending = 'sort:Desc',
-    OpenFilterDialog = 'filter:openDialog',
+    OpenFilterByConditionDialog = 'filterCondition:openDialog',
+    OpenFilterByValueDialog = 'filterValue:openDialog',
     RevertGrid = 'grid:reset'
   }
 

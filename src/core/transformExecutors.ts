@@ -101,6 +101,12 @@ class FilterExecutor extends TransformExecutor {
           return item[this._options.field] !== null;
         };
         break;
+      case "in":
+        filterFunc = (item: any) => {
+          let values = <any[]>this._options.value;
+          return values.includes(item[this._options.field])
+        };
+        break;
       default:
         throw 'unreachable';
     }
@@ -131,7 +137,7 @@ namespace FilterExecutor {
     /**
      * The operator to use for the comparison.
      */
-    operator: Transform.FilterOperators,
+    operator: Transform.FilterOperator,
 
     /**
      * The value(s) to filter by.

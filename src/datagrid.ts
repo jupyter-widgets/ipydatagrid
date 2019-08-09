@@ -315,8 +315,8 @@ class DataGridView extends DOMWidgetView {
         this.model.data_model.clearTransforms();
       }
     });
-    commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterDialog, {
-      label: 'Filter...',
+    commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog, {
+      label: 'Filter by condition...',
       mnemonic: 4,
       iconClass: 'fa fa-filter',
       execute: (args) => {
@@ -327,7 +327,25 @@ class DataGridView extends DOMWidgetView {
           region: commandArgs.region,
           columnIndex: commandArgs.columnIndex,
           forceX: false,
-          forceY: false
+          forceY: false,
+          mode: 'condition'
+        });
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog, {
+      label: 'Filter by value...',
+      mnemonic: 4,
+      iconClass: 'fa fa-filter',
+      execute: (args) => {
+        let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
+        this.filterDialog.open({
+          x: commandArgs.clientX,
+          y: commandArgs.clientY,
+          region: commandArgs.region,
+          columnIndex: commandArgs.columnIndex,
+          forceX: false,
+          forceY: false,
+          mode: 'value'
         });
       }
     });
