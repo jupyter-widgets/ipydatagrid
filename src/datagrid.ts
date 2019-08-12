@@ -276,7 +276,7 @@ class DataGridView extends DOMWidgetView {
 }
 
 export {
-  PredicateModel,
+  VegaExprModel, VegaExprView,
   TextRendererModel, TextRendererView,
   BarRendererModel, BarRendererView,
 } from './cellrenderer';

@@ -3,6 +3,8 @@
 
 import * as _ from 'underscore';
 
+const expressions: any = require('vega-expression');
+
 import {
   CellRenderer, TextRenderer
 } from '@phosphor/datagrid';
@@ -24,61 +26,60 @@ type Scale = any;
 
 
 export
-class PredicateModel extends WidgetModel {
+class VegaExprModel extends WidgetModel {
   defaults() {
     return {...super.defaults(),
-      _model_name: PredicateModel.model_name,
-      _model_module: PredicateModel.model_module,
-      _model_module_version: PredicateModel.model_module_version,
-      cell_field: 'value',
-      operator: '<',
-      reference_value: null,
-      output_if_true: '',
-      output_if_false: null,
+      _model_name: VegaExprModel.model_name,
+      _model_module: VegaExprModel.model_module,
+      _model_module_version: VegaExprModel.model_module_version,
+      value: 'default_value'
     };
   }
 
-  process(config: CellRenderer.ICellConfig, current: string) {
-    const cell_field: keyof CellRenderer.ICellConfig = this.get('cell_field');
-    const cell_value = config[cell_field];
-    const reference_value = this.get('reference_value');
+  initialize(attributes: any, options: any) {
+    super.initialize(attributes, options);
 
-    let condition: boolean;
-    switch (this.get('operator')) {
-      case '<':
-        condition = cell_value < reference_value;
-        break;
-      case '>':
-        condition = cell_value > reference_value;
-        break;
-      case '=':
-        condition = cell_value == reference_value;
-        break;
-      case '>=':
-        condition = cell_value >= reference_value;
-        break;
-      case '<=':
-        condition = cell_value <= reference_value;
-        break;
-      case 'contains':
-        condition = cell_value.toString().includes(reference_value.toString());
-        break;
-      default:
-        condition = false;
-        break;
-    }
+    this._codegen = expressions.codegen({
+      whitelist: ['cell', 'default_value'],
+      globalvar: 'cell'
+    });
 
-    const output_if_false = this.get('output_if_false') !== null ? this.get('output_if_false') : current;
-    return condition ? this.get('output_if_true') : output_if_false;
+    this.update_function();
+    this.on('change:value', this.update_function.bind(this));
   }
 
-  static model_name = 'PredicateModel';
+  process(config: CellRenderer.ICellConfig, default_value: any) {
+    return this._function(config, default_value);
+  }
+
+  update_function() {
+    const parsed_value = this._codegen(expressions.parse(this.get('value')));
+
+    this._function = Function('cell', 'default_value', '"use strict";return(' + parsed_value.code + ')');
+  }
+
+  static model_name = 'VegaExprModel';
   static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
+  static model_module_version = MODULE_VERSION
+  static view_name = 'VegaExprView';
+  static view_module = MODULE_NAME;
+  static view_module_version = MODULE_VERSION;
+
+  _codegen: any;
+  _function: any;
+}
+
+export
+class VegaExprView extends WidgetView {
+  process(config: CellRenderer.ICellConfig, default_value: any) {
+    return this.model.process(config, default_value);
+  }
+
+  model: VegaExprModel;
 }
 
 
-type Processor = boolean | string | number | PredicateModel[] | Scale;
+type Processor = boolean | string | number | VegaExprView | Scale;
 
 
 export
@@ -105,27 +106,14 @@ abstract class CellRendererModel extends WidgetModel {
 
 export
 abstract class CellRendererView extends WidgetView {
-  _initialize_processor(name: string): Promise<any> {
+  _initialize_processor(name: string): Promise<Processor> {
     let processor = this.model.get(name);
 
     if (typeof processor === 'string' || typeof processor === 'number' || typeof processor === 'boolean') {
       return Promise.resolve(processor);
     }
 
-    if (processor instanceof PredicateModel) {
-      processor = [processor];
-    }
-
-    // If it's an Array, assuming it's PredicateModel[]
-    if (processor instanceof Array) {
-      for (const predicate of processor) {
-        this.listenTo(predicate, 'change', () => { this.trigger('renderer_changed'); });
-      }
-
-      return Promise.resolve(processor);
-    }
-
-    // Assuming it is a Scale model
+    // Assuming it is an VegaExprModel or a Scale model
     this.listenTo(processor, 'change', () => { this.trigger('renderer_changed'); });
 
     return this.create_child_view(processor);
@@ -136,15 +124,8 @@ abstract class CellRendererView extends WidgetView {
       return processor;
     }
 
-    // If it's an Array, assuming it's PredicateModel[]
-    if (processor instanceof Array) {
-      let value = default_value;
-
-      for (const predicate of processor) {
-        value = predicate.process(config, value);
-      }
-
-      return value;
+    if (processor instanceof VegaExprView) {
+      return processor.process(config, default_value);
     }
 
     // Assuming it is a Scale view

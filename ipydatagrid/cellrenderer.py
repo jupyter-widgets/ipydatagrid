@@ -9,7 +9,7 @@ TODO: Add module docstring
 """
 
 from traitlets import (
-    Any, Bool, Enum, Float, Instance, Unicode, Union, TraitType
+    Bool, Enum, Float, Instance, Unicode, Union
 )
 
 from ipywidgets import Widget, widget_serialization, Color
@@ -20,53 +20,18 @@ from bqplot import Scale, ColorScale
 from ._frontend import module_name, module_version
 
 
-class Predicate(Widget):
-    _model_name = Unicode('PredicateModel').tag(sync=True)
+class VegaExpr(Widget):
+    _model_name = Unicode('VegaExprModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
+    _view_name = Unicode('VegaExprView').tag(sync=True)
+    _view_module = Unicode(module_name).tag(sync=True)
+    _view_module_version = Unicode(module_version).tag(sync=True)
 
-    cell_field = Enum(values=['value', 'row', 'column']).tag(sync=True)
-    operator = Enum(values=['<', '>', '<=', '>=', '=', 'contains']).tag(sync=True)
-    reference_value = Any().tag(sync=True)
-    output_if_true = Any().tag(sync=True)
-    output_if_false = Any(allow_none=True, default_value=None).tag(sync=True)
+    value = Unicode('default_value').tag(sync=True)
 
-    def __init__(self, cell_field, operator, reference_value, output_if_true, output_if_false=None, *args, **kwargs):
-        super(Predicate, self).__init__(
-            *args,
-            cell_field=cell_field, operator=operator, reference_value=reference_value,
-            output_if_true=output_if_true, output_if_false=output_if_false, **kwargs
-        )
-
-
-class Predicates(TraitType):
-    """A custom trait for a list of Predicates returning a specified valid TraitType value."""
-    default_value = []
-
-    def __init__(self, output_trait, **kwargs):
-        self.output_trait = output_trait
-
-        super(Predicates, self).__init__(**kwargs)
-
-    def validate(self, obj, value):
-        if isinstance(value, Predicate):
-            self._validate_predicate(value)
-            return value
-
-        if isinstance(value, list):
-            for element in value:
-                self._validate_predicate(element)
-            return value
-
-        self.error(obj, value)
-
-    def _validate_predicate(self, predicate):
-        self.output_trait.validate(predicate, predicate.output_if_true)
-        if predicate.output_if_false is not None:
-            self.output_trait.validate(predicate, predicate.output_if_false)
-
-    def info(self):
-        return 'a Predicate/list of Predicates returning {}'.format(self.output_trait.info())
+    def __init__(self, value='', **kwargs):
+        super(VegaExpr, self).__init__(value=value, **kwargs)
 
 
 class CellRenderer(Widget):
@@ -83,19 +48,19 @@ class TextRenderer(CellRenderer):
     _view_name = Unicode('TextRendererView').tag(sync=True)
 
     font = Union((
-        Unicode(), Predicates(Unicode()), Instance(Scale)
+        Unicode(), Instance(VegaExpr), Instance(Scale)
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)
     text_color = Union((
-        Color(), Predicates(Color()), Instance(ColorScale)
+        Color(), Instance(VegaExpr), Instance(ColorScale)
     ), default_value='black').tag(sync=True, **widget_serialization)
     background_color = Union((
-        Color(), Predicates(Color()), Instance(ColorScale)
+        Color(), Instance(VegaExpr), Instance(ColorScale)
     ), default_value='white').tag(sync=True, **widget_serialization)
     vertical_alignment = Union((
-        Enum(values=['top', 'center', 'bottom']), Predicates(Enum(values=['top', 'center', 'bottom'])), Instance(Scale)
+        Enum(values=['top', 'center', 'bottom']), Instance(VegaExpr), Instance(Scale)
     ), default_value='center').tag(sync=True, **widget_serialization)
     horizontal_alignment = Union((
-        Enum(values=['left', 'center', 'right']), Predicates(Enum(values=['left', 'center', 'right'])), Instance(Scale)
+        Enum(values=['left', 'center', 'right']), Instance(VegaExpr), Instance(Scale)
     ), default_value='left').tag(sync=True, **widget_serialization)
     # format = Unicode(allow_none=True, default_value=None).tag(sync=True)
 
@@ -105,20 +70,20 @@ class BarRenderer(TextRenderer):
     _view_name = Unicode('BarRendererView').tag(sync=True)
 
     bar_color = Union((
-        Color(), Predicates(Color()), Instance(ColorScale)
+        Color(), Instance(VegaExpr), Instance(ColorScale)
     ), default_value='#4682b4').tag(sync=True, **widget_serialization)
     value = Union((
-        Float(), Predicates(Float()), Instance(Scale)
+        Float(), Instance(VegaExpr), Instance(Scale)
     ), default_value=0.).tag(sync=True, **widget_serialization)
     orientation = Union((
-        Unicode(), Predicates(Unicode()), Instance(Scale)
+        Unicode(), Instance(VegaExpr), Instance(Scale)
     ), default_value='horizontal').tag(sync=True, **widget_serialization)
     bar_vertical_alignment = Union((
-        Enum(values=['top', 'center', 'bottom']), Predicates(Enum(values=['top', 'center', 'bottom'])), Instance(Scale)
+        Enum(values=['top', 'center', 'bottom']), Instance(VegaExpr), Instance(Scale)
     ), default_value='bottom').tag(sync=True, **widget_serialization)
     bar_horizontal_alignment = Union((
-        Enum(values=['left', 'center', 'right']), Predicates(Enum(values=['left', 'center', 'right'])), Instance(Scale)
+        Enum(values=['left', 'center', 'right']), Instance(VegaExpr), Instance(Scale)
     ), default_value='left').tag(sync=True, **widget_serialization)
     show_text = Union((
-        Bool(), Predicates(Bool())
+        Bool(), Instance(VegaExpr)
     ), default_value=True).tag(sync=True, **widget_serialization)
