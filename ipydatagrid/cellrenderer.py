@@ -9,7 +9,7 @@ TODO: Add module docstring
 """
 
 from traitlets import (
-    Bool, Enum, Float, Instance, Unicode, Union
+    Any, Bool, Enum, Float, Instance, Unicode, Union, validate
 )
 
 from ipywidgets import Widget, widget_serialization, Color
@@ -18,6 +18,7 @@ from ipywidgets import Widget, widget_serialization, Color
 from bqplot import Scale, ColorScale
 
 from ._frontend import module_name, module_version
+from .vegatranspiler.py2vega import python2vega_expr
 
 
 class VegaExpr(Widget):
@@ -32,6 +33,14 @@ class VegaExpr(Widget):
 
     def __init__(self, value='', **kwargs):
         super(VegaExpr, self).__init__(value=value, **kwargs)
+
+
+class Expr(VegaExpr):
+    value = Any().tag(sync=True)
+
+    @validate('value')
+    def _validate_value(self, proposal):
+        return python2vega_expr(proposal['value'], ['value', 'x', 'y', 'height', 'width', 'row', 'column'])
 
 
 class CellRenderer(Widget):
