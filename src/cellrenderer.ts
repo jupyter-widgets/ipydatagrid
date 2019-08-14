@@ -3,6 +3,8 @@
 
 import * as _ from 'underscore';
 
+const d3Format: any = require('d3-format');
+
 import {
   CellRenderer, TextRenderer
 } from '@phosphor/datagrid';
@@ -79,7 +81,7 @@ abstract class CellRendererView extends WidgetView {
    *
    * @return The promise to initialize the renderer
    */
-  private _initialize(): Promise<any> {
+  protected _initialize(): Promise<any> {
     const promises: Dict<PromiseLike<Processor>> = {};
     const attr_names = this.model.get_attrs().map((attr: ICellRendererAttribute) => { return attr.name; });
 
@@ -135,10 +137,13 @@ abstract class CellRendererView extends WidgetView {
    *
    * @return The PromiseLike to update the processor view.
    */
-  private _update_processor(name: string): any {
+  protected _update_processor(name: string): any {
     let processor: any = this.model.get(name);
 
-    if (typeof processor === 'string' || typeof processor === 'number' || typeof processor === 'boolean') {
+    if (typeof processor === 'string' ||
+        typeof processor === 'number' ||
+        typeof processor === 'boolean' ||
+        processor === null) {
       return processor;
     }
 
@@ -160,7 +165,10 @@ abstract class CellRendererView extends WidgetView {
   protected process(name: string, config: CellRenderer.ICellConfig, default_value: boolean | string | number): any {
     const processor = this.processors[name];
 
-    if (typeof processor === 'string' || typeof processor === 'number' || typeof processor === 'boolean') {
+    if (typeof processor === 'string' ||
+        typeof processor === 'number' ||
+        typeof processor === 'boolean' ||
+        processor === null) {
       return processor;
     }
 
@@ -193,6 +201,7 @@ class TextRendererModel extends CellRendererModel {
       background_color: 'white',
       vertical_alignment: 'center',
       horizontal_alignment: 'left',
+      format: null,
     };
   }
 
@@ -213,6 +222,7 @@ class TextRendererModel extends CellRendererModel {
     background_color: { deserialize: (unpack_models as any) },
     vertical_alignment: { deserialize: (unpack_models as any) },
     horizontal_alignment: { deserialize: (unpack_models as any) },
+    format: { deserialize: (unpack_models as any) },
   }
 
   static model_name = 'TextRendererModel';
@@ -223,12 +233,44 @@ class TextRendererModel extends CellRendererModel {
 export
 class TextRendererView extends CellRendererView {
   _create_renderer(options: TextRenderer.IOptions) {
-    return new TextRenderer(options);
+    return new TextRenderer({
+      ...options,
+      format: this.get_formatter()
+    });
+  }
+
+  get_formatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
+    let missing = options.missing || '';
+
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+
+      // @ts-ignore
+      const formatting_rule = this._process(this._format, { value }, null);
+
+      if (formatting_rule === null) {
+        return String(value);
+      }
+
+      return String(d3Format.format(formatting_rule)(value));
+    };
+  }
+
+  protected _initialize(): Promise<any> {
+    return super._initialize().then(() => {
+      return this._update_processor('format').then((processor: Processor) => {
+        this._format = processor;
+      });
+    });
   }
 
   renderer: TextRenderer;
 
   model: TextRendererModel;
+
+  _format: Processor;
 }
 
 
@@ -276,7 +318,10 @@ class BarRendererModel extends TextRendererModel {
 export
 class BarRendererView extends TextRendererView {
   _create_renderer(options: BarRenderer.IOptions) {
-    return new BarRenderer(options);
+    return new BarRenderer({
+      ...options,
+      format: this.get_formatter()
+    });
   }
 
   renderer: BarRenderer;

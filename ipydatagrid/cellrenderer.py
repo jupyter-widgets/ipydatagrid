@@ -71,7 +71,9 @@ class TextRenderer(CellRenderer):
     horizontal_alignment = Union((
         Enum(values=['left', 'center', 'right']), Instance(VegaExpr), Instance(Scale)
     ), default_value='left').tag(sync=True, **widget_serialization)
-    # format = Unicode(allow_none=True, default_value=None).tag(sync=True)
+    format = Union((
+        Unicode(), Instance(VegaExpr)
+    ), allow_none=True, default_value=None).tag(sync=True, **widget_serialization)
 
 
 class BarRenderer(TextRenderer):
