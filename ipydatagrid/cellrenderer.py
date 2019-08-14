@@ -9,7 +9,7 @@ TODO: Add module docstring
 """
 
 from traitlets import (
-    Any, Enum, Instance, Unicode, Union, TraitType
+    Any, Bool, Enum, Float, Instance, Unicode, Union, TraitType
 )
 
 from ipywidgets import Widget, widget_serialization, Color
@@ -98,3 +98,27 @@ class TextRenderer(CellRenderer):
         Enum(values=['left', 'center', 'right']), Predicates(Enum(values=['left', 'center', 'right'])), Instance(Scale)
     ), default_value='left').tag(sync=True, **widget_serialization)
     # format = Unicode(allow_none=True, default_value=None).tag(sync=True)
+
+
+class BarRenderer(TextRenderer):
+    _model_name = Unicode('BarRendererModel').tag(sync=True)
+    _view_name = Unicode('BarRendererView').tag(sync=True)
+
+    bar_color = Union((
+        Color(), Predicates(Color()), Instance(ColorScale)
+    ), default_value='#4682b4').tag(sync=True, **widget_serialization)
+    value = Union((
+        Float(), Predicates(Float()), Instance(Scale)
+    ), default_value=0.).tag(sync=True, **widget_serialization)
+    orientation = Union((
+        Unicode(), Predicates(Unicode()), Instance(Scale)
+    ), default_value='horizontal').tag(sync=True, **widget_serialization)
+    bar_vertical_alignment = Union((
+        Enum(values=['top', 'center', 'bottom']), Predicates(Enum(values=['top', 'center', 'bottom'])), Instance(Scale)
+    ), default_value='bottom').tag(sync=True, **widget_serialization)
+    bar_horizontal_alignment = Union((
+        Enum(values=['left', 'center', 'right']), Predicates(Enum(values=['left', 'center', 'right'])), Instance(Scale)
+    ), default_value='left').tag(sync=True, **widget_serialization)
+    show_text = Union((
+        Bool(), Predicates(Bool())
+    ), default_value=True).tag(sync=True, **widget_serialization)
