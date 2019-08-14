@@ -107,6 +107,13 @@ class FilterExecutor extends TransformExecutor {
           return values.includes(item[this._options.field])
         };
         break;
+      case "between":
+        filterFunc = (item: any) => {
+          let values = <any[]>this._options.value;
+          return item[this._options.field] > values[0]
+          && item[this._options.field] < values[1]
+        };
+        break;
       default:
         throw 'unreachable';
     }

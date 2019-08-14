@@ -56,11 +56,28 @@ export class InteractiveFilterDialog extends Widget {
   }
 
   /**
+   * Checks for any undefined values in `this._filterValue`.
+   */
+  hasValidFilterValue(): boolean {
+    if (!this._filterValue) {
+      return false;
+    } else if (Array.isArray(this._filterValue)) {
+      if (this._filterValue[0] === undefined
+        || this._filterValue[1] === undefined ){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Applies the active transformation to the linked data model.
    */
   applyFilter(): void {
     // Bail if no value has been entered
-    if (!this._filterValue) {
+    // TODO: Create some kind of visual error state to indicate the blank field
+    // that needs a value.
+    if (!this.hasValidFilterValue) {
       return;
     }
 
@@ -71,9 +88,8 @@ export class InteractiveFilterDialog extends Widget {
         ? this._columnIndex
         : this._columnIndex + 1,
       operator: this._filterOperator,
-      value: this._filterValue
+      value: <Transform.FilterValue>this._filterValue
     };
-
     this._model.addTransform(transform);
     this.close()
   }
@@ -104,11 +120,20 @@ export class InteractiveFilterDialog extends Widget {
     }
 
     // Render virtual DOM
+    this._render();
+  }
+
+  /**
+   * Renders the widget with VirtualDOM.
+   */
+  private _render(): void {
     if (this._mode === 'condition') {
       VirtualDOM.render([
         this.createTitleNode(),
         this.createOperatorList(),
-        this.createSingleValueNode()
+        this._filterOperator === 'between'
+          ? this.createDualValueNode()
+          : this.createSingleValueNode()
       ], this._mainElem);
     } else if (this._mode === 'value') {
       VirtualDOM.render([
@@ -286,11 +311,68 @@ export class InteractiveFilterDialog extends Widget {
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
-          onchange: (evt) => {
+          oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement
             this._filterValue = Number(elem.value);
           },
           value: (this._filterValue) ? String(this._filterValue) : ''
+        }),
+        h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
+    );
+  }
+
+    /**
+   * Creates a `VirtualElement` to display an input element with "apply" button.
+   *
+   * Note: The `key` is randomly assigned to ensure that this element is always
+   * rerendered with current state. User interaction with `input` elements
+   * can cause attribute changes that are not recognized by VirtualDOM.
+   */
+  createDualValueNode(): VirtualElement {
+    return h.li(
+      { className: 'p-Menu-item' }, h.div(
+        { className: 'p-Menu-itemLabel' },
+        h.input({
+          style: { marginRight: '5px', width: '50px' },
+          // Assigning a random key ensures that this element is always
+          // rerendered
+          key: String(Math.random()),
+          oninput: (evt) => {
+            const elem = <HTMLInputElement>evt.srcElement
+
+            if (!Array.isArray(this._filterValue)){
+              this._filterValue = <InteractiveFilterDialog.FilterValue>[
+                Number(elem.value),
+                undefined
+              ];
+            } else {
+              this._filterValue[0] = Number(elem.value);
+            }
+          },
+          value: Array.isArray(this._filterValue)
+            ? String(this._filterValue[0] || '')
+            : String(this._filterValue || '')
+        }),
+        'and ',
+        h.input({
+          style: { marginRight: '5px', width: '50px' },
+          // Assigning a random key ensures that this element is always
+          // rerendered
+          key: String(Math.random()),
+          oninput: (evt) => {
+            const elem = <HTMLInputElement>evt.srcElement
+
+            if (!Array.isArray(this._filterValue)){
+              this._filterValue = <InteractiveFilterDialog.FilterValue>[
+                Number(elem.value),
+                undefined
+              ];
+            } else {
+              this._filterValue[1] = Number(elem.value);
+            }
+          },
+          value: Array.isArray(this._filterValue)
+            ? String(this._filterValue[1] || '') : ''
         }),
         h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
     );
@@ -344,6 +426,8 @@ export class InteractiveFilterDialog extends Widget {
           onchange: (evt) => {
             const elem = <HTMLSelectElement>evt.srcElement
             this._filterOperator = <Transform.FilterOperator>elem.value;
+            // Re-render virtual DOM, in case input elements need to change.
+            this._render();
           },
           value: this._filterOperator
         },
@@ -359,6 +443,9 @@ export class InteractiveFilterDialog extends Widget {
           h.option({
             value: '>=', ...(op === '>=') && { selected: '' }
           }, 'Value greater than or equal to:'),
+          h.option({
+            value: 'between', ...(op === 'between') && { selected: '' }
+          }, 'Value is in between:'),
           h.option({
             value: '=', ...(op === '=') && { selected: '' }
           }, 'Value is equal to:'),
@@ -388,15 +475,27 @@ export class InteractiveFilterDialog extends Widget {
   // Menu state
   private _mode: 'condition' | 'value' = 'value';
   private _filterOperator: Transform.FilterOperator = '<';
-  private _filterValue: Transform.FilterValue | undefined = undefined;
+  private _filterValue: InteractiveFilterDialog.FilterValue
 }
 
 export namespace InteractiveFilterDialog {
+
+  /**
+   * An options object for creating an `InteractiveFilterDialog`.
+   */
   export interface IOptions {
     model: ViewBasedJSONModel
   }
 
+  /**
+   * A type alias for various filter modes.
+   */
   export type FilterMode = 'condition' | 'value'
+
+  /**
+   * Type alias for valid input element values.
+   */
+  export type FilterValue = Transform.FilterValue | undefined | undefined[]
 
   /**
    * An options object for the `open` method of this item.
@@ -434,6 +533,9 @@ export namespace InteractiveFilterDialog {
      */
     forceY: boolean
 
+    /**
+     * Selects if widget will open in `condition` or `value` mode.
+     */
     mode: FilterMode
   }
 }

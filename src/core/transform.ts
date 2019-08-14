@@ -60,6 +60,15 @@ export namespace Transform {
    * The available operators for this transform.
    */
   export type FilterOperator = (
-    '<' | '>' | '=' | '<=' | '>=' | '!=' | 'empty' | 'notempty' | 'in'
+    '<'
+    | '>'
+    | '='
+    | '<='
+    | '>='
+    | '!='
+    | 'empty'
+    | 'notempty'
+    | 'in'
+    | 'between'
   );
 }
