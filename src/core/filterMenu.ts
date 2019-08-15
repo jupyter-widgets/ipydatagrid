@@ -63,7 +63,7 @@ export class InteractiveFilterDialog extends Widget {
       return false;
     } else if (Array.isArray(this._filterValue)) {
       if (this._filterValue[0] === undefined
-        || this._filterValue[1] === undefined ){
+        || this._filterValue[1] === undefined) {
         return false;
       }
     }
@@ -90,6 +90,8 @@ export class InteractiveFilterDialog extends Widget {
       operator: this._filterOperator,
       value: <Transform.FilterValue>this._filterValue
     };
+
+
     this._model.addTransform(transform);
     this.close()
   }
@@ -158,6 +160,10 @@ export class InteractiveFilterDialog extends Widget {
 
     // Update state with the metadata of the event that opened the menu.
     this._columnIndex = options.columnIndex;
+    this._columnDType = this._model.metadata(
+      options.region,
+      options.columnIndex
+    )['type'];
     this._region = options.region;
     this._mode = options.mode;
 
@@ -313,21 +319,25 @@ export class InteractiveFilterDialog extends Widget {
           key: String(Math.random()),
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement
-            this._filterValue = Number(elem.value);
+            this._filterValue = this._columnDType === 'number'
+              ? Number(elem.value)
+              : elem.value;
           },
-          value: (this._filterValue) ? String(this._filterValue) : ''
+          value: (this._filterValue && !Array.isArray(this._filterValue))
+            ? String(this._filterValue)
+            : ''
         }),
         h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
     );
   }
 
-    /**
-   * Creates a `VirtualElement` to display an input element with "apply" button.
-   *
-   * Note: The `key` is randomly assigned to ensure that this element is always
-   * rerendered with current state. User interaction with `input` elements
-   * can cause attribute changes that are not recognized by VirtualDOM.
-   */
+  /**
+ * Creates a `VirtualElement` to display an input element with "apply" button.
+ *
+ * Note: The `key` is randomly assigned to ensure that this element is always
+ * rerendered with current state. User interaction with `input` elements
+ * can cause attribute changes that are not recognized by VirtualDOM.
+ */
   createDualValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
@@ -338,20 +348,17 @@ export class InteractiveFilterDialog extends Widget {
           // rerendered
           key: String(Math.random()),
           oninput: (evt) => {
-            const elem = <HTMLInputElement>evt.srcElement
-
-            if (!Array.isArray(this._filterValue)){
-              this._filterValue = <InteractiveFilterDialog.FilterValue>[
-                Number(elem.value),
-                undefined
-              ];
-            } else {
-              this._filterValue[0] = Number(elem.value);
-            }
+            const elem = <HTMLInputElement>evt.srcElement;
+            this._filterValue = [
+              this._columnDType === 'number'
+                ? Number(elem.value)
+                : elem.value,
+              (<any[]>this._filterValue)[1]
+            ];
           },
-          value: Array.isArray(this._filterValue)
-            ? String(this._filterValue[0] || '')
-            : String(this._filterValue || '')
+          // this._filterValue is converted to an array in
+          // this.createOperatorList
+          value: String((<any[]>this._filterValue)[0] || '')
         }),
         'and ',
         h.input({
@@ -360,19 +367,17 @@ export class InteractiveFilterDialog extends Widget {
           // rerendered
           key: String(Math.random()),
           oninput: (evt) => {
-            const elem = <HTMLInputElement>evt.srcElement
-
-            if (!Array.isArray(this._filterValue)){
-              this._filterValue = <InteractiveFilterDialog.FilterValue>[
-                Number(elem.value),
-                undefined
-              ];
-            } else {
-              this._filterValue[1] = Number(elem.value);
-            }
+            const elem = <HTMLInputElement>evt.srcElement;
+            this._filterValue = [
+              (<any[]>this._filterValue)[0],
+              this._columnDType === 'number'
+                ? Number(elem.value)
+                : elem.value
+            ];
           },
-          value: Array.isArray(this._filterValue)
-            ? String(this._filterValue[1] || '') : ''
+          // this._filterValue is converted to an array in
+          // this.createOperatorList
+          value: String((<any[]>this._filterValue)[1] || '')
         }),
         h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
     );
@@ -426,6 +431,10 @@ export class InteractiveFilterDialog extends Widget {
           onchange: (evt) => {
             const elem = <HTMLSelectElement>evt.srcElement
             this._filterOperator = <Transform.FilterOperator>elem.value;
+
+            if (elem.value === 'between') {
+              this._filterValue = new Array(2);
+            }
             // Re-render virtual DOM, in case input elements need to change.
             this._render();
           },
@@ -469,6 +478,7 @@ export class InteractiveFilterDialog extends Widget {
   private _mainElem: HTMLUListElement;
 
   // Cell metadata
+  private _columnDType: string = 'number';
   private _columnIndex: number = 0;
   private _region: DataModel.CellRegion = 'column-header';
 
