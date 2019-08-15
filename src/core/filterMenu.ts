@@ -314,7 +314,14 @@ export class InteractiveFilterDialog extends Widget {
       { className: 'p-Menu-item' }, h.div(
         { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
         h.input({
-          style: { marginRight: '5px', width: '130px' },
+          style: {
+            marginRight: '5px',
+            width: '130px',
+            visibility: (
+              this._filterOperator === 'empty'
+              || this._filterOperator === 'notempty'
+            ) ? 'hidden' : 'visible'
+          },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
@@ -337,12 +344,12 @@ export class InteractiveFilterDialog extends Widget {
   }
 
   /**
- * Creates a `VirtualElement` to display an input element with "apply" button.
- *
- * Note: The `key` is randomly assigned to ensure that this element is always
- * rerendered with current state. User interaction with `input` elements
- * can cause attribute changes that are not recognized by VirtualDOM.
- */
+   * Creates a `VirtualElement` to display an input element with "apply" button.
+   *
+   * Note: The `key` is randomly assigned to ensure that this element is always
+   * rerendered with current state. User interaction with `input` elements
+   * can cause attribute changes that are not recognized by VirtualDOM.
+   */
   createDualValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
@@ -391,7 +398,7 @@ export class InteractiveFilterDialog extends Widget {
   /**
    * Creates a `VirtualElement` to display the unique values of a column.
    */
-  createUniqueValueNodes(): VirtualElement {
+  protected createUniqueValueNodes(): VirtualElement {
     const uniqueVals = this._model.uniqueValues(this._columnIndex);
     const optionElems = uniqueVals.map(val => {
       return h.option({ value: val }, String(val))
@@ -430,7 +437,7 @@ export class InteractiveFilterDialog extends Widget {
    * rerendered with current state. User interaction with `input` elements
    * can cause attribute changes that are not recognized by VirtualDOM.
    */
-  createOperatorList() {
+  protected createOperatorList() {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
         { className: 'p-Menu-itemLabel', style: { padding: '5px' } }, h.select({
@@ -459,10 +466,27 @@ export class InteractiveFilterDialog extends Widget {
   }
 
   /**
+   * Creates a `VirtualElement` to display an "apply" button.
+   */
+  protected createApplyButtonNode(): VirtualElement {
+    return h.li(
+      { className: 'p-Menu-item' },
+      h.div({
+        className: 'p-Menu-itemLabel',
+        style: { padding: '5px', textAlign: 'right' }
+      },
+      h.button({
+        style: { width: '60px' },
+        onclick: this.applyFilter.bind(this)
+      }, 'Apply'))
+    );
+  }
+
+  /**
    * Creates an array of VirtualElements to represent the available operators
    * for columns with a numerical dtype.
    */
-  _createNumericalOperators(): VirtualElement[] {
+  private _createNumericalOperators(): VirtualElement[] {
     const op = this._filterOperator
     return [
       h.option({
@@ -502,7 +526,7 @@ export class InteractiveFilterDialog extends Widget {
    * Creates an array of VirtualElements to represent the available operators
    * for columns with a categorical dtype.
    */
-  _createCategoricalOperators(): VirtualElement[] {
+  private _createCategoricalOperators(): VirtualElement[] {
     const op = this._filterOperator
     return [
       h.option({
