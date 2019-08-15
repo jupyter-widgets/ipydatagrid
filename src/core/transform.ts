@@ -70,5 +70,9 @@ export namespace Transform {
     | 'notempty'
     | 'in'
     | 'between'
+    | 'startswith'
+    | 'endswith'
+    | 'contains'
+    | '!contains'
   );
 }

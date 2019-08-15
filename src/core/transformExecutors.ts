@@ -104,7 +104,7 @@ class FilterExecutor extends TransformExecutor {
       case "in":
         filterFunc = (item: any) => {
           let values = <any[]>this._options.value;
-          return values.includes(item[this._options.field])
+          return values.includes(item[this._options.field]);
         };
         break;
       case "between":
@@ -112,6 +112,26 @@ class FilterExecutor extends TransformExecutor {
           let values = <any[]>this._options.value;
           return item[this._options.field] > values[0]
           && item[this._options.field] < values[1]
+        };
+        break;
+      case "startswith":
+        filterFunc = (item: any) => {
+          return item[this._options.field].startsWith(this._options.value);
+        };
+        break;
+      case "endswith":
+        filterFunc = (item: any) => {
+          return item[this._options.field].endsWith(this._options.value);
+        };
+        break;
+      case "contains":
+        filterFunc = (item: any) => {
+          return item[this._options.field].includes(this._options.value);
+        };
+        break;
+      case "!contains":
+        filterFunc = (item: any) => {
+          return !item[this._options.field].includes(this._options.value);
         };
         break;
       default:

@@ -295,7 +295,8 @@ export class InteractiveFilterDialog extends Widget {
   createTitleNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel' }, (this._mode === 'condition')
+        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        (this._mode === 'condition')
           ? 'Filter by condition:'
           : 'Filter by value:')
     );
@@ -311,15 +312,16 @@ export class InteractiveFilterDialog extends Widget {
   createSingleValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel' },
+        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
         h.input({
-          style: { marginRight: '5px' },
+          style: { marginRight: '5px', width: '130px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement
-            this._filterValue = this._columnDType === 'number'
+            this._filterValue = (this._columnDType === 'number'
+              || this._columnDType === 'integer')
               ? Number(elem.value)
               : elem.value;
           },
@@ -327,7 +329,10 @@ export class InteractiveFilterDialog extends Widget {
             ? String(this._filterValue)
             : ''
         }),
-        h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
+        h.button({
+          style: { width: '60px' },
+          onclick: this.applyFilter.bind(this)
+        }, 'Apply'))
     );
   }
 
@@ -341,7 +346,7 @@ export class InteractiveFilterDialog extends Widget {
   createDualValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel' },
+        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
         h.input({
           style: { marginRight: '5px', width: '50px' },
           // Assigning a random key ensures that this element is always
@@ -350,7 +355,7 @@ export class InteractiveFilterDialog extends Widget {
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement;
             this._filterValue = [
-              this._columnDType === 'number'
+              this._columnDType === 'number' || this._columnDType === 'integer'
                 ? Number(elem.value)
                 : elem.value,
               (<any[]>this._filterValue)[1]
@@ -370,7 +375,7 @@ export class InteractiveFilterDialog extends Widget {
             const elem = <HTMLInputElement>evt.srcElement;
             this._filterValue = [
               (<any[]>this._filterValue)[0],
-              this._columnDType === 'number'
+              this._columnDType === 'number' || this._columnDType === 'integer'
                 ? Number(elem.value)
                 : elem.value
             ];
@@ -397,16 +402,21 @@ export class InteractiveFilterDialog extends Widget {
       h.div(
         h.select({
           multiple: '',
-          style: { width: '100%', height: '200px' },
+          style: { width: '200px', height: '200px', margin: '5px' },
           onchange: (evt) => {
             let selectElem = <HTMLSelectElement>evt.srcElement;
-            const vals = [];
+            const values = [];
             for (let i = 0; i < selectElem.options.length; i++) {
               if (selectElem.options[i].selected) {
-                vals.push(Number(selectElem.options[i].value))
+                values.push(
+                  (this._columnDType === 'number'
+                    || this._columnDType === 'integer')
+                    ? Number(selectElem.options[i].value)
+                    : selectElem.options[i].value
+                )
               }
             }
-            this._filterValue = vals;
+            this._filterValue = <number[] | string[]>values;
           }
         }, optionElems)
       )
@@ -421,10 +431,10 @@ export class InteractiveFilterDialog extends Widget {
    * can cause attribute changes that are not recognized by VirtualDOM.
    */
   createOperatorList() {
-    const op = this._filterOperator
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel' }, h.select({
+        { className: 'p-Menu-itemLabel', style: { padding: '5px' } }, h.select({
+          style: { width: '200px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
@@ -440,36 +450,107 @@ export class InteractiveFilterDialog extends Widget {
           },
           value: this._filterOperator
         },
-          h.option({
-            value: '<', ...(op === '<') && { selected: '' }
-          }, 'Value less than:'),
-          h.option({
-            value: '>', ...(op === '>') && { selected: '' }
-          }, 'Value greater than:'),
-          h.option({
-            value: '<=', ...(op === '<=') && { selected: '' }
-          }, 'Value less than or equal to:'),
-          h.option({
-            value: '>=', ...(op === '>=') && { selected: '' }
-          }, 'Value greater than or equal to:'),
-          h.option({
-            value: 'between', ...(op === 'between') && { selected: '' }
-          }, 'Value is in between:'),
-          h.option({
-            value: '=', ...(op === '=') && { selected: '' }
-          }, 'Value is equal to:'),
-          h.option({
-            value: '!=', ...(op === '!=') && { selected: '' }
-          }, 'Value is not equal to:'),
-          h.option({
-            value: 'empty', ...(op === 'empty') && { selected: '' }
-          }, 'Value is empty:'),
-          h.option({
-            value: 'notempty', ...(op === 'notempty') && { selected: '' }
-          }, 'Value is not empty:')
+          ...(this._columnDType === 'number' || this._columnDType === 'integer')
+            ? this._createNumericalOperators()
+            : this._createCategoricalOperators()
         )
       )
     )
+  }
+
+  /**
+   * Creates an array of VirtualElements to represent the available operators
+   * for columns with a numerical dtype.
+   */
+  _createNumericalOperators(): VirtualElement[] {
+    const op = this._filterOperator
+    return [
+      h.option({
+        value: 'empty', ...(op === 'empty') && { selected: '' }
+      }, 'Is empty:'),
+      h.option({
+        value: 'notempty', ...(op === 'notempty') && { selected: '' }
+      }, 'Is not empty:'),
+      h.option({
+        value: '', disabled: 'disabled'
+      }, "───────────"),
+      h.option({
+        value: '<', ...(op === '<') && { selected: '' }
+      }, 'Less than:'),
+      h.option({
+        value: '>', ...(op === '>') && { selected: '' }
+      }, 'Greater than:'),
+      h.option({
+        value: '<=', ...(op === '<=') && { selected: '' }
+      }, 'Less than or equal to:'),
+      h.option({
+        value: '>=', ...(op === '>=') && { selected: '' }
+      }, 'Greater than or equal to:'),
+      h.option({
+        value: 'between', ...(op === 'between') && { selected: '' }
+      }, 'In between:'),
+      h.option({
+        value: '=', ...(op === '=') && { selected: '' }
+      }, 'Is equal to:'),
+      h.option({
+        value: '!=', ...(op === '!=') && { selected: '' }
+      }, 'Is not equal to:'),
+    ]
+  }
+
+  /**
+   * Creates an array of VirtualElements to represent the available operators
+   * for columns with a categorical dtype.
+   */
+  _createCategoricalOperators(): VirtualElement[] {
+    const op = this._filterOperator
+    return [
+      h.option({
+        value: 'empty', ...(op === 'empty') && { selected: '' }
+      }, 'Text is empty'),
+      h.option({
+        value: 'notempty', ...(op === 'notempty') && { selected: '' }
+      }, 'Text is not empty'),
+      h.option({
+        value: '', disabled: 'disabled'
+      }, "───────────"),
+      h.option({
+        value: 'contains', ...(op === 'contains') && { selected: '' }
+      }, 'Text contains'),
+      h.option({
+        value: '!contains', ...(op === '!contains') && { selected: '' }
+      }, 'Text does not contain'),
+      h.option({
+        value: 'startswith', ...(op === 'startswith') && { selected: '' }
+      }, 'Text starts with'),
+      h.option({
+        value: 'endswith', ...(op === 'endswith') && { selected: '' }
+      }, 'Text ends with'),
+      h.option({
+        value: '=', ...(op === '=') && { selected: '' }
+      }, 'Text is exactly'),
+      h.option({
+        value: '!=', ...(op === '!=') && { selected: '' }
+      }, 'Text is not exactly'),
+      h.option({
+        value: '', disabled: 'disabled'
+      }, "───────────"),
+      h.option({
+        value: '<', ...(op === '<') && { selected: '' }
+      }, 'Less than'),
+      h.option({
+        value: '>', ...(op === '>') && { selected: '' }
+      }, 'Greater than'),
+      h.option({
+        value: '<=', ...(op === '<=') && { selected: '' }
+      }, 'Less than or equal to'),
+      h.option({
+        value: '>=', ...(op === '>=') && { selected: '' }
+      }, 'Greater than or equal to'),
+      h.option({
+        value: 'between', ...(op === 'between') && { selected: '' }
+      }, 'In between'),
+    ]
   }
 
   private _model: ViewBasedJSONModel;
