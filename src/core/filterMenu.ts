@@ -141,10 +141,7 @@ export class InteractiveFilterDialog extends Widget {
       VirtualDOM.render([
         this.createTitleNode(),
         this.createUniqueValueNodes(),
-        h.button({
-          style: { paddingTop: '5px' },
-          onclick: this.applyFilter.bind(this)
-        }, 'Apply')
+        this.createSingleValueNode()
       ], this._mainElem);
     } else {
       throw 'unreachable';
@@ -320,6 +317,7 @@ export class InteractiveFilterDialog extends Widget {
             visibility: (
               this._filterOperator === 'empty'
               || this._filterOperator === 'notempty'
+              || this._mode === 'value'
             ) ? 'hidden' : 'visible'
           },
           // Assigning a random key ensures that this element is always
