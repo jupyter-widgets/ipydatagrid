@@ -242,19 +242,17 @@ class TextRendererView extends CellRendererView {
   }
 
   get_formatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
-    let missing = options.missing || '';
-
     return ({ value }) => {
-      if (value === null || value === undefined) {
-        return missing;
-      }
-
       // @ts-ignore
       const formatting_rule = this._process(this._format, { value }, null);
 
       let formatted_value: string;
       if (formatting_rule === null) {
-        formatted_value = String(value);
+        if (value === null) {
+          formatted_value = 'None'
+        } else {
+          formatted_value = String(value);
+        }
       } else {
         formatted_value = String(d3Format.format(formatting_rule)(value));
       }
