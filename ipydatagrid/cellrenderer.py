@@ -40,7 +40,7 @@ class Expr(VegaExpr):
 
     @validate('value')
     def _validate_value(self, proposal):
-        return py2vega(proposal['value'], ['value', 'default_value', 'x', 'y', 'height', 'width', 'row', 'column'])
+        return py2vega(proposal['value'], ['value', 'default_value', 'formatted_value', 'x', 'y', 'height', 'width', 'row', 'column'])
 
 
 class CellRenderer(Widget):
@@ -56,6 +56,9 @@ class TextRenderer(CellRenderer):
     _model_name = Unicode('TextRendererModel').tag(sync=True)
     _view_name = Unicode('TextRendererView').tag(sync=True)
 
+    text_value = Union((
+        Unicode(), Instance(VegaExpr), Instance(Scale)
+    ), allow_none=True, default_value=None).tag(sync=True, **widget_serialization)
     font = Union((
         Unicode(), Instance(VegaExpr), Instance(Scale)
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)
@@ -80,12 +83,12 @@ class BarRenderer(TextRenderer):
     _model_name = Unicode('BarRendererModel').tag(sync=True)
     _view_name = Unicode('BarRendererView').tag(sync=True)
 
+    bar_value = Union((
+        Float(), Instance(VegaExpr), Instance(Scale)
+    ), default_value=0.).tag(sync=True, **widget_serialization)
     bar_color = Union((
         Color(), Instance(VegaExpr), Instance(ColorScale)
     ), default_value='#4682b4').tag(sync=True, **widget_serialization)
-    value = Union((
-        Float(), Instance(VegaExpr), Instance(Scale)
-    ), default_value=0.).tag(sync=True, **widget_serialization)
     orientation = Union((
         Unicode(), Instance(VegaExpr), Instance(Scale)
     ), default_value='horizontal').tag(sync=True, **widget_serialization)

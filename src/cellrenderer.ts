@@ -196,6 +196,7 @@ class TextRendererModel extends CellRendererModel {
     return {...super.defaults(),
       _model_name: TextRendererModel.model_name,
       _view_name: TextRendererModel.view_name,
+      text_value: null,
       font: '12px sans-serif',
       text_color: 'black',
       background_color: 'white',
@@ -217,6 +218,7 @@ class TextRendererModel extends CellRendererModel {
 
   static serializers: ISerializers = {
     ...CellRendererModel.serializers,
+    text_value: { deserialize: (unpack_models as any) },
     font: { deserialize: (unpack_models as any) },
     text_color: { deserialize: (unpack_models as any) },
     background_color: { deserialize: (unpack_models as any) },
@@ -250,19 +252,28 @@ class TextRendererView extends CellRendererView {
       // @ts-ignore
       const formatting_rule = this._process(this._format, { value }, null);
 
+      let formatted_value: string;
       if (formatting_rule === null) {
-        return String(value);
+        formatted_value = String(value);
+      } else {
+        formatted_value = String(d3Format.format(formatting_rule)(value));
       }
 
-      return String(d3Format.format(formatting_rule)(value));
+      // @ts-ignore
+      return this._process(this._text_value, { value, formatted_value }, formatted_value) || formatted_value;
     };
   }
 
   protected _initialize(): Promise<any> {
     return super._initialize().then(() => {
-      return this._update_processor('format').then((processor: Processor) => {
-        this._format = processor;
-      });
+      return return Promise.all([
+        this._initialize_processor('text_value').then((processor: Processor) => {
+          this._text_value = processor;
+        }),
+        this._initialize_processor('format').then((processor: Processor) => {
+          this._format = processor;
+        })
+      ]);
     });
   }
 
@@ -270,6 +281,7 @@ class TextRendererView extends CellRendererView {
 
   model: TextRendererModel;
 
+  _text_value: Processor;
   _format: Processor;
 }
 
@@ -281,7 +293,7 @@ class BarRendererModel extends TextRendererModel {
       _model_name: BarRendererModel.model_name,
       _view_name: BarRendererModel.view_name,
       bar_color: '#4682b4',
-      value: 0.,
+      bar_value: 0.,
       orientation: 'horizontal',
       bar_vertical_alignment: 'bottom',
       bar_horizontal_alignment: 'left',
@@ -303,7 +315,7 @@ class BarRendererModel extends TextRendererModel {
   static serializers: ISerializers = {
     ...TextRendererModel.serializers,
     bar_color: { deserialize: (unpack_models as any) },
-    value: { deserialize: (unpack_models as any) },
+    bar_value: { deserialize: (unpack_models as any) },
     orientation: { deserialize: (unpack_models as any) },
     bar_vertical_alignment: { deserialize: (unpack_models as any) },
     bar_horizontal_alignment: { deserialize: (unpack_models as any) },

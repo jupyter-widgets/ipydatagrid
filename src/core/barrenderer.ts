@@ -3,7 +3,7 @@ import {
 } from '@phosphor/datagrid';
 
 /**
- * A cell renderer which renders data values as bars.
+ * A cell renderer which renders data barValues as bars.
  */
 export
 class BarRenderer extends TextRenderer {
@@ -15,7 +15,7 @@ class BarRenderer extends TextRenderer {
   constructor(options: BarRenderer.IOptions = {}) {
     super(options);
     this.barColor = options.barColor || '#4682b4';
-    this.value = options.value || 0.;
+    this.barValue = options.barValue || 0.;
     this.orientation = options.orientation || 'horizontal';
     this.barVerticalAlignment = options.barVerticalAlignment || 'bottom';
     this.barHorizontalAlignment = options.barHorizontalAlignment || 'left';
@@ -30,7 +30,7 @@ class BarRenderer extends TextRenderer {
   /**
    * The value of the bar, between 0. and 1.
    */
-  readonly value: CellRenderer.ConfigOption<number>;
+  readonly barValue: CellRenderer.ConfigOption<number>;
 
   /**
    * The orientation of the bar, can be horizontal or vertical.
@@ -116,7 +116,7 @@ class BarRenderer extends TextRenderer {
    */
   drawBar(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
     const barColor = CellRenderer.resolveOption(this.barColor, config);
-    let value = CellRenderer.resolveOption(this.value, config);
+    let barValue = CellRenderer.resolveOption(this.barValue, config);
     const vAlign = CellRenderer.resolveOption(this.barVerticalAlignment, config);
     const hAlign = CellRenderer.resolveOption(this.barHorizontalAlignment, config);
     const orientation = CellRenderer.resolveOption(this.orientation, config);
@@ -127,11 +127,11 @@ class BarRenderer extends TextRenderer {
     }
 
     // Be careful not to draw outside of the cell
-    if (value > 1.) {
-      value = 1.;
+    if (barValue > 1.) {
+      barValue = 1.;
     }
-    if (value < 0.) {
-      value = 0.;
+    if (barValue < 0.) {
+      barValue = 0.;
     }
 
     let x: number = config.x;
@@ -140,14 +140,14 @@ class BarRenderer extends TextRenderer {
     // Draw the bar in the cell.
     gc.fillStyle = barColor;
     if (orientation === 'horizontal') {
-      const rect_width = value * config.width;
+      const rect_width = barValue * config.width;
 
       if (hAlign === 'center') x += (config.width - rect_width) / 2.;
       if (hAlign === 'right') x += config.width - rect_width;
 
       gc.fillRect(x, y, rect_width, config.height);
     } else {
-      const rect_height = value * config.height;
+      const rect_height = barValue * config.height;
 
       if (vAlign === 'center') {
         y += (config.height - rect_height) / 2.;
@@ -184,11 +184,11 @@ namespace BarRenderer {
     barColor?: CellRenderer.ConfigOption<string>;
 
     /**
-     * The value of the bar, between 0. and 1..
+     * The barValue of the bar, between 0. and 1..
      *
      * The default is `0.`.
      */
-    value?: CellRenderer.ConfigOption<number>;
+    barValue?: CellRenderer.ConfigOption<number>;
 
     /**
      * The orientation of the bar, can be horizontal or vertical.
