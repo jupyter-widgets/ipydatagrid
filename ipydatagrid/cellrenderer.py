@@ -18,7 +18,7 @@ from ipywidgets import Widget, widget_serialization, Color
 from bqplot import Scale, ColorScale
 
 from ._frontend import module_name, module_version
-from .vegatranspiler.py2vega import python2vega_expr
+from py2vega import py2vega
 
 
 class VegaExpr(Widget):
@@ -40,7 +40,7 @@ class Expr(VegaExpr):
 
     @validate('value')
     def _validate_value(self, proposal):
-        return python2vega_expr(proposal['value'], ['value', 'x', 'y', 'height', 'width', 'row', 'column'])
+        return py2vega(proposal['value'], ['value', 'x', 'y', 'height', 'width', 'row', 'column'])
 
 
 class CellRenderer(Widget):
