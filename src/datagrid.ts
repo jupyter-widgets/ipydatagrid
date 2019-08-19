@@ -130,9 +130,15 @@ class DataGridModel extends DOMWidgetModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
+    this.on('change:data', this.update_data.bind(this));
+    this.on('change:transforms', this.update_transforms.bind(this));
+    this.update_data();
+    this.update_transforms();
+  }
+
+  update_data() {
     this.data_model = new ViewBasedJSONModel(this.get('data'));
 
-    this.on('change:transforms', this.update_transforms.bind(this));
     this.update_transforms();
   }
 
@@ -188,6 +194,10 @@ class DataGridView extends DOMWidgetView {
 
       this.grid.model = this.model.data_model;
       this._update_grid_renderers();
+
+      this.model.on('change:data', () => {
+        this.grid.model = this.model.data_model;
+      });
 
       this.model.on('change:base_row_size', () => {
         this.grid.baseRowSize = this.model.get('base_row_size');
