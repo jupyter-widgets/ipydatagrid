@@ -243,7 +243,7 @@ class DataGridView extends DOMWidgetView {
     promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
       this.default_renderer = default_renderer_view;
 
-      this.listenTo(this.default_renderer, 'renderer_changed', this._repaint.bind(this));
+      this.listenTo(this.default_renderer, 'renderer_changed', this._update_grid_renderers.bind(this));
     }));
 
     let renderer_promises: Dict<Promise<any>> = {};
@@ -254,7 +254,7 @@ class DataGridView extends DOMWidgetView {
       this.renderers = renderer_views;
 
       for (const key in renderer_views) {
-        this.listenTo(renderer_views[key], 'renderer_changed', this._repaint.bind(this));
+        this.listenTo(renderer_views[key], 'renderer_changed', this._update_grid_renderers.bind(this));
       }
     }));
 
@@ -262,17 +262,15 @@ class DataGridView extends DOMWidgetView {
   }
 
   _update_grid_renderers() {
-    this.grid.cellRenderers.clear();
-
-    this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
+    if (this.grid.cellRenderers.get('body', {}) !== this.default_renderer.renderer) {
+      this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
+    }
 
     for (const key in this.renderers) {
-      this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+      if (this.grid.cellRenderers.get('body', {'name': key}) !== this.renderers[key].renderer) {
+        this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+      }
     }
-  }
-
-  _repaint() {
-    this.grid.repaint();
   }
 
   renderers: Dict<CellRendererView>;

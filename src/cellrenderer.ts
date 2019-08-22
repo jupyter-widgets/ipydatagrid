@@ -114,6 +114,44 @@ abstract class CellRendererModel extends WidgetModel {
 
 export
 abstract class CellRendererView extends WidgetView {
+  render() {
+    return this._initialize().then(() => {
+      this._update_renderer();
+
+      this.on('processor_changed', this._update_renderer.bind(this));
+    });
+  }
+
+  _initialize(): Promise<any> {
+    const attrs = this._get_attrs();
+
+    this.model.on_some_change(attrs, (event: any) => {
+      const updates = [];
+
+      for (const name in event.changed) {
+        updates.push(this._update_processor(name));
+      }
+
+      Promise.all(updates).then(() => {
+        this.trigger('processor_changed');
+      });
+    }, this);
+
+    const updates = [];
+
+    for (const name of attrs) {
+      updates.push(this._update_processor(name));
+    }
+
+    return Promise.all(updates);
+  }
+
+  _update_renderer() {
+    this.renderer = this._create_renderer();
+
+    this.trigger('renderer_changed');
+  }
+
   _initialize_processor(name: string): Promise<Processor> {
     let processor = this.model.get(name);
 
@@ -122,7 +160,7 @@ abstract class CellRendererView extends WidgetView {
     }
 
     // Assuming it is an VegaExprModel or a Scale model
-    this.listenTo(processor, 'change', () => { this.trigger('renderer_changed'); });
+    this.listenTo(processor, 'change', () => { this.trigger('processor_changed'); });
 
     return this.create_child_view(processor);
   }
@@ -140,7 +178,14 @@ abstract class CellRendererView extends WidgetView {
     return processor.scale(config.value);
   }
 
-  protected abstract _initialize(): Promise<any>;
+  _update_processor(name: string): Promise<any> {
+    return this._initialize_processor(name).then((processor: Processor) => {
+      (this as any)['_' + name] = processor;
+    })
+  }
+
+  protected abstract _get_attrs(): string[];
+  protected abstract _create_renderer(): CellRenderer;
 
   renderer: CellRenderer;
 }
@@ -176,15 +221,13 @@ class TextRendererModel extends CellRendererModel {
 
 export
 class TextRendererView extends CellRendererView {
-  render() {
-    return this._initialize().then(() => {
-      this.renderer = new TextRenderer({
-        font: this.compute_font.bind(this),
-        backgroundColor: this.compute_background_color.bind(this),
-        textColor: this.compute_text_color.bind(this),
-        verticalAlignment: this.compute_vertical_alignment.bind(this),
-        horizontalAlignment: this.compute_horizontal_alignment.bind(this),
-      });
+  _create_renderer() {
+    return new TextRenderer({
+      font: this.compute_font.bind(this),
+      backgroundColor: this.compute_background_color.bind(this),
+      textColor: this.compute_text_color.bind(this),
+      verticalAlignment: this.compute_vertical_alignment.bind(this),
+      horizontalAlignment: this.compute_horizontal_alignment.bind(this),
     });
   }
 
@@ -208,24 +251,8 @@ class TextRendererView extends CellRendererView {
     return this._process(this._horizontal_alignment, config, 'left');
   }
 
-  protected _initialize(): Promise<any> {
-    return Promise.all([
-      this._initialize_processor('font').then((processor: Processor) => {
-        this._font = processor;
-      }),
-      this._initialize_processor('text_color').then((processor: Processor) => {
-        this._text_color = processor;
-      }),
-      this._initialize_processor('background_color').then((processor: Processor) => {
-        this._background_color = processor;
-      }),
-      this._initialize_processor('vertical_alignment').then((processor: Processor) => {
-        this._vertical_alignment = processor;
-      }),
-      this._initialize_processor('horizontal_alignment').then((processor: Processor) => {
-        this._horizontal_alignment = processor;
-      })
-    ]);
+  protected _get_attrs(): string[] {
+    return ['font', 'text_color', 'background_color', 'vertical_alignment', 'horizontal_alignment'];
   }
 
   renderer: TextRenderer;
@@ -270,26 +297,19 @@ class BarRendererModel extends TextRendererModel {
 
 export
 class BarRendererView extends TextRendererView {
-  render() {
-    return this._initialize().then(() => {
-      // If it's a scale, set the range to [0., 1.]
-      if (this._value.scale) {
-        this._value.set_range([0., 1.]);
-      }
-
-      this.renderer = new BarRenderer({
-        font: this.compute_font.bind(this),
-        backgroundColor: this.compute_background_color.bind(this),
-        textColor: this.compute_text_color.bind(this),
-        verticalAlignment: this.compute_vertical_alignment.bind(this),
-        horizontalAlignment: this.compute_horizontal_alignment.bind(this),
-        barColor: this.compute_bar_color.bind(this),
-        value: this.compute_value.bind(this),
-        orientation: this.compute_orientation.bind(this),
-        barVerticalAlignment: this.compute_bar_vertical_alignment.bind(this),
-        barHorizontalAlignment: this.compute_bar_horizontal_alignment.bind(this),
-        showText: this.compute_show_text.bind(this),
-      });
+  _create_renderer() {
+    return new BarRenderer({
+      font: this.compute_font.bind(this),
+      backgroundColor: this.compute_background_color.bind(this),
+      textColor: this.compute_text_color.bind(this),
+      verticalAlignment: this.compute_vertical_alignment.bind(this),
+      horizontalAlignment: this.compute_horizontal_alignment.bind(this),
+      barColor: this.compute_bar_color.bind(this),
+      value: this.compute_value.bind(this),
+      orientation: this.compute_orientation.bind(this),
+      barVerticalAlignment: this.compute_bar_vertical_alignment.bind(this),
+      barHorizontalAlignment: this.compute_bar_horizontal_alignment.bind(this),
+      showText: this.compute_show_text.bind(this),
     });
   }
 
@@ -317,29 +337,8 @@ class BarRendererView extends TextRendererView {
     return this._process(this._show_text, config, true);
   }
 
-  protected _initialize(): Promise<any> {
-    return super._initialize().then(() => {
-      return Promise.all([
-        this._initialize_processor('bar_color').then((processor: Processor) => {
-          this._bar_color = processor;
-        }),
-        this._initialize_processor('value').then((processor: Processor) => {
-          this._value = processor;
-        }),
-        this._initialize_processor('orientation').then((processor: Processor) => {
-          this._orientation = processor;
-        }),
-        this._initialize_processor('bar_vertical_alignment').then((processor: Processor) => {
-          this._bar_vertical_alignment = processor;
-        }),
-        this._initialize_processor('bar_horizontal_alignment').then((processor: Processor) => {
-          this._bar_horizontal_alignment = processor;
-        }),
-        this._initialize_processor('show_text').then((processor: Processor) => {
-          this._show_text = processor;
-        }),
-      ])
-    });
+  protected _get_attrs(): string[] {
+    return super._get_attrs().concat(['bar_color', 'value', 'orientation', 'bar_vertical_alignment', 'bar_horizontal_alignment', 'show_text']);
   }
 
   renderer: BarRenderer;
