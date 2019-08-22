@@ -3,7 +3,8 @@
 
 import * as _ from 'underscore';
 
-const expressions: any = require('vega-expression');
+const vega_expressions: any = require('vega-expression');
+const vega_functions: any = require('vega-functions');
 
 import {
   CellRenderer, TextRenderer
@@ -39,23 +40,30 @@ class VegaExprModel extends WidgetModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    this._codegen = expressions.codegen({
-      whitelist: ['cell', 'default_value'],
-      globalvar: 'cell'
-    });
+    const codegen_params = {
+      whitelist: ['cell', 'default_value', 'functions'],
+      globalvar: 'cell',
+      functions: function(codegen: any) {
+        const fn = vega_expressions.functions(codegen);
+        for (let name in vega_functions.functionContext) { fn[name] = 'functions.' + name; }
+        return fn;
+      }
+    };
+
+    this._codegen = vega_expressions.codegen(codegen_params);
 
     this.update_function();
     this.on('change:value', this.update_function.bind(this));
   }
 
   process(config: CellRenderer.ICellConfig, default_value: any) {
-    return this._function(config, default_value);
+    return this._function(config, default_value, vega_functions.functionContext);
   }
 
   update_function() {
-    const parsed_value = this._codegen(expressions.parse(this.get('value')));
+    const parsed_value = this._codegen(vega_expressions.parse(this.get('value')));
 
-    this._function = Function('cell', 'default_value', '"use strict";return(' + parsed_value.code + ')');
+    this._function = Function('cell', 'default_value', 'functions', '"use strict";return(' + parsed_value.code + ')');
   }
 
   static model_name = 'VegaExprModel';
