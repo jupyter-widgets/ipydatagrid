@@ -109,6 +109,7 @@ export class TransformStateManager {
       if (transform.sort) {
         let executor = new SortExecutor({
           field: data.schema.fields[transform.sort.columnIndex]['name'],
+          dType: data.schema.fields[transform.sort.columnIndex]['type'],
           desc: transform.sort.desc,
         });
         sortExecutors.push(executor);
@@ -116,6 +117,7 @@ export class TransformStateManager {
       if (transform.filter) {
         let executor = new FilterExecutor({
           field: data.schema.fields[transform.filter.columnIndex]['name'],
+          dType: data.schema.fields[transform.filter.columnIndex]['type'],
           operator: transform.filter.operator,
           value: transform.filter.value
         });

@@ -313,7 +313,7 @@ export class InteractiveFilterDialog extends Widget {
         h.input({
           style: {
             marginRight: '5px',
-            width: '130px',
+            width: '180px',
             visibility: (
               this._filterOperator === 'empty'
               || this._filterOperator === 'notempty'
@@ -353,7 +353,7 @@ export class InteractiveFilterDialog extends Widget {
       { className: 'p-Menu-item' }, h.div(
         { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
         h.input({
-          style: { marginRight: '5px', width: '50px' },
+          style: { marginRight: '5px', width: '75px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
@@ -372,7 +372,7 @@ export class InteractiveFilterDialog extends Widget {
         }),
         'and ',
         h.input({
-          style: { marginRight: '5px', width: '50px' },
+          style: { marginRight: '5px', width: '75px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
@@ -436,6 +436,17 @@ export class InteractiveFilterDialog extends Widget {
    * can cause attribute changes that are not recognized by VirtualDOM.
    */
   protected createOperatorList() {
+
+    let operators: VirtualElement[];
+
+    if (this._columnDType === 'number' || this._columnDType === 'integer') {
+      operators = this._createNumericalOperators();
+    } else if (['date', 'time', 'datetime'].includes(this._columnDType)) {
+      operators = this._createDateOperators();
+    } else {
+      operators = this._createCategoricalOperators();
+    }
+
     return h.li(
       { className: 'p-Menu-item' }, h.div(
         { className: 'p-Menu-itemLabel', style: { padding: '5px' } }, h.select({
@@ -455,9 +466,7 @@ export class InteractiveFilterDialog extends Widget {
           },
           value: this._filterOperator
         },
-          ...(this._columnDType === 'number' || this._columnDType === 'integer')
-            ? this._createNumericalOperators()
-            : this._createCategoricalOperators()
+          ...operators
         )
       )
     )
@@ -522,6 +531,43 @@ export class InteractiveFilterDialog extends Widget {
 
   /**
    * Creates an array of VirtualElements to represent the available operators
+   * for columns with a date dtype.
+   */
+  private _createDateOperators(): VirtualElement[] {
+    const op = this._filterOperator
+    return [
+      h.option({
+        value: 'empty', ...(op === 'empty') && { selected: '' }
+      }, 'Is empty:'),
+      h.option({
+        value: 'notempty', ...(op === 'notempty') && { selected: '' }
+      }, 'Is not empty:'),
+      h.option({
+        value: '', disabled: 'disabled'
+      }, "───────────"),
+      h.option({
+        value: '<', ...(op === '<') && { selected: '' }
+      }, 'Is before:'),
+      h.option({
+        value: '>', ...(op === '>') && { selected: '' }
+      }, 'Is after:'),
+      h.option({
+        value: 'isSameDay', ...(op === 'between') && { selected: '' }
+      }, 'Is on same day as:'),
+      h.option({
+        value: 'between', ...(op === 'between') && { selected: '' }
+      }, 'Is in between:'),
+      h.option({
+        value: '=', ...(op === '=') && { selected: '' }
+      }, 'Is exactly equal to:'),
+      h.option({
+        value: '!=', ...(op === '!=') && { selected: '' }
+      }, 'Is not exactly equal to:'),
+    ]
+  }
+
+  /**
+   * Creates an array of VirtualElements to represent the available operators
    * for columns with a categorical dtype.
    */
   private _createCategoricalOperators(): VirtualElement[] {
@@ -529,49 +575,43 @@ export class InteractiveFilterDialog extends Widget {
     return [
       h.option({
         value: 'empty', ...(op === 'empty') && { selected: '' }
-      }, 'Text is empty'),
+      }, 'Is empty'),
       h.option({
         value: 'notempty', ...(op === 'notempty') && { selected: '' }
-      }, 'Text is not empty'),
+      }, 'Is not empty'),
       h.option({
         value: '', disabled: 'disabled'
       }, "───────────"),
       h.option({
         value: 'contains', ...(op === 'contains') && { selected: '' }
-      }, 'Text contains'),
+      }, 'Contains'),
       h.option({
         value: '!contains', ...(op === '!contains') && { selected: '' }
-      }, 'Text does not contain'),
+      }, 'Does not contain'),
       h.option({
         value: 'startswith', ...(op === 'startswith') && { selected: '' }
-      }, 'Text starts with'),
+      }, 'Starts with'),
       h.option({
         value: 'endswith', ...(op === 'endswith') && { selected: '' }
-      }, 'Text ends with'),
+      }, 'Ends with'),
       h.option({
         value: '=', ...(op === '=') && { selected: '' }
-      }, 'Text is exactly'),
+      }, 'Is exactly'),
       h.option({
         value: '!=', ...(op === '!=') && { selected: '' }
-      }, 'Text is not exactly'),
+      }, 'Is not exactly'),
       h.option({
         value: '', disabled: 'disabled'
       }, "───────────"),
       h.option({
         value: '<', ...(op === '<') && { selected: '' }
-      }, 'Less than'),
+      }, 'Is before'),
       h.option({
         value: '>', ...(op === '>') && { selected: '' }
-      }, 'Greater than'),
-      h.option({
-        value: '<=', ...(op === '<=') && { selected: '' }
-      }, 'Less than or equal to'),
-      h.option({
-        value: '>=', ...(op === '>=') && { selected: '' }
-      }, 'Greater than or equal to'),
+      }, 'Is after'),
       h.option({
         value: 'between', ...(op === 'between') && { selected: '' }
-      }, 'In between'),
+      }, 'Is in between'),
     ]
   }
 

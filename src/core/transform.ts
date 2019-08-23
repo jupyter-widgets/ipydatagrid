@@ -74,5 +74,6 @@ export namespace Transform {
     | 'endswith'
     | 'contains'
     | '!contains'
+    | 'isOnSameDay'
   );
 }

@@ -10,6 +10,9 @@ import {
   Transform
 } from './transform';
 
+import * as moment from 'moment';
+import { Private } from '@jupyterlab/coreutils';
+
 /**
  * An object that defines a data transformation executor.
  */
@@ -61,33 +64,61 @@ class FilterExecutor extends TransformExecutor {
     switch (this._options.operator) {
       case ">":
         filterFunc = (item: any) => {
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const value = moment.default.utc(this._options.value);
+            return target.isAfter(value);
+          }
           return item[this._options.field] > this._options.value
         };
         break;
       case "<":
         filterFunc = (item: any) => {
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const value = moment.default.utc(this._options.value);
+            return target.isBefore(value);
+          }
           return item[this._options.field] < this._options.value
         };
         break;
       case "<=":
         filterFunc = (item: any) => {
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const value = moment.default.utc(this._options.value);
+            return target.isSameOrBefore(value);
+          }
           return item[this._options.field] <= this._options.value
         };
         break;
       case ">=":
         filterFunc = (item: any) => {
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const value = moment.default.utc(this._options.value);
+            return target.isSameOrAfter(value);
+          }
           return item[this._options.field] >= this._options.value
         };
         break;
       case "=":
         filterFunc = (item: any) => {
-          // If a user inputs a number, will it be cast as a string?
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const value = moment.default.utc(this._options.value);
+            return target.isSame(value);
+          }
           return item[this._options.field] == this._options.value
         };
         break;
       case "!=":
         filterFunc = (item: any) => {
-          // If a user inputs a number, will it be cast as a string?
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const value = moment.default.utc(this._options.value);
+            return !target.isSame(value);
+          }
           return item[this._options.field] !== this._options.value;
         };
         break;
@@ -110,6 +141,15 @@ class FilterExecutor extends TransformExecutor {
       case "between":
         filterFunc = (item: any) => {
           let values = <any[]>this._options.value;
+
+          if (['date', 'datetime', 'time'].includes(this._options.dType)){
+            const target = moment.default.utc(item[this._options.field]);
+            const lowValue = moment.default.utc(values[0]);
+            const highValue = moment.default.utc(values[1]);
+
+            return target.isBetween(lowValue,highValue);
+          }
+
           return item[this._options.field] > values[0]
           && item[this._options.field] < values[1]
         };
@@ -132,6 +172,13 @@ class FilterExecutor extends TransformExecutor {
       case "!contains":
         filterFunc = (item: any) => {
           return !item[this._options.field].includes(this._options.value);
+        };
+        break;
+      case "isOnSameDay":
+        filterFunc = (item: any) => {
+          const target = moment.default.utc(item[this._options.field]);
+          const value = moment.default.utc(this._options.value);
+          return target.isSame(value, 'day');
         };
         break;
       default:
@@ -160,6 +207,11 @@ namespace FilterExecutor {
      * The name of the field in the data source.
      */
     field: string,
+
+    /**
+     * The data type of the column associated with this transform.
+     */
+    dType: string
 
     /**
      * The operator to use for the comparison.
@@ -231,8 +283,17 @@ namespace SortExecutor {
     field: string,
 
     /**
+     * The data type of the column associated with this transform.
+     */
+    dType: string
+
+    /**
      * Indicates ascending or descending order for the sort.
      */
     desc: boolean
   }
+}
+
+export namespace Private {
+  export type JSONDate = 'date' | 'time' | 'datetime'
 }
