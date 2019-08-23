@@ -11,7 +11,7 @@ import {
 } from '@phosphor/datagrid';
 
 import {
-  WidgetModel, WidgetView, ISerializers, unpack_models
+  Dict, WidgetModel, WidgetView, ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -90,6 +90,17 @@ class VegaExprView extends WidgetView {
 type Processor = boolean | string | number | VegaExprView | Scale;
 
 
+interface ICellRendererAttribute {
+  // The name of the widget attribute
+  name: string;
+
+  // The name of the equivalent phosphor attribute
+  phosphor_name: string;
+
+  // The default value for this attribute
+  default_value: boolean | string | number;
+}
+
 export
 abstract class CellRendererModel extends WidgetModel {
   defaults() {
@@ -102,6 +113,8 @@ abstract class CellRendererModel extends WidgetModel {
       _view_module_version: CellRendererModel.view_module_version,
     };
   }
+
+  abstract get_attrs(): ICellRendererAttribute[];
 
   static model_name = 'CellRendererModel';
   static model_module = MODULE_NAME;
@@ -122,41 +135,72 @@ abstract class CellRendererView extends WidgetView {
     });
   }
 
-  _initialize(): Promise<any> {
-    const attrs = this._get_attrs();
+  /**
+   * Initialize the CellRenderer widget.
+   *
+   * @return The promise to initialize the renderer
+   */
+  private _initialize(): Promise<any> {
+    const promises: Dict<PromiseLike<Processor>> = {};
+    const attr_names = this.model.get_attrs().map((attr: ICellRendererAttribute) => { return attr.name; });
 
-    this.model.on_some_change(attrs, (event: any) => {
-      const updates = [];
+    this.model.on_some_change(attr_names, this._on_some_processors_change, this);
 
-      for (const name in event.changed) {
-        updates.push(this._update_processor(name));
-      }
-
-      Promise.all(updates).then(() => {
-        this.trigger('processor_changed');
-      });
-    }, this);
-
-    const updates = [];
-
-    for (const name of attrs) {
-      updates.push(this._update_processor(name));
+    for (const name of attr_names) {
+      promises[name] = this._update_processor(name);
     }
 
-    return Promise.all(updates);
+    return resolvePromisesDict(promises).then((processors: Dict<Processor>) => {
+      this.processors = processors;
+    });
   }
 
+  private _on_some_processors_change(event: any) {
+    const promises: Dict<PromiseLike<Processor>> = {};
+
+    for (const name in event.changed) {
+      promises[name] = this._update_processor(name);
+    }
+
+    resolvePromisesDict(promises).then((processors: Dict<Processor>) => {
+      this.processors = {
+        ...this.processors,
+        ...processors
+      };
+
+      this.trigger('processor_changed');
+    });
+  }
+
+  /**
+   * Update the phosphor renderer value, and trigger an event so that the DataGrid widget knows it has
+   * changed.
+   */
   _update_renderer() {
-    this.renderer = this._create_renderer();
+    let renderer_options: any = {};
+    for (const attr of this.model.get_attrs()) {
+      renderer_options[attr.phosphor_name] = (config: CellRenderer.ICellConfig) => {
+        return this.process(attr.name, config, attr.default_value);
+      };
+    }
+
+    this.renderer = this._create_renderer(renderer_options);
 
     this.trigger('renderer_changed');
   }
 
-  _initialize_processor(name: string): Promise<Processor> {
-    let processor = this.model.get(name);
+  /**
+   * Update the processor associated with the given name.
+   *
+   * @param name - The name of the attribute to process.
+   *
+   * @return The PromiseLike to update the processor view.
+   */
+  private _update_processor(name: string): any {
+    let processor: any = this.model.get(name);
 
     if (typeof processor === 'string' || typeof processor === 'number' || typeof processor === 'boolean') {
-      return Promise.resolve(processor);
+      return processor;
     }
 
     // Assuming it is an VegaExprModel or a Scale model
@@ -165,7 +209,18 @@ abstract class CellRendererView extends WidgetView {
     return this.create_child_view(processor);
   }
 
-  _process(processor: Processor, config: CellRenderer.ICellConfig, default_value: any): any {
+  /**
+   * Process a cell attribute given the cell config.
+   *
+   * @param name - The name of the attribute to process.
+   *
+   * @param config - The configuration data for the cell.
+   *
+   * @param default_value - The default attribute value.
+   */
+  protected process(name: string, config: CellRenderer.ICellConfig, default_value: boolean | string | number): any {
+    const processor = this.processors[name];
+
     if (typeof processor === 'string' || typeof processor === 'number' || typeof processor === 'boolean') {
       return processor;
     }
@@ -178,16 +233,13 @@ abstract class CellRendererView extends WidgetView {
     return processor.scale(config.value);
   }
 
-  _update_processor(name: string): Promise<any> {
-    return this._initialize_processor(name).then((processor: Processor) => {
-      (this as any)['_' + name] = processor;
-    })
-  }
+  protected abstract _create_renderer(options: any): CellRenderer;
 
-  protected abstract _get_attrs(): string[];
-  protected abstract _create_renderer(): CellRenderer;
+  model: CellRendererModel;
 
   renderer: CellRenderer;
+
+  processors: Dict<Processor> = {};
 }
 
 
@@ -203,6 +255,16 @@ class TextRendererModel extends CellRendererModel {
       vertical_alignment: 'center',
       horizontal_alignment: 'left',
     };
+  }
+
+  get_attrs(): ICellRendererAttribute[] {
+    return [
+      {name: 'font', phosphor_name: 'font', default_value: '12px sans-serif'},
+      {name: 'text_color', phosphor_name: 'textColor', default_value: 'black'},
+      {name: 'background_color', phosphor_name: 'backgroundColor', default_value: 'white'},
+      {name: 'vertical_alignment', phosphor_name: 'verticalAlignment', default_value: 'center'},
+      {name: 'horizontal_alignment', phosphor_name: 'horizontalAlignment', default_value: 'left'},
+    ];
   }
 
   static serializers: ISerializers = {
@@ -221,47 +283,13 @@ class TextRendererModel extends CellRendererModel {
 
 export
 class TextRendererView extends CellRendererView {
-  _create_renderer() {
-    return new TextRenderer({
-      font: this.compute_font.bind(this),
-      backgroundColor: this.compute_background_color.bind(this),
-      textColor: this.compute_text_color.bind(this),
-      verticalAlignment: this.compute_vertical_alignment.bind(this),
-      horizontalAlignment: this.compute_horizontal_alignment.bind(this),
-    });
-  }
-
-  compute_font(config: CellRenderer.ICellConfig): string {
-    return this._process(this._font, config, '12px sans-serif');
-  }
-
-  compute_text_color(config: CellRenderer.ICellConfig): string {
-    return this._process(this._text_color, config, 'black');
-  }
-
-  compute_background_color(config: CellRenderer.ICellConfig): string {
-    return this._process(this._background_color, config, 'white');
-  }
-
-  compute_vertical_alignment(config: CellRenderer.ICellConfig): any {
-    return this._process(this._vertical_alignment, config, 'center');
-  }
-
-  compute_horizontal_alignment(config: CellRenderer.ICellConfig): any {
-    return this._process(this._horizontal_alignment, config, 'left');
-  }
-
-  protected _get_attrs(): string[] {
-    return ['font', 'text_color', 'background_color', 'vertical_alignment', 'horizontal_alignment'];
+  _create_renderer(options: TextRenderer.IOptions) {
+    return new TextRenderer(options);
   }
 
   renderer: TextRenderer;
 
-  _font: Processor;
-  _text_color: Processor;
-  _background_color: Processor;
-  _vertical_alignment: Processor;
-  _horizontal_alignment: Processor;
+  model: TextRendererModel;
 }
 
 
@@ -278,6 +306,17 @@ class BarRendererModel extends TextRendererModel {
       bar_horizontal_alignment: 'left',
       show_text: true,
     };
+  }
+
+  get_attrs(): ICellRendererAttribute[] {
+    return super.get_attrs().concat([
+      {name: 'bar_color', phosphor_name: 'barColor', default_value: '#4682b4'},
+      {name: 'value', phosphor_name: 'value', default_value: 0.},
+      {name: 'orientation', phosphor_name: 'orientation', default_value: 'horizontal'},
+      {name: 'bar_vertical_alignment', phosphor_name: 'barVerticalAlignment', default_value: 'bottom'},
+      {name: 'bar_horizontal_alignment', phosphor_name: 'barHorizontalAlignment', default_value: 'left'},
+      {name: 'show_text', phosphor_name: 'showText', default_value: true},
+    ]);
   }
 
   static serializers: ISerializers = {
@@ -297,56 +336,11 @@ class BarRendererModel extends TextRendererModel {
 
 export
 class BarRendererView extends TextRendererView {
-  _create_renderer() {
-    return new BarRenderer({
-      font: this.compute_font.bind(this),
-      backgroundColor: this.compute_background_color.bind(this),
-      textColor: this.compute_text_color.bind(this),
-      verticalAlignment: this.compute_vertical_alignment.bind(this),
-      horizontalAlignment: this.compute_horizontal_alignment.bind(this),
-      barColor: this.compute_bar_color.bind(this),
-      value: this.compute_value.bind(this),
-      orientation: this.compute_orientation.bind(this),
-      barVerticalAlignment: this.compute_bar_vertical_alignment.bind(this),
-      barHorizontalAlignment: this.compute_bar_horizontal_alignment.bind(this),
-      showText: this.compute_show_text.bind(this),
-    });
-  }
-
-  compute_bar_color(config: CellRenderer.ICellConfig): string {
-    return this._process(this._bar_color, config, '#4682b4');
-  }
-
-  compute_value(config: CellRenderer.ICellConfig): number {
-    return this._process(this._value, config, 0.);
-  }
-
-  compute_orientation(config: CellRenderer.ICellConfig): any {
-    return this._process(this._orientation, config, 'horizontal');
-  }
-
-  compute_bar_vertical_alignment(config: CellRenderer.ICellConfig): any {
-    return this._process(this._bar_vertical_alignment, config, 'bottom');
-  }
-
-  compute_bar_horizontal_alignment(config: CellRenderer.ICellConfig): any {
-    return this._process(this._bar_horizontal_alignment, config, 'left');
-  }
-
-  compute_show_text(config: CellRenderer.ICellConfig): any {
-    return this._process(this._show_text, config, true);
-  }
-
-  protected _get_attrs(): string[] {
-    return super._get_attrs().concat(['bar_color', 'value', 'orientation', 'bar_vertical_alignment', 'bar_horizontal_alignment', 'show_text']);
+  _create_renderer(options: BarRenderer.IOptions) {
+    return new BarRenderer(options);
   }
 
   renderer: BarRenderer;
 
-  _bar_color: Processor;
-  _value: Processor;
-  _orientation: Processor;
-  _bar_vertical_alignment: Processor;
-  _bar_horizontal_alignment: Processor;
-  _show_text: Processor;
+  model: BarRendererModel;
 }
