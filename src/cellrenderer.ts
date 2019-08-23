@@ -28,18 +28,19 @@ import {
 // Temporary, will be removed when the scales are exported from bqplot
 type Scale = any;
 
-type Processor = boolean | string | number | VegaExprView | Scale;
+type Scalar = boolean | string | number | null;
+type Processor = Scalar | VegaExprView | Scale;
 
 
 interface ICellRendererAttribute {
   // The name of the widget attribute
   name: string;
 
-  // The name of the equivalent phosphor attribute
-  phosphor_name: string;
+  // The name of the equivalent phosphor attribute, if null the CellRenderer attribute has no equivalent in phosphor
+  phosphor_name: string | null;
 
   // The default value for this attribute
-  default_value: boolean | string | number;
+  default_value: Scalar;
 }
 
 export
@@ -118,14 +119,16 @@ abstract class CellRendererView extends WidgetView {
    * changed.
    */
   _update_renderer() {
-    let renderer_options: any = {};
+    let options: any = {};
     for (const attr of this.model.get_attrs()) {
-      renderer_options[attr.phosphor_name] = (config: CellRenderer.ICellConfig) => {
-        return this.process(attr.name, config, attr.default_value);
-      };
+      if (attr.phosphor_name) {
+        options[attr.phosphor_name] = (config: CellRenderer.ICellConfig) => {
+          return this.process(attr.name, config, attr.default_value);
+        };
+      }
     }
 
-    this.renderer = this._create_renderer(renderer_options);
+    this.renderer = this._create_renderer(options);
 
     this.trigger('renderer_changed');
   }
@@ -162,7 +165,7 @@ abstract class CellRendererView extends WidgetView {
    *
    * @param default_value - The default attribute value.
    */
-  protected process(name: string, config: CellRenderer.ICellConfig, default_value: boolean | string | number): any {
+  protected process(name: string, config: CellRenderer.ICellConfig, default_value: Scalar): any {
     const processor = this.processors[name];
 
     if (typeof processor === 'string' ||
@@ -196,9 +199,9 @@ class TextRendererModel extends CellRendererModel {
     return {...super.defaults(),
       _model_name: TextRendererModel.model_name,
       _view_name: TextRendererModel.view_name,
-      text_value: null,
       font: '12px sans-serif',
       text_color: 'black',
+      text_value: null,
       background_color: 'white',
       vertical_alignment: 'center',
       horizontal_alignment: 'left',
@@ -210,17 +213,19 @@ class TextRendererModel extends CellRendererModel {
     return [
       {name: 'font', phosphor_name: 'font', default_value: '12px sans-serif'},
       {name: 'text_color', phosphor_name: 'textColor', default_value: 'black'},
+      {name: 'text_value', phosphor_name: null, default_value: null},
       {name: 'background_color', phosphor_name: 'backgroundColor', default_value: 'white'},
       {name: 'vertical_alignment', phosphor_name: 'verticalAlignment', default_value: 'center'},
       {name: 'horizontal_alignment', phosphor_name: 'horizontalAlignment', default_value: 'left'},
+      {name: 'format', phosphor_name: null, default_value: null},
     ];
   }
 
   static serializers: ISerializers = {
     ...CellRendererModel.serializers,
-    text_value: { deserialize: (unpack_models as any) },
     font: { deserialize: (unpack_models as any) },
     text_color: { deserialize: (unpack_models as any) },
+    text_value: { deserialize: (unpack_models as any) },
     background_color: { deserialize: (unpack_models as any) },
     vertical_alignment: { deserialize: (unpack_models as any) },
     horizontal_alignment: { deserialize: (unpack_models as any) },
@@ -244,7 +249,7 @@ class TextRendererView extends CellRendererView {
   get_formatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
     return ({ value }) => {
       // @ts-ignore
-      const formatting_rule = this._process(this._format, { value }, null);
+      const formatting_rule = this.process('format', { value }, null);
 
       let formatted_value: string;
       if (formatting_rule === null) {
@@ -258,21 +263,8 @@ class TextRendererView extends CellRendererView {
       }
 
       // @ts-ignore
-      return this._process(this._text_value, { value, formatted_value }, formatted_value) || formatted_value;
+      return this.process('text_value', { value, formatted_value }, formatted_value) || formatted_value;
     };
-  }
-
-  protected _initialize(): Promise<any> {
-    return super._initialize().then(() => {
-      return return Promise.all([
-        this._initialize_processor('text_value').then((processor: Processor) => {
-          this._text_value = processor;
-        }),
-        this._initialize_processor('format').then((processor: Processor) => {
-          this._format = processor;
-        })
-      ]);
-    });
   }
 
   renderer: TextRenderer;
@@ -302,7 +294,7 @@ class BarRendererModel extends TextRendererModel {
   get_attrs(): ICellRendererAttribute[] {
     return super.get_attrs().concat([
       {name: 'bar_color', phosphor_name: 'barColor', default_value: '#4682b4'},
-      {name: 'value', phosphor_name: 'value', default_value: 0.},
+      {name: 'bar_value', phosphor_name: 'barValue', default_value: 0.},
       {name: 'orientation', phosphor_name: 'orientation', default_value: 'horizontal'},
       {name: 'bar_vertical_alignment', phosphor_name: 'barVerticalAlignment', default_value: 'bottom'},
       {name: 'bar_horizontal_alignment', phosphor_name: 'barHorizontalAlignment', default_value: 'left'},
