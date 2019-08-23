@@ -284,7 +284,10 @@ class DataGridView extends DOMWidgetView {
 }
 
 export {
-  VegaExprModel, VegaExprView,
   TextRendererModel, TextRendererView,
   BarRendererModel, BarRendererView,
 } from './cellrenderer';
+
+export {
+  VegaExprModel, VegaExprView
+} from './vegaexpr';
