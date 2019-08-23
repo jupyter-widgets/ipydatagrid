@@ -11,7 +11,6 @@ import {
 } from './transform';
 
 import * as moment from 'moment';
-import { Private } from '@jupyterlab/coreutils';
 
 /**
  * An object that defines a data transformation executor.
@@ -67,7 +66,7 @@ class FilterExecutor extends TransformExecutor {
           if (['date', 'datetime', 'time'].includes(this._options.dType)){
             const target = moment.default.utc(item[this._options.field]);
             const value = moment.default.utc(this._options.value);
-            return target.isAfter(value);
+            return target.isAfter(value, 'day');
           }
           return item[this._options.field] > this._options.value
         };
@@ -77,7 +76,7 @@ class FilterExecutor extends TransformExecutor {
           if (['date', 'datetime', 'time'].includes(this._options.dType)){
             const target = moment.default.utc(item[this._options.field]);
             const value = moment.default.utc(this._options.value);
-            return target.isBefore(value);
+            return target.isBefore(value, 'day');
           }
           return item[this._options.field] < this._options.value
         };
@@ -87,7 +86,7 @@ class FilterExecutor extends TransformExecutor {
           if (['date', 'datetime', 'time'].includes(this._options.dType)){
             const target = moment.default.utc(item[this._options.field]);
             const value = moment.default.utc(this._options.value);
-            return target.isSameOrBefore(value);
+            return target.isSameOrBefore(value, 'day');
           }
           return item[this._options.field] <= this._options.value
         };
@@ -97,7 +96,7 @@ class FilterExecutor extends TransformExecutor {
           if (['date', 'datetime', 'time'].includes(this._options.dType)){
             const target = moment.default.utc(item[this._options.field]);
             const value = moment.default.utc(this._options.value);
-            return target.isSameOrAfter(value);
+            return target.isSameOrAfter(value, 'day');
           }
           return item[this._options.field] >= this._options.value
         };
@@ -147,7 +146,7 @@ class FilterExecutor extends TransformExecutor {
             const lowValue = moment.default.utc(values[0]);
             const highValue = moment.default.utc(values[1]);
 
-            return target.isBetween(lowValue,highValue);
+            return target.isBetween(lowValue,highValue, 'day');
           }
 
           return item[this._options.field] > values[0]

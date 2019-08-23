@@ -547,22 +547,28 @@ export class InteractiveFilterDialog extends Widget {
       }, "───────────"),
       h.option({
         value: '<', ...(op === '<') && { selected: '' }
-      }, 'Is before:'),
+      }, 'Date is before:'),
       h.option({
         value: '>', ...(op === '>') && { selected: '' }
-      }, 'Is after:'),
+      }, 'Date is after:'),
       h.option({
-        value: 'isSameDay', ...(op === 'between') && { selected: '' }
-      }, 'Is on same day as:'),
+        value: '<=', ...(op === '<') && { selected: '' }
+      }, 'Date is on or before:'),
+      h.option({
+        value: '>=', ...(op === '>') && { selected: '' }
+      }, 'Date is on or after:'),
+      h.option({
+        value: 'isOnSameDay', ...(op === 'between') && { selected: '' }
+      }, 'Date is exactly:'),
       h.option({
         value: 'between', ...(op === 'between') && { selected: '' }
-      }, 'Is in between:'),
+      }, 'Date is in between:'),
       h.option({
         value: '=', ...(op === '=') && { selected: '' }
-      }, 'Is exactly equal to:'),
+      }, 'Timestamp is exactly equal to:'),
       h.option({
         value: '!=', ...(op === '!=') && { selected: '' }
-      }, 'Is not exactly equal to:'),
+      }, 'Timestamp is not exactly equal to:'),
     ]
   }
 
