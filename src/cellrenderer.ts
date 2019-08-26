@@ -251,7 +251,7 @@ class TextRendererView extends CellRendererView {
       let formatted_value: string;
       if (formatting_rule === null) {
         if (config.value === null) {
-          formatted_value = 'None'
+          formatted_value = 'None';
         } else {
           formatted_value = String(config.value);
         }
