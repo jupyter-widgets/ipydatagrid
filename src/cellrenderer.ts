@@ -248,6 +248,7 @@ class TextRendererView extends CellRendererView {
 
   get_formatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
     return ({ value }) => {
+      // TODO: Define another process function for the format
       // @ts-ignore
       const formatting_rule = this.process('format', { value }, null);
 
