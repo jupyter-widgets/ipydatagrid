@@ -32,6 +32,10 @@ type Scalar = boolean | string | number | null;
 type Processor = Scalar | VegaExprView | Scale;
 
 
+function isScalar(x: any): x is Scalar {
+    return typeof x === "boolean" || typeof x === "string" || typeof x === "number" || x === null;
+}
+
 interface ICellRendererAttribute {
   // The name of the widget attribute
   name: string;
@@ -143,10 +147,7 @@ abstract class CellRendererView extends WidgetView {
   protected _update_processor(name: string): any {
     let processor: any = this.model.get(name);
 
-    if (typeof processor === 'string' ||
-        typeof processor === 'number' ||
-        typeof processor === 'boolean' ||
-        processor === null) {
+    if (isScalar(processor)) {
       return processor;
     }
 
@@ -168,10 +169,7 @@ abstract class CellRendererView extends WidgetView {
   protected process(name: string, config: CellRenderer.ICellConfig, default_value: Scalar): any {
     const processor = this.processors[name];
 
-    if (typeof processor === 'string' ||
-        typeof processor === 'number' ||
-        typeof processor === 'boolean' ||
-        processor === null) {
+    if (isScalar(processor)) {
       return processor;
     }
 
