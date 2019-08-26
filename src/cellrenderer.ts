@@ -245,24 +245,21 @@ class TextRendererView extends CellRendererView {
   }
 
   get_formatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
-    return ({ value }) => {
-      // TODO: Define another process function for the format
-      // @ts-ignore
-      const formatting_rule = this.process('format', { value }, null);
+    return (config: CellRenderer.ICellConfig) => {
+      const formatting_rule = this.process('format', config, null);
 
       let formatted_value: string;
       if (formatting_rule === null) {
-        if (value === null) {
+        if (config.value === null) {
           formatted_value = 'None'
         } else {
-          formatted_value = String(value);
+          formatted_value = String(config.value);
         }
       } else {
-        formatted_value = String(d3Format.format(formatting_rule)(value));
+        formatted_value = String(d3Format.format(formatting_rule)(config.value));
       }
 
-      // @ts-ignore
-      return this.process('text_value', { value, formatted_value }, formatted_value) || formatted_value;
+      return this.process('text_value', config, formatted_value) || formatted_value;
     };
   }
 
