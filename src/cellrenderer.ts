@@ -204,6 +204,7 @@ class TextRendererModel extends CellRendererModel {
       vertical_alignment: 'center',
       horizontal_alignment: 'left',
       format: null,
+      missing: 'None',
     };
   }
 
@@ -237,6 +238,12 @@ class TextRendererModel extends CellRendererModel {
 
 export
 class TextRendererView extends CellRendererView {
+  render() {
+    return super.render().then(() => {
+      this.model.on('change:missing', () => { this.trigger('processor_changed'); });
+    });
+  }
+
   _create_renderer(options: TextRenderer.IOptions) {
     return new TextRenderer({
       ...options,
@@ -251,7 +258,7 @@ class TextRendererView extends CellRendererView {
       let formatted_value: string;
       if (formatting_rule === null) {
         if (config.value === null) {
-          formatted_value = 'None';
+          formatted_value = this.model.get('missing');
         } else {
           formatted_value = String(config.value);
         }
