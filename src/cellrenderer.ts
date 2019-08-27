@@ -4,6 +4,7 @@
 import * as _ from 'underscore';
 
 const d3Format: any = require('d3-format');
+const d3TimeFormat: any = require('d3-time-format');
 
 import {
   CellRenderer, TextRenderer
@@ -204,6 +205,7 @@ class TextRendererModel extends CellRendererModel {
       vertical_alignment: 'center',
       horizontal_alignment: 'left',
       format: null,
+      format_type: 'number',
       missing: 'None',
     };
   }
@@ -240,7 +242,7 @@ export
 class TextRendererView extends CellRendererView {
   render() {
     return super.render().then(() => {
-      this.model.on('change:missing', () => { this.trigger('renderer_needs_update'); });
+      this.model.on_some_change(['missing', 'format_type'], () => { this.trigger('renderer_needs_update'); }, this);
     });
   }
 
@@ -263,7 +265,11 @@ class TextRendererView extends CellRendererView {
         if (formatting_rule === null) {
           formatted_value = String(config.value);
         } else {
-          formatted_value = String(d3Format.format(formatting_rule)(config.value));
+          if (this.model.get('format_type') == 'time') {
+            formatted_value = String(d3TimeFormat.format(formatting_rule)(config.value));
+          } else {
+            formatted_value = String(d3Format.format(formatting_rule)(config.value));
+          }
         }
       }
 

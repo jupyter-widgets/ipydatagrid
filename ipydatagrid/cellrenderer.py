@@ -77,6 +77,7 @@ class TextRenderer(CellRenderer):
     format = Union((
         Unicode(), Instance(VegaExpr)
     ), allow_none=True, default_value=None).tag(sync=True, **widget_serialization)
+    format_type = Enum(values=['number', 'time'], default_value='number').tag(sync=True)
     missing = Unicode('None').tag(sync=True)
 
 
