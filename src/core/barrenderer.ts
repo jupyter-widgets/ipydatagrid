@@ -3,7 +3,7 @@ import {
 } from '@phosphor/datagrid';
 
 /**
- * A cell renderer which renders data barValues as bars.
+ * A cell renderer which renders data values as bars.
  */
 export
 class BarRenderer extends TextRenderer {
@@ -184,7 +184,7 @@ namespace BarRenderer {
     barColor?: CellRenderer.ConfigOption<string>;
 
     /**
-     * The barValue of the bar, between 0. and 1..
+     * The value of the bar, between 0. and 1..
      *
      * The default is `0.`.
      */
