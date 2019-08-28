@@ -131,6 +131,21 @@ class View {
     // Return the final value.
     return missing ? null : value;
   }
+
+  /**
+   * Returns an array of unique values contained in the provided column index.
+   *
+   * @param columnIndex - The index to retrieve unique values for.
+   */
+  uniqueValues(columnIndex: number): any[]{
+    let columnName = this.metadata('body', columnIndex)['name'];
+    let uniqueVals = new Set();
+    for (let row of this._data) {
+      uniqueVals.add(row[columnName]);
+    }
+    return Array.from(uniqueVals);
+  }
+
   private readonly _data: View.DataSource;
   private readonly _bodyFields: View.IField[];
   private readonly _headerFields: View.IField[];
