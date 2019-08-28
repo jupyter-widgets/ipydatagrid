@@ -5,19 +5,27 @@ import * as _ from 'underscore';
 
 import {
   DataGrid
-} from '@phosphor/datagrid';
+} from './core/ipydatagrid';
 
 import {
-  WidgetModel, DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
+  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
-
-import {
-  Transform, Sort, Filter
-} from './core/transform'
 
 import {
   ViewBasedJSONModel
 } from './core/viewbasedjsonmodel'
+
+import {
+  IPyDataGridContextMenu
+} from './core/gridContextMenu';
+
+import {
+  InteractiveFilterDialog
+} from './core/filterMenu';
+
+import {
+  HeaderRenderer
+} from './core/headerRenderer';
 
 // Import CSS
 import '../css/datagrid.css'
@@ -29,87 +37,17 @@ import {
 import {
   CellRendererModel, CellRendererView
 } from './cellrenderer'
+import { CommandRegistry } from '@phosphor/commands';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
 
 
-abstract class TransformModel extends WidgetModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_module: TransformModel.model_module,
-      _model_module_version: TransformModel.model_module_version,
-      field: ''
-    };
-  }
-
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
-
-  abstract transform: Transform;
-}
-
-
 export
-class FilterModel extends TransformModel {
+  class DataGridModel extends DOMWidgetModel {
   defaults() {
-    return {...super.defaults(),
-      _model_name: FilterModel.model_name,
-      operator: '<',
-      value: null
-    };
-  }
-
-  initialize(attributes: any, options: any) {
-    super.initialize(attributes, options);
-
-    const operators_map: any = {
-      '<': Filter.Operators.LessThan,
-      '>': Filter.Operators.GreaterThan,
-      '=': Filter.Operators.Equals
-    };
-
-    this.transform = new Filter({
-      field: this.get('field'),
-      operator: operators_map[this.get('operator')],
-      value: this.get('value')
-    });
-  }
-
-  static model_name = 'FilterModel';
-
-  transform: Filter;
-}
-
-
-export
-class SortModel extends TransformModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: SortModel.model_name,
-      desc: true
-    };
-  }
-
-  initialize(attributes: any, options: any) {
-    super.initialize(attributes, options);
-
-    this.transform = new Sort({
-      field: this.get('field'),
-      desc: this.get('desc')
-    });
-  }
-
-  static model_name = 'SortModel';
-
-  transform: Sort;
-}
-
-
-export
-class DataGridModel extends DOMWidgetModel {
-  defaults() {
-    return {...super.defaults(),
+    return {
+      ...super.defaults(),
       _model_module: DataGridModel.model_module,
       _model_module_version: DataGridModel.model_module_version,
       _view_name: DataGridModel.view_name,
@@ -121,7 +59,7 @@ class DataGridModel extends DOMWidgetModel {
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       data: {},
-      transforms: [],
+      _transforms: [],
       renderers: {},
       default_renderer: null
     };
@@ -131,21 +69,23 @@ class DataGridModel extends DOMWidgetModel {
     super.initialize(attributes, options);
 
     this.on('change:data', this.update_data.bind(this));
-    this.on('change:transforms', this.update_transforms.bind(this));
+    this.on('change:_transforms', this.update_transforms.bind(this));
     this.update_data();
     this.update_transforms();
   }
 
   update_data() {
     this.data_model = new ViewBasedJSONModel(this.get('data'));
+    this.data_model.transformStateChanged.connect((sender, value) => {
+      this.set('_transforms', value.transforms);
+      this.save_changes();
+    });
 
     this.update_transforms();
   }
 
   update_transforms() {
-    const transforms = this.get('transforms').map((x: TransformModel) => x.transform);
-
-    this.data_model.updateView(transforms);
+    this.data_model.replaceTransforms(this.get('_transforms'));
   }
 
   static serializers: ISerializers = {
@@ -168,7 +108,7 @@ class DataGridModel extends DOMWidgetModel {
 
 
 export
-class DataGridView extends DOMWidgetView {
+  class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
@@ -191,6 +131,24 @@ class DataGridView extends DOMWidgetView {
         baseColumnHeaderSize: this.model.get('base_column_header_size'),
         headerVisibility: this.model.get('header_visibility'),
       });
+
+      this.filterDialog = new InteractiveFilterDialog({
+        model: this.model.data_model
+      });
+
+      this.contextMenu = new IPyDataGridContextMenu({
+        grid: this.grid,
+        commands: this._createCommandRegistry()
+      });
+
+      // Set ipydatagrid header renderer
+      const headerRenderer = new HeaderRenderer({
+        textColor: '#000000',
+        backgroundColor: 'rgb(243, 243, 243)',
+        horizontalAlignment: 'center'
+      });
+      this.grid.cellRenderers.set('column-header', {}, headerRenderer);
+      this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
 
       this.grid.model = this.model.data_model;
       this._update_grid_renderers();
@@ -248,7 +206,7 @@ class DataGridView extends DOMWidgetView {
 
     let renderer_promises: Dict<Promise<any>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
-        renderer_promises[key] = this.create_child_view(model);
+      renderer_promises[key] = this.create_child_view(model);
     });
     promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
       this.renderers = renderer_views;
@@ -267,10 +225,86 @@ class DataGridView extends DOMWidgetView {
     }
 
     for (const key in this.renderers) {
-      if (this.grid.cellRenderers.get('body', {'name': key}) !== this.renderers[key].renderer) {
-        this.grid.cellRenderers.set('body', {'name': key}, this.renderers[key].renderer);
+      if (this.grid.cellRenderers.get('body', { 'name': key }) !== this.renderers[key].renderer) {
+        this.grid.cellRenderers.set('body', { 'name': key }, this.renderers[key].renderer);
       }
     }
+  }
+
+  _createCommandRegistry(): CommandRegistry {
+    const commands = new CommandRegistry();
+    commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
+      label: 'Sort ASC',
+      mnemonic: 1,
+      iconClass: 'fa fa-arrow-up',
+      execute: (args): void => {
+        // @ts-ignore
+        const cellClick: DataGrid.ICellHit = <DataGrid.ICellHit>args;
+        this.model.data_model.addTransform({
+          type: 'sort',
+          columnIndex: cellClick.columnIndex + 1,
+          desc: false
+        })
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.SortDescending, {
+      label: 'Sort DESC',
+      mnemonic: 1,
+      iconClass: 'fa fa-arrow-down',
+      execute: (args) => {
+        // @ts-ignore
+        const cellClick: DataGrid.ICellHit = <DataGrid.ICellHit>args;
+        this.model.data_model.addTransform({
+          type: 'sort',
+          columnIndex: cellClick.columnIndex + 1,
+          desc: true
+        })
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.RevertGrid, {
+      label: 'Revert grid',
+      mnemonic: 8,
+      iconClass: 'fa fa-refresh',
+      execute: (args) => {
+        this.model.data_model.clearTransforms();
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog, {
+      label: 'Filter by condition...',
+      mnemonic: 4,
+      iconClass: 'fa fa-filter',
+      execute: (args) => {
+        let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
+        this.filterDialog.open({
+          x: commandArgs.clientX,
+          y: commandArgs.clientY,
+          region: commandArgs.region,
+          columnIndex: commandArgs.columnIndex,
+          forceX: false,
+          forceY: false,
+          mode: 'condition'
+        });
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog, {
+      label: 'Filter by value...',
+      mnemonic: 4,
+      iconClass: 'fa fa-filter',
+      execute: (args) => {
+        let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
+        this.filterDialog.open({
+          x: commandArgs.clientX,
+          y: commandArgs.clientY,
+          region: commandArgs.region,
+          columnIndex: commandArgs.columnIndex,
+          forceX: false,
+          forceY: false,
+          mode: 'value'
+        });
+      }
+    });
+    return commands;
+
   }
 
   renderers: Dict<CellRendererView>;
@@ -281,6 +315,9 @@ class DataGridView extends DOMWidgetView {
   pWidget: JupyterPhosphorPanelWidget;
 
   model: DataGridModel;
+
+  contextMenu: IPyDataGridContextMenu;
+  filterDialog: InteractiveFilterDialog;
 }
 
 export {
