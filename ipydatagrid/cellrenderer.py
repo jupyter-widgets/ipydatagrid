@@ -56,6 +56,9 @@ class TextRenderer(CellRenderer):
     _model_name = Unicode('TextRendererModel').tag(sync=True)
     _view_name = Unicode('TextRendererView').tag(sync=True)
 
+    text_value = Union((
+        Unicode(), Instance(VegaExpr), Instance(Scale)
+    ), allow_none=True, default_value=None).tag(sync=True, **widget_serialization)
     font = Union((
         Unicode(), Instance(VegaExpr), Instance(Scale)
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)
@@ -71,19 +74,23 @@ class TextRenderer(CellRenderer):
     horizontal_alignment = Union((
         Enum(values=['left', 'center', 'right']), Instance(VegaExpr), Instance(Scale)
     ), default_value='left').tag(sync=True, **widget_serialization)
-    # format = Unicode(allow_none=True, default_value=None).tag(sync=True)
+    format = Union((
+        Unicode(), Instance(VegaExpr)
+    ), allow_none=True, default_value=None).tag(sync=True, **widget_serialization)
+    format_type = Enum(values=['number', 'time'], default_value='number').tag(sync=True)
+    missing = Unicode('None').tag(sync=True)
 
 
 class BarRenderer(TextRenderer):
     _model_name = Unicode('BarRendererModel').tag(sync=True)
     _view_name = Unicode('BarRendererView').tag(sync=True)
 
+    bar_value = Union((
+        Float(), Instance(VegaExpr), Instance(Scale)
+    ), default_value=0.).tag(sync=True, **widget_serialization)
     bar_color = Union((
         Color(), Instance(VegaExpr), Instance(ColorScale)
     ), default_value='#4682b4').tag(sync=True, **widget_serialization)
-    value = Union((
-        Float(), Instance(VegaExpr), Instance(Scale)
-    ), default_value=0.).tag(sync=True, **widget_serialization)
     orientation = Union((
         Unicode(), Instance(VegaExpr), Instance(Scale)
     ), default_value='horizontal').tag(sync=True, **widget_serialization)
