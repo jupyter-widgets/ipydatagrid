@@ -179,7 +179,7 @@ abstract class CellRendererView extends WidgetView {
     }
 
     // If it's a DateScale, convert the value to a Date object
-    if (processor.model.type == 'date') {
+    if (processor.model.type == 'date' || processor.model.type == 'date_color_linear') {
       return processor.scale(new Date(config.value));
     }
 
