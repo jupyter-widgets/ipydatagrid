@@ -266,7 +266,7 @@ class TextRendererView extends CellRendererView {
           formatted_value = String(config.value);
         } else {
           if (this.model.get('format_type') == 'time') {
-            formatted_value = String(d3TimeFormat.format(formatting_rule)(config.value));
+            formatted_value = String(d3TimeFormat.timeFormat(formatting_rule)(new Date(config.value)));
           } else {
             formatted_value = String(d3Format.format(formatting_rule)(config.value));
           }
