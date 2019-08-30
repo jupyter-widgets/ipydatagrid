@@ -26,16 +26,14 @@ import {
   VegaExprView
 } from './vegaexpr';
 
+import {
+  Scalar, Theme
+} from './utils'
+
 // Temporary, will be removed when the scales are exported from bqplot
 type Scale = any;
 
-type Scalar = boolean | string | number | null;
 type Processor = Scalar | VegaExprView | Scale;
-
-
-function isScalar(x: any): x is Scalar {
-    return typeof x === "boolean" || typeof x === "string" || typeof x === "number" || x === null;
-}
 
 interface ICellRendererAttribute {
   // The name of the widget attribute
@@ -83,6 +81,13 @@ abstract class CellRendererView extends WidgetView {
   }
 
   /**
+   * Method that should be called when the theme has changed.
+   */
+  on_theme_changed() {
+    return this._initialize().then(() => { this._update_renderer(); });
+  }
+
+  /**
    * Initialize the CellRenderer widget.
    *
    * @return The promise to initialize the renderer
@@ -123,7 +128,7 @@ abstract class CellRendererView extends WidgetView {
    * Update the phosphor renderer value, and trigger an event so that the DataGrid widget knows it has
    * changed.
    */
-  _update_renderer() {
+  private _update_renderer() {
     let options: any = {};
     for (const attr of this.model.get_attrs()) {
       if (attr.phosphor_name) {
@@ -148,7 +153,7 @@ abstract class CellRendererView extends WidgetView {
   protected _update_processor(name: string): any {
     let processor: any = this.model.get(name);
 
-    if (isScalar(processor)) {
+    if (Scalar.isScalar(processor)) {
       return processor;
     }
 
@@ -170,7 +175,7 @@ abstract class CellRendererView extends WidgetView {
   protected process(name: string, config: CellRenderer.ICellConfig, default_value: Scalar): any {
     const processor = this.processors[name];
 
-    if (isScalar(processor)) {
+    if (Scalar.isScalar(processor)) {
       return processor;
     }
 
@@ -204,9 +209,9 @@ class TextRendererModel extends CellRendererModel {
       _model_name: TextRendererModel.model_name,
       _view_name: TextRendererModel.view_name,
       font: '12px sans-serif',
-      text_color: 'black',
+      text_color: null,
       text_value: null,
-      background_color: 'white',
+      background_color: null,
       vertical_alignment: 'center',
       horizontal_alignment: 'left',
       format: null,
@@ -218,9 +223,9 @@ class TextRendererModel extends CellRendererModel {
   get_attrs(): ICellRendererAttribute[] {
     return [
       {name: 'font', phosphor_name: 'font', default_value: '12px sans-serif'},
-      {name: 'text_color', phosphor_name: 'textColor', default_value: 'black'},
+      {name: 'text_color', phosphor_name: 'textColor', default_value: Theme.getFontColor()},
       {name: 'text_value', phosphor_name: null, default_value: null},
-      {name: 'background_color', phosphor_name: 'backgroundColor', default_value: 'white'},
+      {name: 'background_color', phosphor_name: 'backgroundColor', default_value: Theme.getBackgroundColor()},
       {name: 'vertical_alignment', phosphor_name: 'verticalAlignment', default_value: 'center'},
       {name: 'horizontal_alignment', phosphor_name: 'horizontalAlignment', default_value: 'left'},
       {name: 'format', phosphor_name: null, default_value: null},

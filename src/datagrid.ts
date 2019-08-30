@@ -4,8 +4,12 @@
 import * as _ from 'underscore';
 
 import {
-  DataGrid
-} from './core/ipydatagrid';
+  TextRenderer
+} from '@phosphor/datagrid';
+
+import {
+  CommandRegistry
+} from '@phosphor/commands';
 
 import {
   BasicKeyHandler
@@ -39,6 +43,10 @@ import {
   HeaderRenderer
 } from './core/headerRenderer';
 
+import {
+  DataGrid
+} from './core/ipydatagrid';
+
 // Import CSS
 import '../css/datagrid.css'
 
@@ -49,7 +57,10 @@ import {
 import {
   CellRendererModel, CellRendererView
 } from './cellrenderer'
-import { CommandRegistry } from '@phosphor/commands';
+
+import {
+  Theme
+} from './utils'
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -161,7 +172,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
 };
 
 export
-  class DataGridView extends DOMWidgetView {
+class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
@@ -196,14 +207,7 @@ export
         commands: this._createCommandRegistry()
       });
 
-      // Set ipydatagrid header renderer
-      const headerRenderer = new HeaderRenderer({
-        textColor: '#000000',
-        backgroundColor: 'rgb(243, 243, 243)',
-        horizontalAlignment: 'center'
-      });
-      this.grid.cellRenderers.set('column-header', {}, headerRenderer);
-      this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
+      this._update_grid_style();
 
       this.grid.model = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
@@ -255,7 +259,7 @@ export
     });
   }
 
-  _update_renderers() {
+  private _update_renderers() {
     // Unlisten to previous renderers
     if (this.default_renderer) {
       this.stopListening(this.default_renderer, 'renderer_changed');
@@ -289,7 +293,7 @@ export
     return Promise.all(promises);
   }
 
-  _update_grid_renderers() {
+  private _update_grid_renderers() {
     if (this.grid.cellRenderers.get('body', {}) !== this.default_renderer.renderer) {
       this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
     }
@@ -301,7 +305,32 @@ export
     }
   }
 
-  _createCommandRegistry(): CommandRegistry {
+  protected _update_grid_style() {
+    const headerRenderer = new HeaderRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center'
+    });
+    this.grid.cellRenderers.set('column-header', {}, headerRenderer);
+    this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
+
+    const rowHeaderRenderer = new TextRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center',
+      verticalAlignment: 'center'
+    });
+    this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
+
+    this.grid.style = {
+      voidColor: Theme.getBackgroundColor(),
+      backgroundColor: Theme.getBackgroundColor(),
+      gridLineColor: Theme.getBorderColor(),
+      headerGridLineColor: Theme.getBorderColor(1),
+    };
+  }
+
+  private _createCommandRegistry(): CommandRegistry {
     const commands = new CommandRegistry();
     commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
       label: 'Sort ASC',

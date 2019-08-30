@@ -64,10 +64,10 @@ class TextRenderer(CellRenderer):
     ), default_value='12px sans-serif').tag(sync=True, **widget_serialization)
     text_color = Union((
         Color(), Instance(VegaExpr), Instance(ColorScale)
-    ), default_value='black').tag(sync=True, **widget_serialization)
+    ), default_value=Expr('default_value')).tag(sync=True, **widget_serialization)
     background_color = Union((
         Color(), Instance(VegaExpr), Instance(ColorScale)
-    ), default_value='white').tag(sync=True, **widget_serialization)
+    ), default_value=Expr('default_value')).tag(sync=True, **widget_serialization)
     vertical_alignment = Union((
         Enum(values=['top', 'center', 'bottom']), Instance(VegaExpr), Instance(Scale)
     ), default_value='center').tag(sync=True, **widget_serialization)
