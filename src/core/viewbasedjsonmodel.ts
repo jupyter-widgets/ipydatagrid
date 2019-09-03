@@ -1,6 +1,6 @@
 import {
   DataModel,
-} from '@phosphor/datagrid';
+} from './datamodel';
 
 import {
   ReadonlyJSONObject
