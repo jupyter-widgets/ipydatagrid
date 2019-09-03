@@ -8,7 +8,7 @@ import {
 
 import {
   DataModel
-} from '@phosphor/datagrid';
+} from './datamodel';
 
 import {
   Menu
@@ -30,12 +30,7 @@ export
    * @param options - The options for initializing the context menu.
    */
   constructor(options: GridContextMenu.IOptions) {
-    // @ts-ignore
     this._menu = new Menu({ commands: options.commands });
-
-    // Connect to the data grid and bind this object, so that it can be
-    // referenced in the signal callback
-    options.grid.cellClick.connect(this.open.bind(this));
   }
 
   /**
@@ -44,9 +39,9 @@ export
    * 
    * @param grid - The "sender" of the signal.
    * 
-   * @param cellClick  - The "value" of the signal.
+   * @param hit  - The "value" of the signal.
    */
-  abstract open(grid: DataGrid, cellClick: DataGrid.ICellClick): void;
+  abstract open(grid: DataGrid, hit: DataGrid.HitTestResult): void;
 
   /**
    * The menu widget which displays the relevant context items.
@@ -97,27 +92,23 @@ export class IPyDataGridContextMenu extends GridContextMenu {
    * 
    * @param grid - The "sender" of the signal.
    * 
-   * @param cellClick  - The "value" of the signal.
+   * @param hit  - The "value" of the signal.
    */
-  open(grid: DataGrid, cellClick: DataGrid.ICellClick): void {
-
-    // Bail if this click wasn't intended to open a menu
-    if (!cellClick.cell.menuClick) {
-      return;
-    }
-
+  open(grid: DataGrid, hit: DataGrid.HitTestResult): void {
     // Discard the current menu items.
     this._menu.clearItems();
 
     // Create the args that will be provided to the commands' .execute() method
     const args: IPyDataGridContextMenu.CommandArgs = {
-      ...cellClick.cell,
-      clientX: cellClick.event.clientX,
-      clientY: cellClick.event.clientY
-    }
+      region: hit.region as DataModel.CellRegion,
+      rowIndex: hit.row,
+      columnIndex: hit.column,
+      clientX: hit.x,
+      clientY: hit.y
+    };
 
     // Add menu items based on the region of the grid that was clicked on.
-    switch (cellClick.cell.region) {
+    switch (hit.region) {
       case 'column-header':
         this._menu.addItem({
           command: IPyDataGridContextMenu.CommandID.SortAscending,
@@ -173,7 +164,7 @@ export class IPyDataGridContextMenu extends GridContextMenu {
     }
 
     // Open context menu at location of the click event
-    this._menu.open(cellClick.event.clientX, cellClick.event.clientY)
+    this._menu.open(hit.x, hit.y);
   }
 }
 
