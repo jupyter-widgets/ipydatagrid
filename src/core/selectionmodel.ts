@@ -30,11 +30,12 @@ abstract class SelectionModel {
   /**
    * Construct a new selection model.
    *
-   * @param options - The options for initializing the model
+   * @param options - The options for initializing the model.
    */
   constructor(options: SelectionModel.IOptions) {
     this.model = options.model;
     this._selectionMode = options.selectionMode || 'cell';
+    this.model.changed.connect(this.onModelChanged, this);
   }
 
   /**
@@ -92,6 +93,17 @@ abstract class SelectionModel {
   abstract clear(): void;
 
   /**
+   * A signal handler for the data model `changed` signal.
+   *
+   * @param args - The arguments for the signal.
+   *
+   * #### Notes
+   * Selection model implementations should update their selections
+   * in a manner that is relevant for the changes to the data model.
+   */
+  protected abstract onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void;
+
+  /**
    * A signal emitted when the selection model has changed.
    */
   get changed(): ISignal<this, void> {
@@ -104,7 +116,7 @@ abstract class SelectionModel {
   readonly model: DataModel;
 
   /**
-   * Get the selection model for the model.
+   * Get the selection mode for the model.
    */
   get selectionMode(): SelectionModel.SelectionMode {
     return this._selectionMode;
