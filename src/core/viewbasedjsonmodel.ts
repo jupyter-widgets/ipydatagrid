@@ -1,10 +1,10 @@
 import {
-  each
-} from '@phosphor/algorithm';
+  DataModel,
+} from './datamodel';
 
 import {
-  DataModel
-} from '@phosphor/datagrid';
+  each
+} from '@phosphor/algorithm';
 
 import {
   ReadonlyJSONObject, ReadonlyJSONValue

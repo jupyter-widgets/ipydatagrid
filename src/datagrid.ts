@@ -8,8 +8,19 @@ import {
 } from './core/ipydatagrid';
 
 import {
-  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers,
-  resolvePromisesDict, unpack_models
+  BasicKeyHandler
+} from './core/basickeyhandler';
+
+import {
+  BasicMouseHandler
+} from './core/basicmousehandler';
+
+import {
+  BasicSelectionModel
+} from './core/basicselectionmodel';
+
+import {
+  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -108,6 +119,47 @@ export
   data_model: ViewBasedJSONModel;
 }
 
+class IIPyDataGridMouseHandler extends BasicMouseHandler {
+  /**
+   * Construct a new datagrid mouse handler.
+   *
+   * @param dataGridView - The DataGridView object for which mouse events are handled.
+   */
+  constructor(dataGridView: DataGridView) {
+    super();
+
+    this._dataGridView = dataGridView;
+  }
+
+  /**
+   * Handle the mouse down event for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The mouse down event of interest.
+   */
+  onMouseDown(grid: DataGrid, event: MouseEvent): void {
+    const hit = grid.hitTest(event.clientX, event.clientY);
+    
+
+    if (hit.region === 'column-header') {
+      const columnSize = grid.columnSize('body', hit.column);
+      const isMenuClick = hit.x > columnSize - HeaderRenderer.buttonSize;
+      
+      if (isMenuClick) {
+        this._dataGridView.contextMenu.open(grid, {
+          ...hit, x: event.clientX, y: event.clientY
+        });
+
+        return;
+      }
+    }
+
+    super.onMouseDown(grid, event);
+  }
+
+  private _dataGridView: DataGridView;
+};
 
 export
   class DataGridView extends DOMWidgetView {
@@ -127,10 +179,12 @@ export
   render() {
     return this._update_renderers().then(() => {
       this.grid = new DataGrid({
-        baseRowSize: this.model.get('base_row_size'),
-        baseColumnSize: this.model.get('base_column_size'),
-        baseRowHeaderSize: this.model.get('base_row_header_size'),
-        baseColumnHeaderSize: this.model.get('base_column_header_size'),
+        defaultSizes: {
+          rowHeight: this.model.get('base_row_size'),
+          columnWidth: this.model.get('base_column_size'),
+          rowHeaderWidth: this.model.get('base_row_header_size'),
+          columnHeaderHeight: this.model.get('base_column_header_size')
+        },
         headerVisibility: this.model.get('header_visibility'),
       });
 
@@ -151,26 +205,39 @@ export
       });
       this.grid.cellRenderers.set('column-header', {}, headerRenderer);
       this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
-
-      this._update_data();
+      this.grid.keyHandler = new BasicKeyHandler();
+      this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this._update_grid_renderers();
+      this._update_data();
 
       this.model.on('change:data', this._update_data.bind(this));
 
       this.model.on('change:base_row_size', () => {
-        this.grid.baseRowSize = this.model.get('base_row_size');
+        this.grid.defaultSizes = {
+          ...this.grid.defaultSizes,
+          rowHeight: this.model.get('base_row_size')
+        };
       });
 
       this.model.on('change:base_column_size', () => {
-        this.grid.baseColumnSize = this.model.get('base_column_size');
+        this.grid.defaultSizes = {
+          ...this.grid.defaultSizes,
+          columnWidth: this.model.get('base_column_size')
+        };
       });
 
       this.model.on('change:base_row_header_size', () => {
-        this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
+        this.grid.defaultSizes = {
+          ...this.grid.defaultSizes,
+          rowHeaderWidth: this.model.get('base_row_header_size')
+        };
       });
 
       this.model.on('change:base_column_header_size', () => {
-        this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
+        this.grid.defaultSizes = {
+          ...this.grid.defaultSizes,
+          columnHeaderHeight: this.model.get('base_column_header_size')
+        };
       });
 
       this.model.on('change:header_visibility', () => {
@@ -187,6 +254,9 @@ export
 
   _update_data() {
     this.grid.model = this.model.data_model;
+    this.grid.selectionModel = new BasicSelectionModel({
+      model: this.model.data_model
+    });
 
     this.model.data_model.dataSync.connect((sender, msg) => {
       switch (msg.type) {
@@ -257,8 +327,7 @@ export
       mnemonic: 1,
       iconClass: 'fa fa-arrow-up',
       execute: (args): void => {
-        // @ts-ignore
-        const cellClick: DataGrid.ICellHit = <DataGrid.ICellHit>args;
+        const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
         this.model.data_model.addTransform({
           type: 'sort',
           columnIndex: cellClick.columnIndex + 1,
@@ -271,8 +340,7 @@ export
       mnemonic: 1,
       iconClass: 'fa fa-arrow-down',
       execute: (args) => {
-        // @ts-ignore
-        const cellClick: DataGrid.ICellHit = <DataGrid.ICellHit>args;
+        const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
         this.model.data_model.addTransform({
           type: 'sort',
           columnIndex: cellClick.columnIndex + 1,
