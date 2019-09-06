@@ -8,7 +8,8 @@ import {
 } from './core/ipydatagrid';
 
 import {
-  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
+  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers,
+  resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -53,13 +54,14 @@ export
       _view_name: DataGridModel.view_name,
       _view_module: DataGridModel.view_module,
       _view_module_version: DataGridModel.view_module_version,
+      _visible_rows: [],
+      _transforms: [],
       baseRowSize: 20,
       baseColumnSize: 64,
       baseRowHeaderSize: 64,
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       data: {},
-      _transforms: [],
       renderers: {},
       default_renderer: null
     };
@@ -150,12 +152,10 @@ export
       this.grid.cellRenderers.set('column-header', {}, headerRenderer);
       this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
 
-      this.grid.model = this.model.data_model;
+      this._update_data();
       this._update_grid_renderers();
 
-      this.model.on('change:data', () => {
-        this.grid.model = this.model.data_model;
-      });
+      this.model.on('change:data', this._update_data.bind(this));
 
       this.model.on('change:base_row_size', () => {
         this.grid.baseRowSize = this.model.get('base_row_size');
@@ -183,6 +183,25 @@ export
 
       this.pWidget.addWidget(this.grid);
     });
+  }
+
+  _update_data() {
+    this.grid.model = this.model.data_model;
+
+    this.model.data_model.dataSync.connect((sender, msg) => {
+      switch (msg.type) {
+        case ('row-indices-updated'):
+          this.model.set('_visible_rows', msg.indices);
+          this.model.save_changes();
+          break;
+        case ('cell-updated'):
+          this.model.set('data', this.model.data_model.dataset);
+          this.model.save_changes();
+          break;
+        default:
+          throw 'unreachable';
+      }
+    })
   }
 
   _update_renderers() {

@@ -146,6 +146,14 @@ class View {
     return Array.from(uniqueVals);
   }
 
+  /**
+   * Returns a reference to the dataset from this View.
+   */
+  get dataset(): View.DataSource {
+    return this._data;
+  }
+
+
   private readonly _data: View.DataSource;
   private readonly _bodyFields: View.IField[];
   private readonly _headerFields: View.IField[];
