@@ -187,6 +187,8 @@ class DataGridView extends DOMWidgetView {
   }
 
   render() {
+    this.el.classList.add('datagrid-container');
+
     return this._update_renderers().then(() => {
       this.grid = new DataGrid({
         defaultSizes: {
