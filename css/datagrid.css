@@ -1,6 +1,11 @@
 .p-DataGrid {
-  height: 500px;
+  width: 100%;
+  height: 100%;
   padding: 3px;
   border: none;
   font-family: "Lato", Helvetica, sans-serif;
+}
+
+.datagrid-container {
+  height: 500px;
 }
