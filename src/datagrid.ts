@@ -93,23 +93,23 @@ export
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    this.on('change:data', this.update_data.bind(this));
-    this.on('change:_transforms', this.update_transforms.bind(this));
-    this.update_data();
-    this.update_transforms();
+    this.on('change:data', this.updateData.bind(this));
+    this.on('change:_transforms', this.updateTransforms.bind(this));
+    this.updateData();
+    this.updateTransforms();
   }
 
-  update_data() {
+  updateData() {
     this.data_model = new ViewBasedJSONModel(this.get('data'));
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
       this.save_changes();
     });
 
-    this.update_transforms();
+    this.updateTransforms();
   }
 
-  update_transforms() {
+  updateTransforms() {
     this.data_model.replaceTransforms(this.get('_transforms'));
   }
 
@@ -191,7 +191,7 @@ class DataGridView extends DOMWidgetView {
   render() {
     this.el.classList.add('datagrid-container');
 
-    return this._update_renderers().then(() => {
+    return this.updateRenderers().then(() => {
       this.grid = new DataGrid({
         defaultSizes: {
           rowHeight: this.model.get('base_row_size'),
@@ -211,13 +211,13 @@ class DataGridView extends DOMWidgetView {
         commands: this._createCommandRegistry()
       });
 
-      this._update_grid_style();
+      this.updateGridStyle();
 
       this.grid.model = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this.grid.selectionModel = new BasicSelectionModel({ model: this.model.data_model });
-      this._update_grid_renderers();
+      this.updateGridRenderers();
 
       this.model.on('change:data', () => {
         this.grid.model = this.model.data_model;
@@ -256,48 +256,48 @@ class DataGridView extends DOMWidgetView {
       });
 
       this.model.on_some_change(['default_renderer', 'renderers'], () => {
-        this._update_renderers().then(this._update_grid_renderers.bind(this));
+        this.updateRenderers().then(this.updateGridRenderers.bind(this));
       }, this);
 
       this.pWidget.addWidget(this.grid);
     });
   }
 
-  private _update_renderers() {
+  private updateRenderers() {
     // Unlisten to previous renderers
     if (this.default_renderer) {
-      this.stopListening(this.default_renderer, 'renderer_changed');
+      this.stopListening(this.default_renderer, 'rendererChanged');
     }
     for (const key in this.renderers) {
-      this.stopListening(this.renderers[key], 'renderer_changed');
+      this.stopListening(this.renderers[key], 'rendererChanged');
     }
 
     // And create views for new renderers
     let promises = [];
 
     const default_renderer = this.model.get('default_renderer');
-    promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
-      this.default_renderer = default_renderer_view;
+    promises.push(this.create_child_view(default_renderer).then((defaultRendererView: any) => {
+      this.default_renderer = defaultRendererView;
 
-      this.listenTo(this.default_renderer, 'renderer_changed', this._update_grid_renderers.bind(this));
+      this.listenTo(this.default_renderer, 'rendererChanged', this.updateGridRenderers.bind(this));
     }));
 
     let renderer_promises: Dict<Promise<any>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
       renderer_promises[key] = this.create_child_view(model);
     });
-    promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
-      this.renderers = renderer_views;
+    promises.push(resolvePromisesDict(renderer_promises).then((rendererViews: Dict<CellRendererView>) => {
+      this.renderers = rendererViews;
 
-      for (const key in renderer_views) {
-        this.listenTo(renderer_views[key], 'renderer_changed', this._update_grid_renderers.bind(this));
+      for (const key in rendererViews) {
+        this.listenTo(rendererViews[key], 'rendererChanged', this.updateGridRenderers.bind(this));
       }
     }));
 
     return Promise.all(promises);
   }
 
-  private _update_grid_renderers() {
+  private updateGridRenderers() {
     if (this.grid.cellRenderers.get('body', {}) !== this.default_renderer.renderer) {
       this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
     }
@@ -309,7 +309,7 @@ class DataGridView extends DOMWidgetView {
     }
   }
 
-  protected _update_grid_style() {
+  protected updateGridStyle() {
     const headerRenderer = new HeaderRenderer({
       textColor: Theme.getFontColor(1),
       backgroundColor: Theme.getBackgroundColor(2),
