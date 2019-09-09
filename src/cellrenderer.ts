@@ -28,7 +28,7 @@ import {
 
 import {
   Scalar, Theme
-} from './utils'
+} from './utils';
 
 // Temporary, will be removed when the scales are exported from bqplot
 type Scale = any;
