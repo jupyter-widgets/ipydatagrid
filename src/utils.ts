@@ -31,4 +31,9 @@ namespace Theme {
   function getBorderColor(index: number = 0) {
     return getCSSVariable('--jp-border-color' + index);
   }
+
+  export
+  function getBrandColor(index: number = 0) {
+    return getCSSVariable('--jp-brand-color' + index);
+  }
 }

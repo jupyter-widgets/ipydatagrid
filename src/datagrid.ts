@@ -3,6 +3,8 @@
 
 import * as _ from 'underscore';
 
+const d3Color: any = require('d3-color');
+
 import {
   TextRenderer
 } from '@phosphor/datagrid';
@@ -150,12 +152,12 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
    */
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
-    
+
 
     if (hit.region === 'column-header') {
       const columnSize = grid.columnSize('body', hit.column);
       const isMenuClick = hit.x > columnSize - HeaderRenderer.buttonSize;
-      
+
       if (isMenuClick) {
         this._dataGridView.contextMenu.open(grid, {
           ...hit, x: event.clientX, y: event.clientY
@@ -322,11 +324,18 @@ class DataGridView extends DOMWidgetView {
     });
     this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
 
+    const selectionFillColor = d3Color.rgb(Theme.getBrandColor(2));
+    selectionFillColor.opacity = 0.4;  // Fading the selection fill color a bit
+
     this.grid.style = {
       voidColor: Theme.getBackgroundColor(),
       backgroundColor: Theme.getBackgroundColor(),
       gridLineColor: Theme.getBorderColor(),
       headerGridLineColor: Theme.getBorderColor(1),
+      selectionFillColor: selectionFillColor.formatRgb(),
+      selectionBorderColor: Theme.getBrandColor(1),
+      headerSelectionFillColor: selectionFillColor.formatRgb(),
+      headerSelectionBorderColor: Theme.getBrandColor(1),
     };
   }
 
