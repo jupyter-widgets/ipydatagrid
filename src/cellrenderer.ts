@@ -28,7 +28,7 @@ import {
 
 import {
   Scalar, Theme
-} from './utils'
+} from './utils';
 
 // Temporary, will be removed when the scales are exported from bqplot
 type Scale = any;
@@ -40,10 +40,10 @@ interface ICellRendererAttribute {
   name: string;
 
   // The name of the equivalent phosphor attribute, if null the CellRenderer attribute has no equivalent in phosphor
-  phosphor_name: string | null;
+  phosphorName: string | null;
 
   // The default value for this attribute
-  default_value: Scalar;
+  defaultValue: Scalar;
 }
 
 export
@@ -73,18 +73,18 @@ abstract class CellRendererModel extends WidgetModel {
 export
 abstract class CellRendererView extends WidgetView {
   render() {
-    return this._initialize().then(() => {
-      this._update_renderer();
+    return this.initializeRenderer().then(() => {
+      this.updateRenderer();
 
-      this.on('renderer_needs_update', this._update_renderer.bind(this));
+      this.on('rendererNeedsUpdate', this.updateRenderer.bind(this));
     });
   }
 
   /**
    * Method that should be called when the theme has changed.
    */
-  on_theme_changed() {
-    return this._initialize().then(() => { this._update_renderer(); });
+  onThemeChanged() {
+    return this.initializeRenderer().then(() => { this.updateRenderer(); });
   }
 
   /**
@@ -92,14 +92,14 @@ abstract class CellRendererView extends WidgetView {
    *
    * @return The promise to initialize the renderer
    */
-  protected _initialize(): Promise<any> {
+  protected initializeRenderer(): Promise<any> {
     const promises: Dict<PromiseLike<Processor>> = {};
     const attr_names = this.model.get_attrs().map((attr: ICellRendererAttribute) => { return attr.name; });
 
     this.model.on_some_change(attr_names, this._on_some_processors_change, this);
 
     for (const name of attr_names) {
-      promises[name] = this._update_processor(name);
+      promises[name] = this.updateProcessor(name);
     }
 
     return resolvePromisesDict(promises).then((processors: Dict<Processor>) => {
@@ -111,7 +111,7 @@ abstract class CellRendererView extends WidgetView {
     const promises: Dict<PromiseLike<Processor>> = {};
 
     for (const name in event.changed) {
-      promises[name] = this._update_processor(name);
+      promises[name] = this.updateProcessor(name);
     }
 
     resolvePromisesDict(promises).then((processors: Dict<Processor>) => {
@@ -120,7 +120,7 @@ abstract class CellRendererView extends WidgetView {
         ...processors
       };
 
-      this.trigger('renderer_needs_update');
+      this.trigger('rendererNeedsUpdate');
     });
   }
 
@@ -128,19 +128,19 @@ abstract class CellRendererView extends WidgetView {
    * Update the phosphor renderer value, and trigger an event so that the DataGrid widget knows it has
    * changed.
    */
-  private _update_renderer() {
+  private updateRenderer() {
     let options: any = {};
     for (const attr of this.model.get_attrs()) {
-      if (attr.phosphor_name) {
-        options[attr.phosphor_name] = (config: CellRenderer.ICellConfig) => {
-          return this.process(attr.name, config, attr.default_value);
+      if (attr.phosphorName) {
+        options[attr.phosphorName] = (config: CellRenderer.ICellConfig) => {
+          return this.process(attr.name, config, attr.defaultValue);
         };
       }
     }
 
-    this.renderer = this._create_renderer(options);
+    this.renderer = this.createRenderer(options);
 
-    this.trigger('renderer_changed');
+    this.trigger('rendererChanged');
   }
 
   /**
@@ -150,7 +150,7 @@ abstract class CellRendererView extends WidgetView {
    *
    * @return The PromiseLike to update the processor view.
    */
-  protected _update_processor(name: string): any {
+  protected updateProcessor(name: string): any {
     let processor: any = this.model.get(name);
 
     if (Scalar.isScalar(processor)) {
@@ -158,7 +158,7 @@ abstract class CellRendererView extends WidgetView {
     }
 
     // Assuming it is an VegaExprModel or a Scale model
-    this.listenTo(processor, 'change', () => { this.trigger('renderer_needs_update'); });
+    this.listenTo(processor, 'change', () => { this.trigger('rendererNeedsUpdate'); });
 
     return this.create_child_view(processor);
   }
@@ -170,9 +170,9 @@ abstract class CellRendererView extends WidgetView {
    *
    * @param config - The configuration data for the cell.
    *
-   * @param default_value - The default attribute value.
+   * @param defaultValue - The default attribute value.
    */
-  protected process(name: string, config: CellRenderer.ICellConfig, default_value: Scalar): any {
+  protected process(name: string, config: CellRenderer.ICellConfig, defaultValue: Scalar): any {
     const processor = this.processors[name];
 
     if (Scalar.isScalar(processor)) {
@@ -180,7 +180,7 @@ abstract class CellRendererView extends WidgetView {
     }
 
     if (processor instanceof VegaExprView) {
-      return processor.process(config, default_value);
+      return processor.process(config, defaultValue);
     }
 
     // If it's a DateScale, convert the value to a Date object
@@ -192,7 +192,7 @@ abstract class CellRendererView extends WidgetView {
     return processor.scale(config.value);
   }
 
-  protected abstract _create_renderer(options: any): CellRenderer;
+  protected abstract createRenderer(options: any): CellRenderer;
 
   model: CellRendererModel;
 
@@ -222,13 +222,13 @@ class TextRendererModel extends CellRendererModel {
 
   get_attrs(): ICellRendererAttribute[] {
     return [
-      {name: 'font', phosphor_name: 'font', default_value: '12px sans-serif'},
-      {name: 'text_color', phosphor_name: 'textColor', default_value: Theme.getFontColor()},
-      {name: 'text_value', phosphor_name: null, default_value: null},
-      {name: 'background_color', phosphor_name: 'backgroundColor', default_value: Theme.getBackgroundColor()},
-      {name: 'vertical_alignment', phosphor_name: 'verticalAlignment', default_value: 'center'},
-      {name: 'horizontal_alignment', phosphor_name: 'horizontalAlignment', default_value: 'left'},
-      {name: 'format', phosphor_name: null, default_value: null},
+      {name: 'font', phosphorName: 'font', defaultValue: '12px sans-serif'},
+      {name: 'text_color', phosphorName: 'textColor', defaultValue: Theme.getFontColor()},
+      {name: 'text_value', phosphorName: null, defaultValue: null},
+      {name: 'background_color', phosphorName: 'backgroundColor', defaultValue: Theme.getBackgroundColor()},
+      {name: 'vertical_alignment', phosphorName: 'verticalAlignment', defaultValue: 'center'},
+      {name: 'horizontal_alignment', phosphorName: 'horizontalAlignment', defaultValue: 'left'},
+      {name: 'format', phosphorName: null, defaultValue: null},
     ];
   }
 
@@ -252,47 +252,44 @@ export
 class TextRendererView extends CellRendererView {
   render() {
     return super.render().then(() => {
-      this.model.on_some_change(['missing', 'format_type'], () => { this.trigger('renderer_needs_update'); }, this);
+      this.model.on_some_change(['missing', 'format_type'], () => { this.trigger('rendererNeedsUpdate'); }, this);
     });
   }
 
-  _create_renderer(options: TextRenderer.IOptions) {
+  createRenderer(options: TextRenderer.IOptions) {
     return new TextRenderer({
       ...options,
-      format: this.get_formatter()
+      format: this.getFormatter()
     });
   }
 
-  get_formatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
+  getFormatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
     return (config: CellRenderer.ICellConfig) => {
-      let formatted_value: string;
+      let formattedValue: string;
 
       if (config.value === null) {
-        formatted_value = this.model.get('missing');
+        formattedValue = this.model.get('missing');
       } else {
-        const formatting_rule = this.process('format', config, null);
+        const formattingRule = this.process('format', config, null);
 
-        if (formatting_rule === null) {
-          formatted_value = String(config.value);
+        if (formattingRule === null) {
+          formattedValue = String(config.value);
         } else {
           if (this.model.get('format_type') == 'time') {
-            formatted_value = String(d3TimeFormat.timeFormat(formatting_rule)(new Date(config.value)));
+            formattedValue = String(d3TimeFormat.timeFormat(formattingRule)(new Date(config.value)));
           } else {
-            formatted_value = String(d3Format.format(formatting_rule)(config.value));
+            formattedValue = String(d3Format.format(formattingRule)(config.value));
           }
         }
       }
 
-      return this.process('text_value', config, formatted_value) || formatted_value;
+      return this.process('text_value', config, formattedValue) || formattedValue;
     };
   }
 
   renderer: TextRenderer;
 
   model: TextRendererModel;
-
-  _text_value: Processor;
-  _format: Processor;
 }
 
 
@@ -313,12 +310,12 @@ class BarRendererModel extends TextRendererModel {
 
   get_attrs(): ICellRendererAttribute[] {
     return super.get_attrs().concat([
-      {name: 'bar_color', phosphor_name: 'barColor', default_value: '#4682b4'},
-      {name: 'bar_value', phosphor_name: 'barValue', default_value: 0.},
-      {name: 'orientation', phosphor_name: 'orientation', default_value: 'horizontal'},
-      {name: 'bar_vertical_alignment', phosphor_name: 'barVerticalAlignment', default_value: 'bottom'},
-      {name: 'bar_horizontal_alignment', phosphor_name: 'barHorizontalAlignment', default_value: 'left'},
-      {name: 'show_text', phosphor_name: 'showText', default_value: true},
+      {name: 'bar_color', phosphorName: 'barColor', defaultValue: '#4682b4'},
+      {name: 'bar_value', phosphorName: 'barValue', defaultValue: 0.},
+      {name: 'orientation', phosphorName: 'orientation', defaultValue: 'horizontal'},
+      {name: 'bar_vertical_alignment', phosphorName: 'barVerticalAlignment', defaultValue: 'bottom'},
+      {name: 'bar_horizontal_alignment', phosphorName: 'barHorizontalAlignment', defaultValue: 'left'},
+      {name: 'show_text', phosphorName: 'showText', defaultValue: true},
     ]);
   }
 
@@ -339,10 +336,10 @@ class BarRendererModel extends TextRendererModel {
 
 export
 class BarRendererView extends TextRendererView {
-  _create_renderer(options: BarRenderer.IOptions) {
+  createRenderer(options: BarRenderer.IOptions) {
     return new BarRenderer({
       ...options,
-      format: this.get_formatter()
+      format: this.getFormatter()
     });
   }
 

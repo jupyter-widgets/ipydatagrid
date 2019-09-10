@@ -48,23 +48,23 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
     render() {
       return super.render().then(() => {
         if (themeManager) {
-          themeManager.themeChanged.connect(this._on_theme_changed, this);
+          themeManager.themeChanged.connect(this.onThemeChanged, this);
         }
       });
     }
 
-    private _on_theme_changed() {
-      this._update_grid_style();
-      this.default_renderer.on_theme_changed();
+    private onThemeChanged() {
+      this.updateGridStyle();
+      this.default_renderer.onThemeChanged();
 
       for (const key in this.renderers) {
-        this.renderers[key].on_theme_changed();
+        this.renderers[key].onThemeChanged();
       }
     }
 
     remove() {
       if (themeManager) {
-        themeManager.themeChanged.disconnect(this._on_theme_changed, this);
+        themeManager.themeChanged.disconnect(this.onThemeChanged, this);
       }
       return super.remove();
     }
