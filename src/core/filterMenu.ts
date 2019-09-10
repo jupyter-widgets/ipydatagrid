@@ -441,10 +441,13 @@ export class InteractiveFilterDialog extends Widget {
 
     let operators: VirtualElement[];
 
+    // TODO: Refactor this to a switch statement
     if (this._columnDType === 'number' || this._columnDType === 'integer') {
       operators = this._createNumericalOperators();
     } else if (['date', 'time', 'datetime'].includes(this._columnDType)) {
       operators = this._createDateOperators();
+    } else if (this._columnDType === 'boolean') {
+      operators = this._createBooleanOperators();
     } else {
       operators = this._createCategoricalOperators();
     }
@@ -571,6 +574,22 @@ export class InteractiveFilterDialog extends Widget {
       h.option({
         value: '!=', ...(op === '!=') && { selected: '' }
       }, 'Timestamp is not exactly equal to:'),
+    ]
+  }
+
+    /**
+   * Creates an array of VirtualElements to represent the available operators
+   * for columns with a boolean dtype.
+   */
+  private _createBooleanOperators(): VirtualElement[] {
+    const op = this._filterOperator
+    return [
+      h.option({
+        value: 'empty', ...(op === 'empty') && { selected: '' }
+      }, 'Is empty:'),
+      h.option({
+        value: 'notempty', ...(op === 'notempty') && { selected: '' }
+      }, 'Is not empty:')
     ]
   }
 
