@@ -225,6 +225,7 @@ class DataGridView extends DOMWidgetView {
       this.model.on('change:data', () => {
         this.grid.model = this.model.data_model;
         this.grid.selectionModel = this.model.selectionModel;
+        this.filterDialog.model = this.model.data_model;
       });
 
       this.model.on('change:base_row_size', () => {
