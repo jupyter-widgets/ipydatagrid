@@ -106,6 +106,8 @@ export
       this.save_changes();
     });
 
+    this.selectionModel = new BasicSelectionModel({ model: this.data_model });
+
     this.updateTransforms();
   }
 
@@ -129,6 +131,7 @@ export
   static view_module_version = MODULE_VERSION;
 
   data_model: ViewBasedJSONModel;
+  selectionModel: BasicSelectionModel;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
@@ -216,11 +219,12 @@ class DataGridView extends DOMWidgetView {
       this.grid.model = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
-      this.grid.selectionModel = new BasicSelectionModel({ model: this.model.data_model });
+      this.grid.selectionModel = this.model.selectionModel;
       this.updateGridRenderers();
 
       this.model.on('change:data', () => {
         this.grid.model = this.model.data_model;
+        this.grid.selectionModel = this.model.selectionModel;
       });
 
       this.model.on('change:base_row_size', () => {
