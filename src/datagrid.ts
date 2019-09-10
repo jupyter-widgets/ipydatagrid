@@ -221,6 +221,7 @@ class DataGridView extends DOMWidgetView {
 
       this.model.on('change:data', () => {
         this.grid.model = this.model.data_model;
+        this.updateHeaderRenderer();
       });
 
       this.model.on('change:base_row_size', () => {
@@ -310,14 +311,7 @@ class DataGridView extends DOMWidgetView {
   }
 
   protected updateGridStyle() {
-    const headerRenderer = new HeaderRenderer({
-      textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
-      horizontalAlignment: 'center'
-    });
-    this.grid.cellRenderers.set('column-header', {}, headerRenderer);
-    this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
-
+    this.updateHeaderRenderer();
     const rowHeaderRenderer = new TextRenderer({
       textColor: Theme.getFontColor(1),
       backgroundColor: Theme.getBackgroundColor(2),
@@ -339,6 +333,17 @@ class DataGridView extends DOMWidgetView {
       headerSelectionFillColor: selectionFillColor.formatRgb(),
       headerSelectionBorderColor: Theme.getBrandColor(1),
     };
+  }
+
+  private updateHeaderRenderer() {
+    const headerRenderer = new HeaderRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center'
+    });
+    headerRenderer.model = this.model.data_model;
+    this.grid.cellRenderers.set('column-header', {}, headerRenderer);
+    this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
   }
 
   private _createCommandRegistry(): CommandRegistry {
