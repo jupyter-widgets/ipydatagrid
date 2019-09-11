@@ -155,11 +155,12 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
    */
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
+    const hitRegion = hit.region;
 
-
-    if (hit.region === 'column-header') {
-      const columnSize = grid.columnSize('body', hit.column);
-      const isMenuClick = hit.x > columnSize - HeaderRenderer.buttonSize;
+    if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
+      const columnSize = grid.columnSize(
+        hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
+      const isMenuClick = hit.x > (columnSize - HeaderRenderer.buttonSize);
 
       if (isMenuClick) {
         this._dataGridView.contextMenu.open(grid, {
