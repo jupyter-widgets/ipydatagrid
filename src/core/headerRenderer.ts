@@ -107,27 +107,35 @@ export class HeaderRenderer extends TextRenderer {
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
+    const backgroundSize = HeaderRenderer.buttonSize + HeaderRenderer.buttonPadding;
     gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
     gc.fillRect(
-      (config.x + config.width - HeaderRenderer.buttonSize),
-      (config.y),
-      (HeaderRenderer.buttonSize), 
-      (config.height - 1)
+      (config.x + config.width - backgroundSize),
+      (config.y + config.height - backgroundSize),
+      backgroundSize, 
+      backgroundSize
     )
 
     // Draw menu icon
     gc.fillStyle = color;
-    gc.font = '11px fontawesome';
+    gc.textAlign = 'start';
+    gc.font = `${HeaderRenderer.buttonSize}px fontawesome`;
     gc.fillText(
       (`\uF150`),
-      (config.x + (config.width - 12)),
-      (config.y + config.height - 4)
+      (config.x + (config.width - HeaderRenderer.buttonSize - HeaderRenderer.buttonPadding)),
+      (config.y + config.height - HeaderRenderer.buttonPadding)
     );
+    // restore alignment
+    gc.textAlign = hAlign;
   } 
 
   /**
    * Indicates the size of the menu icon, to support the current implementation
    * of hit testing.
    */
-  static buttonSize: number = 20;
+  static buttonSize: number = 11;
+  /**
+   * Indicates the padding of the menu icon, within containing header.
+   */
+  static buttonPadding: number = 5;
 }
