@@ -112,6 +112,7 @@ export
   }
 
   updateTransforms() {
+    this.selectionModel.clear();
     this.data_model.replaceTransforms(this.get('_transforms'));
   }
 
