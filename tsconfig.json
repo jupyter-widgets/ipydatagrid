@@ -18,7 +18,9 @@
     "target": "es2015"
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
+    "src/*.ts",
+    "src/*.tsx",
+    "src/core/*.ts",
+    "src/core/*.tsx"
   ]
 }
