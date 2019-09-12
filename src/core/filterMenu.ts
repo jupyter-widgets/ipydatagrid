@@ -642,6 +642,20 @@ export class InteractiveFilterDialog extends Widget {
     ]
   }
 
+  /**
+   * Returns a reference to the data model used for this menu.
+   */
+  get model(): ViewBasedJSONModel {
+    return this._model;
+  }
+
+  /**
+   * Updates the data model used for this menu.
+   */
+  set model(model: ViewBasedJSONModel) {
+    this._model = model;
+  }
+
   private _model: ViewBasedJSONModel;
 
   // DOM elements
