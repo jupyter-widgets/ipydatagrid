@@ -115,32 +115,33 @@ export class HeaderRenderer extends TextRenderer {
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
+    const backgroundSize = HeaderRenderer.buttonSize + HeaderRenderer.buttonPadding;
     gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
     gc.fillRect(
-      (config.x + config.width - HeaderRenderer.buttonSize + 1),
-      (config.y),
-      (HeaderRenderer.buttonSize),
-      (config.height - 1)
+      (config.x + config.width - backgroundSize),
+      (config.y + config.height - backgroundSize),
+      backgroundSize, 
+      backgroundSize
     )
 
     const iconStart = config.x
       + config.width
       - HeaderRenderer.iconWidth
-      - HeaderRenderer.iconPadding;
+      - HeaderRenderer.buttonPadding;
 
     // Draw menu icon
     gc.beginPath();
     gc.moveTo(
       iconStart,
-      config.height - HeaderRenderer.iconPadding - HeaderRenderer.iconHeight
+      config.height - HeaderRenderer.buttonPadding - HeaderRenderer.iconHeight
     );
     gc.lineTo(
       iconStart + (HeaderRenderer.iconWidth / 2),
-      config.height - HeaderRenderer.iconPadding
+      config.height - HeaderRenderer.buttonPadding
     );
     gc.lineTo(
       iconStart + HeaderRenderer.iconWidth,
-      config.height - HeaderRenderer.iconPadding - HeaderRenderer.iconHeight
+      config.height - HeaderRenderer.buttonPadding - HeaderRenderer.iconHeight
     );
     gc.closePath();
 
@@ -153,7 +154,7 @@ export class HeaderRenderer extends TextRenderer {
       );
       if (this._model.transformMetadata(schemaIndex)
         && (this._model.transformMetadata(schemaIndex))!['filter']) {
-        gc.fillStyle = Theme.getBrandColor(1) || '#2196f3';
+        gc.fillStyle = Theme.getBrandColor(1);
         gc.fill()
         return;
       }
@@ -174,10 +175,10 @@ export class HeaderRenderer extends TextRenderer {
    * Indicates the size of the menu icon, to support the current implementation
    * of hit testing.
    */
-  static buttonSize: number = 20;
+  static buttonSize: number = 11;
   static iconWidth: number = 12;
   static iconHeight: number = 6;
-  static iconPadding: number = 5;
+  static buttonPadding: number = 5;
 
   private _model: ViewBasedJSONModel | undefined = undefined
 }

@@ -106,10 +106,13 @@ export
       this.save_changes();
     });
 
+    this.selectionModel = new BasicSelectionModel({ model: this.data_model });
+
     this.updateTransforms();
   }
 
   updateTransforms() {
+    this.selectionModel.clear();
     this.data_model.replaceTransforms(this.get('_transforms'));
   }
 
@@ -129,6 +132,7 @@ export
   static view_module_version = MODULE_VERSION;
 
   data_model: ViewBasedJSONModel;
+  selectionModel: BasicSelectionModel;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
@@ -152,11 +156,19 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
    */
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
+    const hitRegion = hit.region;
+    const buttonSize = HeaderRenderer.buttonSize;
+    const buttonPadding = HeaderRenderer.buttonPadding;
 
-
-    if (hit.region === 'column-header') {
-      const columnSize = grid.columnSize('body', hit.column);
-      const isMenuClick = hit.x > columnSize - HeaderRenderer.buttonSize;
+    if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
+      const columnWidth = grid.columnSize(
+        hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
+      const rowHeight = grid.rowSize('column-header', hit.row);
+      const isMenuClick =
+        hit.x > (columnWidth - buttonSize - buttonPadding) &&
+        hit.x < (columnWidth - buttonPadding) &&
+        hit.y > (rowHeight - buttonSize - buttonPadding) &&
+        hit.y < (rowHeight - buttonPadding);
 
       if (isMenuClick) {
         this._dataGridView.contextMenu.open(grid, {
@@ -216,12 +228,14 @@ class DataGridView extends DOMWidgetView {
       this.grid.model = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
-      this.grid.selectionModel = new BasicSelectionModel({ model: this.model.data_model });
+      this.grid.selectionModel = this.model.selectionModel;
       this.updateGridRenderers();
 
       this.model.on('change:data', () => {
         this.grid.model = this.model.data_model;
+        this.grid.selectionModel = this.model.selectionModel;
         this.updateHeaderRenderer();
+        this.filterDialog.model = this.model.data_model;
       });
 
       this.model.on('change:base_row_size', () => {
@@ -267,10 +281,10 @@ class DataGridView extends DOMWidgetView {
   private updateRenderers() {
     // Unlisten to previous renderers
     if (this.default_renderer) {
-      this.stopListening(this.default_renderer, 'rendererChanged');
+      this.stopListening(this.default_renderer, 'renderer-changed');
     }
     for (const key in this.renderers) {
-      this.stopListening(this.renderers[key], 'rendererChanged');
+      this.stopListening(this.renderers[key], 'renderer-changed');
     }
 
     // And create views for new renderers
@@ -280,7 +294,7 @@ class DataGridView extends DOMWidgetView {
     promises.push(this.create_child_view(default_renderer).then((defaultRendererView: any) => {
       this.default_renderer = defaultRendererView;
 
-      this.listenTo(this.default_renderer, 'rendererChanged', this.updateGridRenderers.bind(this));
+      this.listenTo(this.default_renderer, 'renderer-changed', this.updateGridRenderers.bind(this));
     }));
 
     let renderer_promises: Dict<Promise<any>> = {};
@@ -291,7 +305,7 @@ class DataGridView extends DOMWidgetView {
       this.renderers = rendererViews;
 
       for (const key in rendererViews) {
-        this.listenTo(rendererViews[key], 'rendererChanged', this.updateGridRenderers.bind(this));
+        this.listenTo(rendererViews[key], 'renderer-changed', this.updateGridRenderers.bind(this));
       }
     }));
 

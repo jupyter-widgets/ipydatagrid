@@ -76,7 +76,7 @@ abstract class CellRendererView extends WidgetView {
     return this.initializeRenderer().then(() => {
       this.updateRenderer();
 
-      this.on('rendererNeedsUpdate', this.updateRenderer.bind(this));
+      this.on('renderer-needs-update', this.updateRenderer.bind(this));
     });
   }
 
@@ -120,7 +120,7 @@ abstract class CellRendererView extends WidgetView {
         ...processors
       };
 
-      this.trigger('rendererNeedsUpdate');
+      this.trigger('renderer-needs-update');
     });
   }
 
@@ -140,7 +140,7 @@ abstract class CellRendererView extends WidgetView {
 
     this.renderer = this.createRenderer(options);
 
-    this.trigger('rendererChanged');
+    this.trigger('renderer-changed');
   }
 
   /**
@@ -158,7 +158,7 @@ abstract class CellRendererView extends WidgetView {
     }
 
     // Assuming it is an VegaExprModel or a Scale model
-    this.listenTo(processor, 'change', () => { this.trigger('rendererNeedsUpdate'); });
+    this.listenTo(processor, 'change', () => { this.trigger('renderer-needs-update'); });
 
     return this.create_child_view(processor);
   }
@@ -252,7 +252,7 @@ export
 class TextRendererView extends CellRendererView {
   render() {
     return super.render().then(() => {
-      this.model.on_some_change(['missing', 'format_type'], () => { this.trigger('rendererNeedsUpdate'); }, this);
+      this.model.on_some_change(['missing', 'format_type'], () => { this.trigger('renderer-needs-update'); }, this);
     });
   }
 
