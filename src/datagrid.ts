@@ -278,10 +278,10 @@ class DataGridView extends DOMWidgetView {
   private updateRenderers() {
     // Unlisten to previous renderers
     if (this.default_renderer) {
-      this.stopListening(this.default_renderer, 'rendererChanged');
+      this.stopListening(this.default_renderer, 'renderer-changed');
     }
     for (const key in this.renderers) {
-      this.stopListening(this.renderers[key], 'rendererChanged');
+      this.stopListening(this.renderers[key], 'renderer-changed');
     }
 
     // And create views for new renderers
@@ -291,7 +291,7 @@ class DataGridView extends DOMWidgetView {
     promises.push(this.create_child_view(default_renderer).then((defaultRendererView: any) => {
       this.default_renderer = defaultRendererView;
 
-      this.listenTo(this.default_renderer, 'rendererChanged', this.updateGridRenderers.bind(this));
+      this.listenTo(this.default_renderer, 'renderer-changed', this.updateGridRenderers.bind(this));
     }));
 
     let renderer_promises: Dict<Promise<any>> = {};
@@ -302,7 +302,7 @@ class DataGridView extends DOMWidgetView {
       this.renderers = rendererViews;
 
       for (const key in rendererViews) {
-        this.listenTo(rendererViews[key], 'rendererChanged', this.updateGridRenderers.bind(this));
+        this.listenTo(rendererViews[key], 'renderer-changed', this.updateGridRenderers.bind(this));
       }
     }));
 
