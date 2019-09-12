@@ -146,12 +146,26 @@ class View {
     return Array.from(uniqueVals);
   }
 
+  /**
+   * Returns the index in the schema that relates to the index by region.
+   *
+   * @param region - The `CellRegion` of interest.
+   *
+   * @param index - The column index to look up.
+   */
+  getSchemaIndex(region: DataModel.CellRegion, index: number): number {
+    if (region === 'corner-header') {
+      return index;
+    } else {
+      return this._headerFields.length + index;
+    }
+  }
+
   private readonly _data: View.DataSource;
   private readonly _bodyFields: View.IField[];
   private readonly _headerFields: View.IField[];
   private readonly _missingValues: Private.MissingValuesMap | null;
 }
-
 
 /**
  * The namespace for the `View` class statics.

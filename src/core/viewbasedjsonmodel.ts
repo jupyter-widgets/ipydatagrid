@@ -170,6 +170,17 @@ export class ViewBasedJSONModel extends DataModel {
     return this._transformSignal;
   }
 
+  /**
+   * Returns the index in the schema that relates to the index by region.
+   *
+   * @param region - The `CellRegion` of interest.
+   *
+   * @param index - The column index to look up.
+   */
+  getSchemaIndex(region: DataModel.CellRegion, index: number): number {
+    return this.currentView.getSchemaIndex(region, index)
+  }
+
   private _currentView: View;
   private _transformSignal = new Signal<this, TransformStateManager.IEvent>(this);
 
