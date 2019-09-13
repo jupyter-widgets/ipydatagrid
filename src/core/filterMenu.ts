@@ -399,7 +399,10 @@ export class InteractiveFilterDialog extends Widget {
    * Creates a `VirtualElement` to display the unique values of a column.
    */
   protected createUniqueValueNodes(): VirtualElement {
-    const uniqueVals = this._model.uniqueValues(this._columnIndex);
+    const uniqueVals = this._model.uniqueValues(
+      this._region,
+      this._columnIndex
+    );
     const optionElems = uniqueVals.map(val => {
       return h.option({ value: val }, String(val))
     });

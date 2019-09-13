@@ -80,6 +80,25 @@ describe('Test .data()', () => {
   })
 });
 
+describe('Test .uniqueValues()', () => {
+  const testData = DataGenerator.multiCol({
+    length: 5, data: [
+      { name: 'string', type: 'string', data: ['A', 'C', 'B', 'A', 'C'] },
+      { name: 'boolean', type: 'boolean', data: [true, false, true, false, false] },
+    ]
+  });
+  const testView = new View(testData)
+  test('cellregion-column-header-0', () => {
+    expect(testView.uniqueValues('column-header', 0)).toEqual(['A', 'C', 'B'])
+  });
+  test('cellregion-column-header-1', () => {
+    expect(testView.uniqueValues('column-header', 1)).toEqual([true, false])
+  });
+  test('cellregion-corner-header-0', () => {
+    expect(testView.uniqueValues('corner-header', 0)).toEqual([0, 1, 2, 3, 4])
+  });
+})
+
 /**
  * The namespace for the module implementation details.
  */
