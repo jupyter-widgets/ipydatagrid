@@ -16,7 +16,7 @@ export namespace DataGenerator {
    *
    * @param options - The options for creating a table.
    */
-  export function createTestData(options: ICreateTestDataOptions): ViewBasedJSONModel.IData {
+  export function singleCol(options: ISingleColOptions): ViewBasedJSONModel.IData {
     const data = options.data.map((val: any, i: number) => {
       const row: { [key: string]: any } = { 'index': i };
       row[options.name] = val;
@@ -34,10 +34,37 @@ export namespace DataGenerator {
     }
   }
 
+  export function multiCol(options: IMultiColOptions): ViewBasedJSONModel.IData{
+    const fields = options.data.map(val=>{
+      return {name: val.name, type: val.type}
+    });
+    const rows = [];
+
+    for (let i=0;i<options.length;i++){
+      const row: { [key: string]: any } = {};
+      options.data.forEach(col=>{
+        row[col.name] = col.data[i];
+        row['index'] = i;
+      });
+      rows.push(row)
+    }
+  
+    return {
+      'schema': {
+        'fields': [
+          { name: 'index', type: 'integer' },
+          ...fields
+        ],
+        'primaryKey': ['index']
+      },
+      'data': rows
+    }
+  }
+
   /**
    * An options object for initializing single column table for testing.
    */
-  export interface ICreateTestDataOptions {
+  export interface ISingleColOptions {
 
     /**
      * The name of the column to be created.
@@ -54,5 +81,13 @@ export namespace DataGenerator {
      */
     data: any[]
   }
+
+  export interface IMultiColOptions {
+    data: DataGenerator.ISingleColOptions[]
+    length: number
+  }
 }
+
+
+
 

@@ -399,7 +399,10 @@ export class InteractiveFilterDialog extends Widget {
    * Creates a `VirtualElement` to display the unique values of a column.
    */
   protected createUniqueValueNodes(): VirtualElement {
-    const uniqueVals = this._model.uniqueValues(this._columnIndex);
+    const uniqueVals = this._model.uniqueValues(
+      this._region,
+      this._columnIndex
+    );
     const optionElems = uniqueVals.map(val => {
       return h.option({ value: val }, String(val))
     });
@@ -640,6 +643,20 @@ export class InteractiveFilterDialog extends Widget {
         value: 'between', ...(op === 'between') && { selected: '' }
       }, 'Is in between'),
     ]
+  }
+
+  /**
+   * Returns a reference to the data model used for this menu.
+   */
+  get model(): ViewBasedJSONModel {
+    return this._model;
+  }
+
+  /**
+   * Updates the data model used for this menu.
+   */
+  set model(model: ViewBasedJSONModel) {
+    this._model = model;
   }
 
   private _model: ViewBasedJSONModel;
