@@ -293,7 +293,7 @@ export class InteractiveFilterDialog extends Widget {
   createTitleNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        { className: 'p-Menu-itemLabel', style: { paddingLeft: '5px' } },
         (this._mode === 'condition')
           ? 'Filter by condition:'
           : 'Filter by value:')
@@ -310,12 +310,12 @@ export class InteractiveFilterDialog extends Widget {
   createSingleValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
         h.input({
+          type: 'text',
           style: {
             marginRight: '5px',
             width: '135px',
-            height: '20px',
             visibility: (
               this._filterOperator === 'empty'
               || this._filterOperator === 'notempty'
@@ -337,7 +337,8 @@ export class InteractiveFilterDialog extends Widget {
             : ''
         }),
         h.button({
-          style: { width: '60px', height: '20px', padding: '1px' },
+          className: 'jupyter-widgets jupyter-button widget-button',
+          style: { width: '60px', padding: '1px' },
           onclick: this.applyFilter.bind(this)
         }, 'Apply'))
     );
@@ -353,12 +354,13 @@ export class InteractiveFilterDialog extends Widget {
   createDualValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
         h.input({
           style: { marginRight: '5px', width: '75px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
+          type: 'text',
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement;
             this._filterValue = [
@@ -378,6 +380,7 @@ export class InteractiveFilterDialog extends Widget {
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
+          type: 'text',
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement;
             this._filterValue = [
@@ -391,7 +394,11 @@ export class InteractiveFilterDialog extends Widget {
           // this.createOperatorList
           value: String((<any[]>this._filterValue)[1] || '')
         }),
-        h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
+        h.button({
+          className: "jupyter-widgets jupyter-button widget-button",
+          style: { width: '60px', padding: '1px' },
+          onclick: this.applyFilter.bind(this)
+        }, 'Apply'))
     );
   }
 
@@ -406,9 +413,13 @@ export class InteractiveFilterDialog extends Widget {
 
     return h.li(
       { className: 'p-Menu-item' },
-      h.div(
+      h.div({
+        className: 'widget-select widget-select-multiple',
+        style: { width: '200px' }
+      },
         h.select({
           multiple: '',
+          value: '',
           style: { width: '200px', height: '200px', margin: '5px' },
           onchange: (evt) => {
             let selectElem = <HTMLSelectElement>evt.srcElement;
@@ -454,8 +465,8 @@ export class InteractiveFilterDialog extends Widget {
 
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } }, h.select({
-          style: { width: '200px' },
+        { className: 'p-Menu-itemLabel widget-dropdown', style: { padding: '5px' } }, h.select({
+          style: { width: '200px', fontSize: '12px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
@@ -488,6 +499,7 @@ export class InteractiveFilterDialog extends Widget {
         style: { padding: '5px', textAlign: 'right' }
       },
         h.button({
+          className: 'jupyter-widgets jupyter-button widget-button',
           style: { width: '60px' },
           onclick: this.applyFilter.bind(this)
         }, 'Apply'))
@@ -577,7 +589,7 @@ export class InteractiveFilterDialog extends Widget {
     ]
   }
 
-    /**
+  /**
    * Creates an array of VirtualElements to represent the available operators
    * for columns with a boolean dtype.
    */
