@@ -137,8 +137,8 @@ class View {
    *
    * @param columnIndex - The index to retrieve unique values for.
    */
-  uniqueValues(columnIndex: number): any[]{
-    let columnName = this.metadata('body', columnIndex)['name'];
+  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[]{
+    let columnName = this.metadata(region, columnIndex)['name'];
     let uniqueVals = new Set();
     for (let row of this._data) {
       uniqueVals.add(row[columnName]);

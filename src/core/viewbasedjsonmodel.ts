@@ -162,8 +162,8 @@ export class ViewBasedJSONModel extends DataModel {
    * 
    * @param columnIndex - The index to retrieve unique values for.
    */
-  uniqueValues(columnIndex: number): any[] {
-    return this.currentView.uniqueValues(columnIndex);
+  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
+    return this.currentView.uniqueValues(region, columnIndex);
   }
 
   get transformStateChanged(): ISignal<this, TransformStateManager.IEvent> {

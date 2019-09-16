@@ -23,7 +23,7 @@ const sortTestCases: Private.SortTestCase[] = [
 describe('Sort Executors', () => {
   for (let testCase of sortTestCases) {
     test(`sort-${testCase.dType}-${testCase.desc ? 'desc' : 'asc'}`, () => {
-      const testData = DataGenerator.createTestData({
+      const testData = DataGenerator.singleCol({
         name: 'test', type: testCase.dType, data: testCase.data
       });
       const result = Private.executeSort({
@@ -78,7 +78,7 @@ const filterTestCases: Private.FilterTestCase[] = [
 describe('Filter Executors', () => {
   for (let testCase of filterTestCases) {
     test(`filter-${testCase.dType}-${testCase.op}`, () => {
-      const testData = DataGenerator.createTestData({
+      const testData = DataGenerator.singleCol({
         name: 'test', type: testCase.dType, data: testCase.data
       });
       const result = Private.executeFilter({
