@@ -39,6 +39,7 @@ class DataGrid(DOMWidget):
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
+    selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""

@@ -86,7 +86,8 @@ export
       data: {},
       _transforms: [],
       renderers: {},
-      default_renderer: null
+      default_renderer: null,
+      selection_mode: 'none'
     };
   }
 
@@ -95,8 +96,10 @@ export
 
     this.on('change:data', this.updateData.bind(this));
     this.on('change:_transforms', this.updateTransforms.bind(this));
+    this.on('change:selection_mode', this.updateSelectionModel, this);
     this.updateData();
     this.updateTransforms();
+    this.updateSelectionModel();
   }
 
   updateData() {
@@ -106,14 +109,31 @@ export
       this.save_changes();
     });
 
-    this.selectionModel = new BasicSelectionModel({ model: this.data_model });
-
     this.updateTransforms();
+    this.updateSelectionModel();
   }
 
   updateTransforms() {
-    this.selectionModel.clear();
+    if (this.selectionModel) {
+      this.selectionModel.clear();
+    }
     this.data_model.replaceTransforms(this.get('_transforms'));
+  }
+
+  updateSelectionModel() {
+    if (this.selectionModel) {
+      this.selectionModel.clear();
+    }
+
+    const selectionMode = this.get('selection_mode');
+
+    if (selectionMode === 'none') {
+      this.selectionModel = null;
+      return;
+    }
+
+    this.selectionModel = new BasicSelectionModel({ model: this.data_model });
+    this.selectionModel.selectionMode = selectionMode;
   }
 
   static serializers: ISerializers = {
@@ -132,7 +152,7 @@ export
   static view_module_version = MODULE_VERSION;
 
   data_model: ViewBasedJSONModel;
-  selectionModel: BasicSelectionModel;
+  selectionModel: BasicSelectionModel | null;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
@@ -233,9 +253,10 @@ class DataGridView extends DOMWidgetView {
 
       this.model.on('change:data', () => {
         this.grid.model = this.model.data_model;
-        this.grid.selectionModel = this.model.selectionModel;
         this.updateHeaderRenderer();
         this.filterDialog.model = this.model.data_model;
+        this.model.updateSelectionModel();
+        this.grid.selectionModel = this.model.selectionModel;
       });
 
       this.model.on('change:base_row_size', () => {
@@ -273,6 +294,11 @@ class DataGridView extends DOMWidgetView {
       this.model.on_some_change(['default_renderer', 'renderers'], () => {
         this.updateRenderers().then(this.updateGridRenderers.bind(this));
       }, this);
+
+      this.model.on('change:selection_mode', () => {
+        this.model.updateSelectionModel();
+        this.grid.selectionModel = this.model.selectionModel;
+      });
 
       this.pWidget.addWidget(this.grid);
     });
