@@ -335,7 +335,10 @@ class DataGridView extends DOMWidgetView {
     this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
 
     const selectionFillColor = d3Color.rgb(Theme.getBrandColor(2));
-    selectionFillColor.opacity = 0.4;  // Fading the selection fill color a bit
+    selectionFillColor.opacity = 0.4;
+
+    const headerSelectionFillColor = d3Color.rgb(Theme.getBrandColor(2));
+    headerSelectionFillColor.opacity = 0.1;
 
     this.grid.style = {
       voidColor: Theme.getBackgroundColor(),
@@ -344,7 +347,7 @@ class DataGridView extends DOMWidgetView {
       headerGridLineColor: Theme.getBorderColor(1),
       selectionFillColor: selectionFillColor.formatRgb(),
       selectionBorderColor: Theme.getBrandColor(1),
-      headerSelectionFillColor: selectionFillColor.formatRgb(),
+      headerSelectionFillColor: headerSelectionFillColor.formatRgb(),
       headerSelectionBorderColor: Theme.getBrandColor(1),
     };
   }
