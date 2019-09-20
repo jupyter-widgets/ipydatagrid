@@ -332,6 +332,13 @@ class DataGridView extends DOMWidgetView {
     });
     this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
 
+    const scrollShadow = {
+      size: 4,
+      color1: Theme.getBorderColor(0, 1.0),
+      color2: Theme.getBorderColor(0, 0.5),
+      color3: Theme.getBorderColor(0, 0.0)
+    }
+
     this.grid.style = {
       voidColor: Theme.getBackgroundColor(),
       backgroundColor: Theme.getBackgroundColor(),
@@ -343,6 +350,7 @@ class DataGridView extends DOMWidgetView {
       headerSelectionBorderColor: Theme.getBrandColor(2),
       cursorFillColor: Theme.getBrandColor(3, 0.4),
       cursorBorderColor: Theme.getBrandColor(1),
+      scrollShadow: scrollShadow,
     };
   }
 
