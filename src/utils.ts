@@ -1,3 +1,5 @@
+const d3Color: any = require('d3-color');
+
 // Scalar type
 export
 type Scalar = null | boolean | number | string;
@@ -12,6 +14,13 @@ namespace Scalar {
 
 export
 namespace Theme {
+  function applyOpacity(color: string, opacity: number) {
+    const c = d3Color.rgb(color);
+    c.opacity = opacity;
+
+    return c.formatRgb();
+  }
+
   function getDefaultCSSVariable(name: string) {
     const defaults: { [keys: string]: string; } = {
       '--jp-layout-color0': 'white',
@@ -48,22 +57,29 @@ namespace Theme {
   }
 
   export
-  function getBackgroundColor(index: number = 0) {
-    return getCSSVariable('--jp-layout-color' + index);
+  function getCSSColor(name: string, opacity: number = 1.) {
+    let color = getCSSVariable(name);
+    color = applyOpacity(color, opacity);
+    return color;
   }
 
   export
-  function getFontColor(index: number = 0) {
-    return getCSSVariable('--jp-ui-font-color' + index);
+  function getBackgroundColor(index: number = 0, opacity: number = 1.) {
+    return getCSSColor('--jp-layout-color' + index, opacity);
   }
 
   export
-  function getBorderColor(index: number = 0) {
-    return getCSSVariable('--jp-border-color' + index);
+  function getFontColor(index: number = 0, opacity: number = 1.) {
+    return getCSSColor('--jp-ui-font-color' + index, opacity);
   }
 
   export
-  function getBrandColor(index: number = 0) {
-    return getCSSVariable('--jp-brand-color' + index);
+  function getBorderColor(index: number = 0, opacity: number = 1.) {
+    return getCSSColor('--jp-border-color' + index, opacity);
+  }
+
+  export
+  function getBrandColor(index: number = 0, opacity: number = 1.) {
+    return getCSSColor('--jp-brand-color' + index, opacity);
   }
 }
