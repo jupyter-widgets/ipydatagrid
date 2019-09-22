@@ -58,13 +58,15 @@ export class InteractiveFilterDialog extends Widget {
 
   /**
    * Checks for any undefined values in `this._filterValue`.
+   *
+   * Note: This should be expanded in the future to also check for dtype
+   * inappropriate values.
    */
   hasValidFilterValue(): boolean {
     if (!this._filterValue) {
       return false;
     } else if (Array.isArray(this._filterValue)) {
-      if (this._filterValue[0] === undefined
-        || this._filterValue[1] === undefined) {
+      if (!this._filterValue[0] || !this._filterValue[1]) {
         return false;
       }
     }
@@ -85,27 +87,22 @@ export class InteractiveFilterDialog extends Widget {
     // Construct transform
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: (this._region !== 'column-header')
-        ? this._columnIndex
-        : this._columnIndex + 1,
+      columnIndex: this.model.getSchemaIndex(this._region, this._columnIndex),
       operator: this._filterOperator,
       value: <Transform.FilterValue>this._filterValue
     };
 
-
     this._model.addTransform(transform);
-    this.close()
+    this.close();
   }
 
   /**
    * Updates the DOM elements with transform state from the linked data model.
    */
   updateDialog(): void {
-    // The 0 index of the model's data is the primary key field, so we need to 
-    // add 1 to get the correct field if the click was on a column header
-    const lookupColumn = (this._region === 'column-header')
-      ? this._columnIndex + 1
-      : 0;
+    const lookupColumn = this.model.getSchemaIndex(
+      this._region, this._columnIndex
+    );
     const columnState = this._model.transformMetadata(lookupColumn);
 
     // Update state with transform metadata, if present
@@ -669,6 +666,34 @@ export class InteractiveFilterDialog extends Widget {
    */
   set model(model: ViewBasedJSONModel) {
     this._model = model;
+  }
+
+  /**
+   * Returns the current input value of the dialog.
+   */
+  get value(): InteractiveFilterDialog.FilterValue {
+    return this._filterValue
+  }
+
+  /**
+   * Returns the currently active filter operator.
+   */
+  get operator(): Transform.FilterOperator {
+    return this._filterOperator;
+  }
+
+  /**
+   * Returns the active column index.
+   */
+  get columnIndex(): number {
+    return this._columnIndex;
+  }
+
+  /**
+   * Returns the active column dtype.
+   */
+  get columnDType(): string {
+    return this._columnDType;
   }
 
   private _model: ViewBasedJSONModel;
