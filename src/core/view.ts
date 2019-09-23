@@ -137,8 +137,8 @@ class View {
    *
    * @param columnIndex - The index to retrieve unique values for.
    */
-  uniqueValues(columnIndex: number): any[]{
-    let columnName = this.metadata('body', columnIndex)['name'];
+  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[]{
+    let columnName = this.metadata(region, columnIndex)['name'];
     let uniqueVals = new Set();
     for (let row of this._data) {
       uniqueVals.add(row[columnName]);
@@ -153,13 +153,26 @@ class View {
     return this._data;
   }
 
+  /**
+   * Returns the index in the schema that relates to the index by region.
+   *
+   * @param region - The `CellRegion` of interest.
+   *
+   * @param index - The column index to look up.
+   */
+  getSchemaIndex(region: DataModel.CellRegion, index: number): number {
+    if (region === 'corner-header') {
+      return index;
+    } else {
+      return this._headerFields.length + index;
+    }
+  }
 
   private readonly _data: View.DataSource;
   private readonly _bodyFields: View.IField[];
   private readonly _headerFields: View.IField[];
   private readonly _missingValues: Private.MissingValuesMap | null;
 }
-
 
 /**
  * The namespace for the `View` class statics.

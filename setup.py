@@ -86,7 +86,7 @@ setup_args = dict(
     ],
     include_package_data = True,
     install_requires = [
-        'py2vega>=0.3.1',
+        'py2vega>=0.5.0',
         'ipywidgets>=7.0.0',
         'bqplot>=0.11.6'  # This is temporary, this dependency will be removed when scales are extracted from bqplot
     ],

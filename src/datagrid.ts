@@ -3,9 +3,15 @@
 
 import * as _ from 'underscore';
 
+const d3Color: any = require('d3-color');
+
 import {
-  DataGrid
-} from './core/ipydatagrid';
+  TextRenderer
+} from '@phosphor/datagrid';
+
+import {
+  CommandRegistry
+} from '@phosphor/commands';
 
 import {
   BasicKeyHandler
@@ -39,6 +45,10 @@ import {
   HeaderRenderer
 } from './core/headerRenderer';
 
+import {
+  DataGrid
+} from './core/ipydatagrid';
+
 // Import CSS
 import '../css/datagrid.css'
 
@@ -49,7 +59,10 @@ import {
 import {
   CellRendererModel, CellRendererView
 } from './cellrenderer'
-import { CommandRegistry } from '@phosphor/commands';
+
+import {
+  Theme
+} from './utils'
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -81,23 +94,43 @@ export
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    this.on('change:data', this.update_data.bind(this));
-    this.on('change:_transforms', this.update_transforms.bind(this));
-    this.update_data();
-    this.update_transforms();
+    this.on('change:data', this.updateData.bind(this));
+    this.on('change:_transforms', this.updateTransforms.bind(this));
+    this.updateData();
+    this.updateTransforms();
   }
 
-  update_data() {
+  updateData() {
     this.data_model = new ViewBasedJSONModel(this.get('data'));
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
       this.save_changes();
     });
+    this.data_model.dataSync.connect((sender, msg) => {
+      switch (msg.type) {
+        case ('row-indices-updated'):
+          this.set('_visible_rows', msg.indices);
+          this.save_changes();
+          break;
+        case ('cell-updated'):
+          this.set('data', this.data_model.dataset);
+          this.save_changes();
+          break;
+        default:
+          throw 'unreachable';
+      }
+    })
 
-    this.update_transforms();
+    this.selectionModel = new BasicSelectionModel({ model: this.data_model });
+
+    this.updateTransforms();
+
+    // @ts-ignore
+    window.model = this.data_model
   }
 
-  update_transforms() {
+  updateTransforms() {
+    this.selectionModel.clear();
     this.data_model.replaceTransforms(this.get('_transforms'));
   }
 
@@ -117,6 +150,7 @@ export
   static view_module_version = MODULE_VERSION;
 
   data_model: ViewBasedJSONModel;
+  selectionModel: BasicSelectionModel;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
@@ -140,12 +174,20 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
    */
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
-    
+    const hitRegion = hit.region;
+    const buttonSize = HeaderRenderer.buttonSize;
+    const buttonPadding = HeaderRenderer.buttonPadding;
 
-    if (hit.region === 'column-header') {
-      const columnSize = grid.columnSize('body', hit.column);
-      const isMenuClick = hit.x > columnSize - HeaderRenderer.buttonSize;
-      
+    if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
+      const columnWidth = grid.columnSize(
+        hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
+      const rowHeight = grid.rowSize('column-header', hit.row);
+      const isMenuClick =
+        hit.x > (columnWidth - buttonSize - buttonPadding) &&
+        hit.x < (columnWidth - buttonPadding) &&
+        hit.y > (rowHeight - buttonSize - buttonPadding) &&
+        hit.y < (rowHeight - buttonPadding);
+
       if (isMenuClick) {
         this._dataGridView.contextMenu.open(grid, {
           ...hit, x: event.clientX, y: event.clientY
@@ -162,7 +204,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
 };
 
 export
-  class DataGridView extends DOMWidgetView {
+class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
@@ -177,7 +219,9 @@ export
   }
 
   render() {
-    return this._update_renderers().then(() => {
+    this.el.classList.add('datagrid-container');
+
+    return this.updateRenderers().then(() => {
       this.grid = new DataGrid({
         defaultSizes: {
           rowHeight: this.model.get('base_row_size'),
@@ -197,20 +241,20 @@ export
         commands: this._createCommandRegistry()
       });
 
-      // Set ipydatagrid header renderer
-      const headerRenderer = new HeaderRenderer({
-        textColor: '#000000',
-        backgroundColor: 'rgb(243, 243, 243)',
-        horizontalAlignment: 'center'
-      });
-      this.grid.cellRenderers.set('column-header', {}, headerRenderer);
-      this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
+      this.updateGridStyle();
+
+      this.grid.model = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
-      this._update_grid_renderers();
-      this._update_data();
+      this.grid.selectionModel = this.model.selectionModel;
+      this.updateGridRenderers();
 
-      this.model.on('change:data', this._update_data.bind(this));
+      this.model.on('change:data', () => {
+        this.grid.model = this.model.data_model;
+        this.grid.selectionModel = this.model.selectionModel;
+        this.updateHeaderRenderer();
+        this.filterDialog.model = this.model.data_model;
+      });
 
       this.model.on('change:base_row_size', () => {
         this.grid.defaultSizes = {
@@ -245,70 +289,48 @@ export
       });
 
       this.model.on_some_change(['default_renderer', 'renderers'], () => {
-        this._update_renderers().then(this._update_grid_renderers.bind(this));
+        this.updateRenderers().then(this.updateGridRenderers.bind(this));
       }, this);
 
       this.pWidget.addWidget(this.grid);
     });
   }
 
-  _update_data() {
-    this.grid.model = this.model.data_model;
-    this.grid.selectionModel = new BasicSelectionModel({
-      model: this.model.data_model
-    });
-
-    this.model.data_model.dataSync.connect((sender, msg) => {
-      switch (msg.type) {
-        case ('row-indices-updated'):
-          this.model.set('_visible_rows', msg.indices);
-          this.model.save_changes();
-          break;
-        case ('cell-updated'):
-          this.model.set('data', this.model.data_model.dataset);
-          this.model.save_changes();
-          break;
-        default:
-          throw 'unreachable';
-      }
-    })
-  }
-
-  _update_renderers() {
+  private updateRenderers() {
     // Unlisten to previous renderers
     if (this.default_renderer) {
-      this.stopListening(this.default_renderer, 'renderer_changed');
+      this.stopListening(this.default_renderer, 'renderer-changed');
     }
     for (const key in this.renderers) {
-      this.stopListening(this.renderers[key], 'renderer_changed');
+      this.stopListening(this.renderers[key], 'renderer-changed');
     }
 
     // And create views for new renderers
     let promises = [];
 
     const default_renderer = this.model.get('default_renderer');
-    promises.push(this.create_child_view(default_renderer).then((default_renderer_view: any) => {
-      this.default_renderer = default_renderer_view;
+    promises.push(this.create_child_view(default_renderer).then((defaultRendererView: any) => {
+      this.default_renderer = defaultRendererView;
 
-      this.listenTo(this.default_renderer, 'renderer_changed', this._update_grid_renderers.bind(this));
+      this.listenTo(this.default_renderer, 'renderer-changed', this.updateGridRenderers.bind(this));
     }));
 
     let renderer_promises: Dict<Promise<any>> = {};
     _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
       renderer_promises[key] = this.create_child_view(model);
     });
-    promises.push(resolvePromisesDict(renderer_promises).then((renderer_views: Dict<CellRendererView>) => {
-      this.renderers = renderer_views;
+    promises.push(resolvePromisesDict(renderer_promises).then((rendererViews: Dict<CellRendererView>) => {
+      this.renderers = rendererViews;
 
-      for (const key in renderer_views) {
-        this.listenTo(renderer_views[key], 'renderer_changed', this._update_grid_renderers.bind(this));
+      for (const key in rendererViews) {
+        this.listenTo(rendererViews[key], 'renderer-changed', this.updateGridRenderers.bind(this));
       }
     }));
 
     return Promise.all(promises);
   }
 
-  _update_grid_renderers() {
+  private updateGridRenderers() {
     if (this.grid.cellRenderers.get('body', {}) !== this.default_renderer.renderer) {
       this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
     }
@@ -320,7 +342,43 @@ export
     }
   }
 
-  _createCommandRegistry(): CommandRegistry {
+  protected updateGridStyle() {
+    this.updateHeaderRenderer();
+    const rowHeaderRenderer = new TextRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center',
+      verticalAlignment: 'center'
+    });
+    this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
+
+    const selectionFillColor = d3Color.rgb(Theme.getBrandColor(2));
+    selectionFillColor.opacity = 0.4;  // Fading the selection fill color a bit
+
+    this.grid.style = {
+      voidColor: Theme.getBackgroundColor(),
+      backgroundColor: Theme.getBackgroundColor(),
+      gridLineColor: Theme.getBorderColor(),
+      headerGridLineColor: Theme.getBorderColor(1),
+      selectionFillColor: selectionFillColor.formatRgb(),
+      selectionBorderColor: Theme.getBrandColor(1),
+      headerSelectionFillColor: selectionFillColor.formatRgb(),
+      headerSelectionBorderColor: Theme.getBrandColor(1),
+    };
+  }
+
+  private updateHeaderRenderer() {
+    const headerRenderer = new HeaderRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center'
+    });
+    headerRenderer.model = this.model.data_model;
+    this.grid.cellRenderers.set('column-header', {}, headerRenderer);
+    this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
+  }
+
+  private _createCommandRegistry(): CommandRegistry {
     const commands = new CommandRegistry();
     commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
       label: 'Sort ASC',

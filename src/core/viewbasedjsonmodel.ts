@@ -57,7 +57,8 @@ export class ViewBasedJSONModel extends DataModel {
   private _updateDataset(data: ViewBasedJSONModel.IData): void {
     this._dataset = data;
     this._updatePrimaryKeyMap();
-    this.currentView = new View(this._dataset);
+    let view = new View(this._dataset);
+    this.currentView = view
   }
 
   /**
@@ -213,8 +214,8 @@ export class ViewBasedJSONModel extends DataModel {
    * 
    * @param columnIndex - The index to retrieve unique values for.
    */
-  uniqueValues(columnIndex: number): any[] {
-    return this.currentView.uniqueValues(columnIndex);
+  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
+    return this.currentView.uniqueValues(region, columnIndex);
   }
 
   get transformStateChanged(): ISignal<this, TransformStateManager.IEvent> {
@@ -231,7 +232,6 @@ export class ViewBasedJSONModel extends DataModel {
    * @param options - The options for this method.
    */
   updateCellValue(options: ViewBasedJSONModel.IUpdateCellValuesOptions): void {
-
     // Bail if cell region isn't the body
     // TODO: Support modifying the schema
     if (options.region !== 'body') {
@@ -251,7 +251,6 @@ export class ViewBasedJSONModel extends DataModel {
     if (lookupIndex === undefined) {
       return;
     };
-
     // Create new row and add it to new dataset
     const newRow = { ...this._dataset.data[lookupIndex] };
     newRow[this.metadata('body', options.column)['name']] = options.value;
@@ -279,8 +278,22 @@ export class ViewBasedJSONModel extends DataModel {
     return this._dataSyncSignal;
   }
 
+  /**
+   * Returns the current full dataset.
+   */
   get dataset(): ViewBasedJSONModel.IData {
     return this._dataset;
+  }
+
+  /**
+   * Returns the index in the schema that relates to the index by region.
+   *
+   * @param region - The `CellRegion` of interest.
+   *
+   * @param index - The column index to look up.
+   */
+  getSchemaIndex(region: DataModel.CellRegion, index: number): number {
+    return this.currentView.getSchemaIndex(region, index)
   }
 
   private _currentView: View;

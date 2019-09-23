@@ -1,8 +1,8 @@
 // Copyright (c) QuantStack
 // Distributed under the terms of the Modified BSD License.
 
-const vega_expressions: any = require('vega-expression');
-const vega_functions: any = require('vega-functions');
+const vegaExpressions: any = require('vega-expression');
+const vegaFunctions: any = require('vega-functions');
 
 import {
   WidgetModel, WidgetView
@@ -34,26 +34,26 @@ class VegaExprModel extends WidgetModel {
       whitelist: ['cell', 'default_value', 'functions'],
       globalvar: 'cell',
       functions: function(codegen: any) {
-        const fn = vega_expressions.functions(codegen);
-        for (let name in vega_functions.functionContext) { fn[name] = 'functions.' + name; }
+        const fn = vegaExpressions.functions(codegen);
+        for (let name in vegaFunctions.functionContext) { fn[name] = 'functions.' + name; }
         return fn;
       }
     };
 
-    this._codegen = vega_expressions.codegen(codegen_params);
+    this._codegen = vegaExpressions.codegen(codegen_params);
 
-    this.update_function();
-    this.on('change:value', this.update_function.bind(this));
+    this.updateFunction();
+    this.on('change:value', this.updateFunction.bind(this));
   }
 
-  process(config: CellRenderer.ICellConfig, default_value: any) {
-    return this._function(config, default_value, vega_functions.functionContext);
+  process(config: CellRenderer.ICellConfig, defaultValue: any) {
+    return this._function(config, defaultValue, vegaFunctions.functionContext);
   }
 
-  update_function() {
-    const parsed_value = this._codegen(vega_expressions.parse(this.get('value')));
+  private updateFunction() {
+    const parsedValue = this._codegen(vegaExpressions.parse(this.get('value')));
 
-    this._function = Function('cell', 'default_value', 'functions', '"use strict";return(' + parsed_value.code + ')');
+    this._function = Function('cell', 'default_value', 'functions', '"use strict";return(' + parsedValue.code + ')');
   }
 
   static model_name = 'VegaExprModel';
@@ -69,8 +69,8 @@ class VegaExprModel extends WidgetModel {
 
 export
 class VegaExprView extends WidgetView {
-  process(config: CellRenderer.ICellConfig, default_value: any) {
-    return this.model.process(config, default_value);
+  process(config: CellRenderer.ICellConfig, defaultValue: any) {
+    return this.model.process(config, defaultValue);
   }
 
   model: VegaExprModel;

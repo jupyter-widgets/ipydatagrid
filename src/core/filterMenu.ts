@@ -58,13 +58,15 @@ export class InteractiveFilterDialog extends Widget {
 
   /**
    * Checks for any undefined values in `this._filterValue`.
+   *
+   * Note: This should be expanded in the future to also check for dtype
+   * inappropriate values.
    */
   hasValidFilterValue(): boolean {
     if (!this._filterValue) {
       return false;
     } else if (Array.isArray(this._filterValue)) {
-      if (this._filterValue[0] === undefined
-        || this._filterValue[1] === undefined) {
+      if (!this._filterValue[0] || !this._filterValue[1]) {
         return false;
       }
     }
@@ -85,27 +87,22 @@ export class InteractiveFilterDialog extends Widget {
     // Construct transform
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: (this._region !== 'column-header')
-        ? this._columnIndex
-        : this._columnIndex + 1,
+      columnIndex: this.model.getSchemaIndex(this._region, this._columnIndex),
       operator: this._filterOperator,
       value: <Transform.FilterValue>this._filterValue
     };
 
-
     this._model.addTransform(transform);
-    this.close()
+    this.close();
   }
 
   /**
    * Updates the DOM elements with transform state from the linked data model.
    */
   updateDialog(): void {
-    // The 0 index of the model's data is the primary key field, so we need to 
-    // add 1 to get the correct field if the click was on a column header
-    const lookupColumn = (this._region === 'column-header')
-      ? this._columnIndex + 1
-      : 0;
+    const lookupColumn = this.model.getSchemaIndex(
+      this._region, this._columnIndex
+    );
     const columnState = this._model.transformMetadata(lookupColumn);
 
     // Update state with transform metadata, if present
@@ -293,7 +290,7 @@ export class InteractiveFilterDialog extends Widget {
   createTitleNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        { className: 'p-Menu-itemLabel', style: { paddingLeft: '5px' } },
         (this._mode === 'condition')
           ? 'Filter by condition:'
           : 'Filter by value:')
@@ -310,12 +307,12 @@ export class InteractiveFilterDialog extends Widget {
   createSingleValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
         h.input({
+          type: 'text',
           style: {
             marginRight: '5px',
             width: '135px',
-            height: '20px',
             visibility: (
               this._filterOperator === 'empty'
               || this._filterOperator === 'notempty'
@@ -337,7 +334,8 @@ export class InteractiveFilterDialog extends Widget {
             : ''
         }),
         h.button({
-          style: { width: '60px', height: '20px', padding: '1px' },
+          className: 'jupyter-widgets jupyter-button widget-button',
+          style: { width: '60px', padding: '1px' },
           onclick: this.applyFilter.bind(this)
         }, 'Apply'))
     );
@@ -353,12 +351,13 @@ export class InteractiveFilterDialog extends Widget {
   createDualValueNode(): VirtualElement {
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } },
+        { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
         h.input({
           style: { marginRight: '5px', width: '75px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
+          type: 'text',
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement;
             this._filterValue = [
@@ -378,6 +377,7 @@ export class InteractiveFilterDialog extends Widget {
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
+          type: 'text',
           oninput: (evt) => {
             const elem = <HTMLInputElement>evt.srcElement;
             this._filterValue = [
@@ -391,7 +391,11 @@ export class InteractiveFilterDialog extends Widget {
           // this.createOperatorList
           value: String((<any[]>this._filterValue)[1] || '')
         }),
-        h.button({ onclick: this.applyFilter.bind(this) }, 'Apply'))
+        h.button({
+          className: "jupyter-widgets jupyter-button widget-button",
+          style: { width: '60px', padding: '1px' },
+          onclick: this.applyFilter.bind(this)
+        }, 'Apply'))
     );
   }
 
@@ -399,16 +403,23 @@ export class InteractiveFilterDialog extends Widget {
    * Creates a `VirtualElement` to display the unique values of a column.
    */
   protected createUniqueValueNodes(): VirtualElement {
-    const uniqueVals = this._model.uniqueValues(this._columnIndex);
+    const uniqueVals = this._model.uniqueValues(
+      this._region,
+      this._columnIndex
+    );
     const optionElems = uniqueVals.map(val => {
       return h.option({ value: val }, String(val))
     });
 
     return h.li(
       { className: 'p-Menu-item' },
-      h.div(
+      h.div({
+        className: 'widget-select widget-select-multiple',
+        style: { width: '200px' }
+      },
         h.select({
           multiple: '',
+          value: '',
           style: { width: '200px', height: '200px', margin: '5px' },
           onchange: (evt) => {
             let selectElem = <HTMLSelectElement>evt.srcElement;
@@ -441,18 +452,21 @@ export class InteractiveFilterDialog extends Widget {
 
     let operators: VirtualElement[];
 
+    // TODO: Refactor this to a switch statement
     if (this._columnDType === 'number' || this._columnDType === 'integer') {
       operators = this._createNumericalOperators();
     } else if (['date', 'time', 'datetime'].includes(this._columnDType)) {
       operators = this._createDateOperators();
+    } else if (this._columnDType === 'boolean') {
+      operators = this._createBooleanOperators();
     } else {
       operators = this._createCategoricalOperators();
     }
 
     return h.li(
       { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { padding: '5px' } }, h.select({
-          style: { width: '200px' },
+        { className: 'p-Menu-itemLabel widget-dropdown', style: { padding: '5px' } }, h.select({
+          style: { width: '200px', fontSize: '12px' },
           // Assigning a random key ensures that this element is always
           // rerendered
           key: String(Math.random()),
@@ -485,6 +499,7 @@ export class InteractiveFilterDialog extends Widget {
         style: { padding: '5px', textAlign: 'right' }
       },
         h.button({
+          className: 'jupyter-widgets jupyter-button widget-button',
           style: { width: '60px' },
           onclick: this.applyFilter.bind(this)
         }, 'Apply'))
@@ -576,6 +591,22 @@ export class InteractiveFilterDialog extends Widget {
 
   /**
    * Creates an array of VirtualElements to represent the available operators
+   * for columns with a boolean dtype.
+   */
+  private _createBooleanOperators(): VirtualElement[] {
+    const op = this._filterOperator
+    return [
+      h.option({
+        value: 'empty', ...(op === 'empty') && { selected: '' }
+      }, 'Is empty:'),
+      h.option({
+        value: 'notempty', ...(op === 'notempty') && { selected: '' }
+      }, 'Is not empty:')
+    ]
+  }
+
+  /**
+   * Creates an array of VirtualElements to represent the available operators
    * for columns with a categorical dtype.
    */
   private _createCategoricalOperators(): VirtualElement[] {
@@ -621,6 +652,48 @@ export class InteractiveFilterDialog extends Widget {
         value: 'between', ...(op === 'between') && { selected: '' }
       }, 'Is in between'),
     ]
+  }
+
+  /**
+   * Returns a reference to the data model used for this menu.
+   */
+  get model(): ViewBasedJSONModel {
+    return this._model;
+  }
+
+  /**
+   * Updates the data model used for this menu.
+   */
+  set model(model: ViewBasedJSONModel) {
+    this._model = model;
+  }
+
+  /**
+   * Returns the current input value of the dialog.
+   */
+  get value(): InteractiveFilterDialog.FilterValue {
+    return this._filterValue
+  }
+
+  /**
+   * Returns the currently active filter operator.
+   */
+  get operator(): Transform.FilterOperator {
+    return this._filterOperator;
+  }
+
+  /**
+   * Returns the active column index.
+   */
+  get columnIndex(): number {
+    return this._columnIndex;
+  }
+
+  /**
+   * Returns the active column dtype.
+   */
+  get columnDType(): string {
+    return this._columnDType;
   }
 
   private _model: ViewBasedJSONModel;

@@ -2,18 +2,26 @@ import {
   TextRenderer, CellRenderer, GraphicsContext
 } from '@phosphor/datagrid'
 
+import {
+  ViewBasedJSONModel
+} from './viewbasedjsonmodel';
+
+import {
+  Theme
+} from '../utils';
+
 /**
  * A custom cell renderer for headers that provides a menu icon.
  */
 export class HeaderRenderer extends TextRenderer {
 
-   /**
-   * Draw the text for the cell.
-   *
-   * @param gc - The graphics context to use for drawing.
-   *
-   * @param config - The configuration data for the cell.
-   */
+  /**
+  * Draw the text for the cell.
+  *
+  * @param gc - The graphics context to use for drawing.
+  *
+  * @param config - The configuration data for the cell.
+  */
   drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
     // Resolve the font for the cell.
     let font = CellRenderer.resolveOption(this.font, config);
@@ -61,32 +69,32 @@ export class HeaderRenderer extends TextRenderer {
 
     // Compute the Y position for the text.
     switch (vAlign) {
-    case 'top':
-      textY = config.y + 2 + textHeight;
-      break;
-    case 'center':
-      textY = config.y + config.height / 2 + textHeight / 2;
-      break;
-    case 'bottom':
-      textY = config.y + config.height - 2;
-      break;
-    default:
-      throw 'unreachable';
+      case 'top':
+        textY = config.y + 2 + textHeight;
+        break;
+      case 'center':
+        textY = config.y + config.height / 2 + textHeight / 2;
+        break;
+      case 'bottom':
+        textY = config.y + config.height - 2;
+        break;
+      default:
+        throw 'unreachable';
     }
 
     // Compute the X position for the text.
     switch (hAlign) {
-    case 'left':
-      textX = config.x + 2;
-      break;
-    case 'center':
-      textX = config.x + config.width / 2;
-      break;
-    case 'right':
-      textX = config.x + config.width - 3;
-      break;
-    default:
-      throw 'unreachable';
+      case 'left':
+        textX = config.x + 2;
+        break;
+      case 'center':
+        textX = config.x + config.width / 2;
+        break;
+      case 'right':
+        textX = config.x + config.width - 3;
+        break;
+      default:
+        throw 'unreachable';
     }
 
     // Clip the cell if the text is taller than the text box height.
@@ -107,27 +115,88 @@ export class HeaderRenderer extends TextRenderer {
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
+    const backgroundSize = HeaderRenderer.buttonSize + HeaderRenderer.buttonPadding;
     gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
     gc.fillRect(
-      (config.x + config.width - HeaderRenderer.buttonSize),
-      (config.y),
-      (HeaderRenderer.buttonSize), 
-      (config.height - 1)
+      (config.x + config.width - backgroundSize),
+      (config.y + config.height - backgroundSize),
+      backgroundSize, 
+      backgroundSize
     )
 
+    const iconStart = config.x
+      + config.width
+      - HeaderRenderer.iconWidth
+      - HeaderRenderer.buttonPadding;
+
     // Draw menu icon
-    gc.fillStyle = color;
-    gc.font = '11px fontawesome';
-    gc.fillText(
-      (`\uF150`),
-      (config.x + (config.width - 12)),
-      (config.y + config.height - 4)
+    gc.beginPath();
+    gc.moveTo(
+      iconStart,
+      config.height - HeaderRenderer.buttonPadding - HeaderRenderer.iconHeight
     );
-  } 
+    gc.lineTo(
+      iconStart + (HeaderRenderer.iconWidth / 2),
+      config.height - HeaderRenderer.buttonPadding
+    );
+    gc.lineTo(
+      iconStart + HeaderRenderer.iconWidth,
+      config.height - HeaderRenderer.buttonPadding - HeaderRenderer.iconHeight
+    );
+    gc.closePath();
+
+    // Check for transform metadata
+    if (this._model) {
+      // Get cell metadata
+      const schemaIndex = this._model.getSchemaIndex(
+        config.region,
+        config.column
+      );
+      if (this._model.transformMetadata(schemaIndex)
+        && (this._model.transformMetadata(schemaIndex))!['filter']) {
+        gc.fillStyle = Theme.getBrandColor(1);
+        gc.fill()
+        return;
+      }
+    }
+    gc.fillStyle = color;
+    gc.fill();
+  }
+
+
+  /**
+   * Sets the data model that should provide metadata for this renderer.
+   */
+  set model(model: ViewBasedJSONModel | undefined) {
+    this._model = model
+  }
 
   /**
    * Indicates the size of the menu icon, to support the current implementation
    * of hit testing.
    */
-  static buttonSize: number = 20;
+  static buttonSize: number = 11;
+  static iconWidth: number = 12;
+  static iconHeight: number = 6;
+  static buttonPadding: number = 5;
+
+  private _model: ViewBasedJSONModel | undefined = undefined
+}
+
+/**
+ * The namespace for the `HeaderRenderer` class statics.
+ */
+export namespace HeaderRenderer {
+  /**
+   * An options object for initializing a renderer.
+   */
+  export interface IOptions {
+
+    /**
+     * The data model this renderer should get metadata from.
+     */
+    model: ViewBasedJSONModel
+
+    textOptions: TextRenderer.IOptions
+  }
 }
