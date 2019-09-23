@@ -3,8 +3,6 @@
 
 import * as _ from 'underscore';
 
-const d3Color: any = require('d3-color');
-
 import {
   TextRenderer
 } from '@phosphor/datagrid';
@@ -348,18 +346,25 @@ class DataGridView extends DOMWidgetView {
     });
     this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
 
-    const selectionFillColor = d3Color.rgb(Theme.getBrandColor(2));
-    selectionFillColor.opacity = 0.4;  // Fading the selection fill color a bit
+    const scrollShadow = {
+      size: 4,
+      color1: Theme.getBorderColor(1, 1.0),
+      color2: Theme.getBorderColor(1, 0.5),
+      color3: Theme.getBorderColor(1, 0.0)
+    }
 
     this.grid.style = {
       voidColor: Theme.getBackgroundColor(),
       backgroundColor: Theme.getBackgroundColor(),
       gridLineColor: Theme.getBorderColor(),
       headerGridLineColor: Theme.getBorderColor(1),
-      selectionFillColor: selectionFillColor.formatRgb(),
+      selectionFillColor: Theme.getBrandColor(2, 0.4),
       selectionBorderColor: Theme.getBrandColor(1),
-      headerSelectionFillColor: selectionFillColor.formatRgb(),
-      headerSelectionBorderColor: Theme.getBrandColor(1),
+      headerSelectionFillColor: Theme.getBackgroundColor(3, 0.4),
+      headerSelectionBorderColor: Theme.getBorderColor(1),
+      cursorFillColor: Theme.getBrandColor(3, 0.4),
+      cursorBorderColor: Theme.getBrandColor(1),
+      scrollShadow: scrollShadow,
     };
   }
 
