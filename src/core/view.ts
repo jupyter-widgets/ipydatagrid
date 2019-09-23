@@ -147,6 +147,13 @@ class View {
   }
 
   /**
+   * Returns a reference to the dataset from this View.
+   */
+  get dataset(): View.DataSource {
+    return this._data;
+  }
+
+  /**
    * Returns the index in the schema that relates to the index by region.
    *
    * @param region - The `CellRegion` of interest.

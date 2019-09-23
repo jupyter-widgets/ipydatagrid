@@ -3,8 +3,6 @@
 
 import * as _ from 'underscore';
 
-const d3Color: any = require('d3-color');
-
 import {
   TextRenderer
 } from '@phosphor/datagrid';
@@ -82,13 +80,14 @@ export
       _view_name: DataGridModel.view_name,
       _view_module: DataGridModel.view_module,
       _view_module_version: DataGridModel.view_module_version,
+      _visible_rows: [],
+      _transforms: [],
       baseRowSize: 20,
       baseColumnSize: 64,
       baseRowHeaderSize: 64,
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       data: {},
-      _transforms: [],
       renderers: {},
       default_renderer: null,
       selection_mode: 'none'
@@ -114,6 +113,20 @@ export
       this.set('_transforms', value.transforms);
       this.save_changes();
     });
+    this.data_model.dataSync.connect((sender, msg) => {
+      switch (msg.type) {
+        case ('row-indices-updated'):
+          this.set('_visible_rows', msg.indices);
+          this.save_changes();
+          break;
+        case ('cell-updated'):
+          this.set('data', this.data_model.dataset);
+          this.save_changes();
+          break;
+        default:
+          throw 'unreachable';
+      }
+    })
 
     this.updateTransforms();
     this.updateSelectionModel();
@@ -365,18 +378,25 @@ class DataGridView extends DOMWidgetView {
     });
     this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
 
-    const selectionFillColor = d3Color.rgb(Theme.getBrandColor(2));
-    selectionFillColor.opacity = 0.4;  // Fading the selection fill color a bit
+    const scrollShadow = {
+      size: 4,
+      color1: Theme.getBorderColor(1, 1.0),
+      color2: Theme.getBorderColor(1, 0.5),
+      color3: Theme.getBorderColor(1, 0.0)
+    }
 
     this.grid.style = {
       voidColor: Theme.getBackgroundColor(),
       backgroundColor: Theme.getBackgroundColor(),
       gridLineColor: Theme.getBorderColor(),
       headerGridLineColor: Theme.getBorderColor(1),
-      selectionFillColor: selectionFillColor.formatRgb(),
+      selectionFillColor: Theme.getBrandColor(2, 0.4),
       selectionBorderColor: Theme.getBrandColor(1),
-      headerSelectionFillColor: selectionFillColor.formatRgb(),
-      headerSelectionBorderColor: Theme.getBrandColor(1),
+      headerSelectionFillColor: Theme.getBackgroundColor(3, 0.4),
+      headerSelectionBorderColor: Theme.getBorderColor(1),
+      cursorFillColor: Theme.getBrandColor(3, 0.4),
+      cursorBorderColor: Theme.getBrandColor(1),
+      scrollShadow: scrollShadow,
     };
   }
 
