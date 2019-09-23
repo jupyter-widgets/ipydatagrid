@@ -14,6 +14,10 @@ import {
 } from '@phosphor/commands';
 
 import {
+  Signal
+} from '@phosphor/signaling'
+
+import {
   BasicKeyHandler
 } from './core/basickeyhandler';
 
@@ -94,6 +98,8 @@ export
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
+    this.selectionModelChanged = new Signal<this, void>(this);
+
     this.on('change:data', this.updateData.bind(this));
     this.on('change:_transforms', this.updateTransforms.bind(this));
     this.on('change:selection_mode', this.updateSelectionModel, this);
@@ -134,6 +140,7 @@ export
 
     this.selectionModel = new BasicSelectionModel({ model: this.data_model });
     this.selectionModel.selectionMode = selectionMode;
+    this.selectionModelChanged.emit();
   }
 
   static serializers: ISerializers = {
@@ -153,6 +160,7 @@ export
 
   data_model: ViewBasedJSONModel;
   selectionModel: BasicSelectionModel | null;
+  selectionModelChanged: Signal<this, void>;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
@@ -255,8 +263,6 @@ class DataGridView extends DOMWidgetView {
         this.grid.model = this.model.data_model;
         this.updateHeaderRenderer();
         this.filterDialog.model = this.model.data_model;
-        this.model.updateSelectionModel();
-        this.grid.selectionModel = this.model.selectionModel;
       });
 
       this.model.on('change:base_row_size', () => {
@@ -295,8 +301,7 @@ class DataGridView extends DOMWidgetView {
         this.updateRenderers().then(this.updateGridRenderers.bind(this));
       }, this);
 
-      this.model.on('change:selection_mode', () => {
-        this.model.updateSelectionModel();
+      this.model.selectionModelChanged.connect(() => {
         this.grid.selectionModel = this.model.selectionModel;
       });
 
