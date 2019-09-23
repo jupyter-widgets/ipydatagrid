@@ -78,13 +78,14 @@ export
       _view_name: DataGridModel.view_name,
       _view_module: DataGridModel.view_module,
       _view_module_version: DataGridModel.view_module_version,
+      _visible_rows: [],
+      _transforms: [],
       baseRowSize: 20,
       baseColumnSize: 64,
       baseRowHeaderSize: 64,
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
       data: {},
-      _transforms: [],
       renderers: {},
       default_renderer: null
     };
@@ -105,10 +106,27 @@ export
       this.set('_transforms', value.transforms);
       this.save_changes();
     });
+    this.data_model.dataSync.connect((sender, msg) => {
+      switch (msg.type) {
+        case ('row-indices-updated'):
+          this.set('_visible_rows', msg.indices);
+          this.save_changes();
+          break;
+        case ('cell-updated'):
+          this.set('data', this.data_model.dataset);
+          this.save_changes();
+          break;
+        default:
+          throw 'unreachable';
+      }
+    })
 
     this.selectionModel = new BasicSelectionModel({ model: this.data_model });
 
     this.updateTransforms();
+
+    // @ts-ignore
+    window.model = this.data_model
   }
 
   updateTransforms() {

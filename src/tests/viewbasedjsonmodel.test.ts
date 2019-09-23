@@ -4,56 +4,43 @@ import { ViewBasedJSONModel } from '../core/viewbasedjsonmodel'
 import { TransformStateManager } from '../core/transformStateManager';
 import { Transform } from '../core/transform';
 import { DataGenerator } from './testUtils'
-jest.mock('../core/view');
-
-const ViewMock = <jest.Mock<View>>View;
-
-beforeEach(() => {
-  ViewMock.mockClear();
-});
 
 describe('Test interactions with View', () => {
-  test('Instantiates a View', () => {
-    // Show that mockClear() is working:
-    expect(View).not.toHaveBeenCalled();
-    // @ts-ignore
-    const model = Private.createSimpleModel();
-    expect(View).toBeCalledTimes(1)
-  })
   test('.rowCount()', () => {
     const model = Private.createSimpleModel();
+    const mock = jest.spyOn(View.prototype, 'rowCount');
     model.rowCount('body');
-    expect(ViewMock.mock.instances[0].rowCount).toHaveBeenCalledWith('body');
+    expect(mock).toHaveBeenCalledWith('body');
   })
   test('.columnCount()', () => {
     const model = Private.createSimpleModel();
+    const mock = jest.spyOn(View.prototype, 'columnCount');
     model.columnCount('body');
-    expect(ViewMock.mock.instances[0].columnCount).toHaveBeenCalledWith('body');
+    expect(mock).toHaveBeenCalledWith('body');
   })
   test('.metadata()', () => {
     const model = Private.createSimpleModel();
+    const mock = jest.spyOn(View.prototype, 'metadata');
     model.metadata('body', 0);
-    expect(ViewMock.mock.instances[0].metadata).toHaveBeenCalledWith('body', 0);
+    expect(mock).toHaveBeenCalledWith('body', 0);
   })
   test('.uniqueValues()', () => {
     const model = Private.createSimpleModel();
+    const mock = jest.spyOn(View.prototype, 'uniqueValues');
     model.uniqueValues('column-header', 0);
-    expect(
-      ViewMock.mock.instances[0].uniqueValues
-    ).toHaveBeenCalledWith('column-header', 0);
+    expect(mock).toHaveBeenCalledWith('column-header', 0);
   })
   test('.getSchemaIndex()', () => {
     const model = Private.createSimpleModel();
+    const mock = jest.spyOn(View.prototype, 'getSchemaIndex');
     model.getSchemaIndex('column-header', 0);
-
-    expect(
-      ViewMock.mock.instances[0].getSchemaIndex
-    ).toHaveBeenCalledWith('column-header', 0);
+    expect(mock).toHaveBeenCalledWith('column-header', 0);
   })
   test('.data()', () => {
     const model = Private.createSimpleModel();
+    const mock = jest.spyOn(View.prototype, 'data');
     model.data('body', 0, 0);
-    expect(ViewMock.mock.instances[0].data).toHaveBeenCalledWith('body', 0, 0);
+    expect(mock).toHaveBeenCalledWith('body', 0, 0);
   })
 })
 

@@ -3,7 +3,11 @@ import {
 } from './datamodel';
 
 import {
-  ReadonlyJSONObject
+  each
+} from '@phosphor/algorithm';
+
+import {
+  ReadonlyJSONObject, ReadonlyJSONValue
 } from '@phosphor/coreutils';
 
 import {
@@ -34,8 +38,7 @@ export class ViewBasedJSONModel extends DataModel {
    */
   constructor(data: ViewBasedJSONModel.IData) {
     super();
-    this._dataset = data;
-    this._currentView = new View(this._dataset);
+    this._updateDataset(data);
     this._transformState = new TransformStateManager();
 
     // Repaint grid on transform state update
@@ -44,6 +47,41 @@ export class ViewBasedJSONModel extends DataModel {
       this.currentView = this._transformState.createView(this._dataset);
       this._transformSignal.emit(value)
     })
+  }
+
+  /**
+   * Sets the dataset for this model.
+   *
+   * @param data - The data to be set on this data model
+   */
+  private _updateDataset(data: ViewBasedJSONModel.IData): void {
+    this._dataset = data;
+    this._updatePrimaryKeyMap();
+    let view = new View(this._dataset);
+    this.currentView = view
+  }
+
+  /**
+   * Updates the primary key map, which provides a mapping from primary key
+   * value to row in the full dataset.
+   */
+  private _updatePrimaryKeyMap(): void {
+    this._primaryKeyMap.clear();
+
+    const primaryKey = this._dataset.schema.primaryKey;
+
+    if (Array.isArray(primaryKey)) {
+      each(this._dataset.data, (rowData, index) => {
+        let keys = primaryKey.map(key => rowData[key])
+        this._primaryKeyMap.set(JSON.stringify(keys), index)
+      })
+    } else {
+      // If primaryKey is a string, we want to represent it in the map as
+      // an array, as it will be looked up that way.
+      each(this._dataset.data, (rowData, index) => {
+        this._primaryKeyMap.set(JSON.stringify([rowData[primaryKey]]), index);
+      })
+    }
   }
 
   /**
@@ -106,9 +144,23 @@ export class ViewBasedJSONModel extends DataModel {
   /**
    * Sets the provided View as the current View, then emits a changed signal.
    */
-  protected set currentView(value: View) {
-    this._currentView = value;
+  protected set currentView(view: View) {
+    this._currentView = view;
     this.emitChanged({ type: 'model-reset' });
+
+    const primaryKey = !Array.isArray(this._dataset.schema.primaryKey)
+      ? [this._dataset.schema.primaryKey]
+      : this._dataset.schema.primaryKey;
+
+    const indices: number[] = view.dataset.map((val, i) => {
+      const lookupVal = JSON.stringify(primaryKey.map(key => val[key]));
+      return this._primaryKeyMap.get(lookupVal) || i;
+    });
+
+    this.dataSync.emit({
+      type: 'row-indices-updated',
+      indices: indices
+    });
   }
 
   /**
@@ -171,6 +223,69 @@ export class ViewBasedJSONModel extends DataModel {
   }
 
   /**
+   * Updates the indicated value in the dataset.
+   *
+   * Note: provided row/column values should correspond to the currently
+   * active View, not the full dataset.
+   * Note: Currently, only updating `body` cells is supported.
+   *
+   * @param options - The options for this method.
+   */
+  updateCellValue(options: ViewBasedJSONModel.IUpdateCellValuesOptions): void {
+    // Bail if cell region isn't the body
+    // TODO: Support modifying the schema
+    if (options.region !== 'body') {
+      return;
+    }
+
+    // Get the index of the row in the full dataset to be updated
+    const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
+      ? this._dataset.schema.primaryKey
+      : [this._dataset.schema.primaryKey];
+    let keyValues = primaryKey.map(key =>
+      this._currentView.dataset[options.row][key]
+    );
+    const lookupIndex = this._primaryKeyMap.get(JSON.stringify(keyValues));
+
+    // Bail if row in dataset could not be found
+    if (lookupIndex === undefined) {
+      return;
+    };
+    // Create new row and add it to new dataset
+    const newRow = { ...this._dataset.data[lookupIndex] };
+    newRow[this.metadata('body', options.column)['name']] = options.value;
+    const newData = Array.from(this._dataset.data);
+    newData[lookupIndex] = newRow;
+
+    this._dataset = {
+      data: newData,
+      schema: this._dataset.schema
+    };
+
+    this.dataSync.emit({
+      type: 'cell-updated',
+    });
+
+    // We need to rerun the transforms, as the changed cell may change the order
+    // or visibility of other rows
+    this.currentView = this._transformState.createView(this._dataset);
+  }
+
+  /**
+   * A signal emitted when the data model has changes to sync to the kernel.
+   */
+  get dataSync(): Signal<this, ViewBasedJSONModel.IDataSyncEvent> {
+    return this._dataSyncSignal;
+  }
+
+  /**
+   * Returns the current full dataset.
+   */
+  get dataset(): ViewBasedJSONModel.IData {
+    return this._dataset;
+  }
+
+  /**
    * Returns the index in the schema that relates to the index by region.
    *
    * @param region - The `CellRegion` of interest.
@@ -183,8 +298,10 @@ export class ViewBasedJSONModel extends DataModel {
 
   private _currentView: View;
   private _transformSignal = new Signal<this, TransformStateManager.IEvent>(this);
+  private _dataSyncSignal = new Signal<this, ViewBasedJSONModel.IDataSyncEvent>(this);
+  private _primaryKeyMap: Map<ReadonlyJSONValue, number> = new Map()
 
-  protected readonly _dataset: ViewBasedJSONModel.IData;
+  protected _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;
 }
 
@@ -194,7 +311,11 @@ export class ViewBasedJSONModel extends DataModel {
 export
 namespace ViewBasedJSONModel {
   /**
+   * An object which describes a column of data in the model.
    *
+   * #### Notes
+   * This is based on the JSON Table Schema specification:
+   * https://specs.frictionlessdata.io/table-schema/
    */
   export interface IField {
     /**
@@ -234,6 +355,28 @@ namespace ViewBasedJSONModel {
     readonly primaryKey: string | string[];
   }
 
+  export interface IUpdateCellValuesOptions {
+    /**
+     * The `CellRegion` of the cell to be updated.
+     */
+    region: DataModel.CellRegion
+
+    /**
+     * The index of the target row in the current view.
+     */
+    column: number
+
+    /**
+     * The index of the target row in the current view.
+     */
+    row: number
+
+    /**
+     * The new value to replace the old one.
+     */
+    value: any
+  }
+
   /**
    * A type alias for a data source for a JSON data model.
    *
@@ -260,5 +403,28 @@ namespace ViewBasedJSONModel {
      * The data model takes full ownership of the data source.
      */
     data: DataSource
+  }
+  export type IDataSyncEvent = ISyncCell | ISyncRowIndices
+
+  /**
+   * An event that indicates a needed change to the kernel-side dataset.
+   */
+  export interface ISyncCell {
+    /**
+     * The discriminated type of the args object.
+     */
+    type: 'cell-updated'
+  }
+  export interface ISyncRowIndices {
+    /**
+     * The discriminated type of the args object.
+     */
+    type: 'row-indices-updated'
+
+    /**
+     * An list of the rows in the untransformed dataset that are currently
+     * represented in the `View`.
+     */
+    indices: number[]
   }
 }

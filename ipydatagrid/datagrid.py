@@ -11,7 +11,7 @@ TODO: Add module docstring
 from traitlets import (
     Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default
 )
-
+from copy import deepcopy
 from ipywidgets import DOMWidget, Widget, widget_serialization
 
 from ._frontend import module_name, module_version
@@ -33,12 +33,25 @@ class DataGrid(DOMWidget):
 
     header_visibility = Enum(default_value='all', values=['all', 'row', 'column', 'none']).tag(sync=True)
 
-    data = Dict().tag(sync=True)
-
     _transforms = List(Dict).tag(sync=True, **widget_serialization)
+    _visible_rows = List(Int).tag(sync=True)
+    data = Dict().tag(sync=True)
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
+
+    def get_cell_value(self, column, row_index):
+        """Gets the value for a single cell."""
+
+        return self.data['data'][row_index][column]
+
+    def get_visible_data(self):
+        """Returns the dataset of the current View."""
+
+        data = deepcopy(self.data)
+        if self._visible_rows:
+            data['data'] = [data['data'][i] for i in self._visible_rows]
+        return data
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
@@ -48,6 +61,7 @@ class DataGrid(DOMWidget):
 
     def revert(self):
         """Revert all transformations."""
+
         self._transforms = []
 
     @default('default_renderer')
