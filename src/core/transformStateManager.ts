@@ -43,6 +43,11 @@ export class TransformStateManager {
     // Add the transform to the state
     switch (transform.type) {
       case ('sort'):
+        // Only allow one sort transform.
+        // TODO: Support multiple sort columns.
+        for (let key of Object.keys(this._state)) {
+          this._state[key]['sort'] = undefined;
+        }
         this._state[transform.columnIndex]['sort'] = transform;
         break;
       case ('filter'):
