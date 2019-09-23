@@ -122,11 +122,7 @@ export
     })
 
     this.selectionModel = new BasicSelectionModel({ model: this.data_model });
-
     this.updateTransforms();
-
-    // @ts-ignore
-    window.model = this.data_model
   }
 
   updateTransforms() {
