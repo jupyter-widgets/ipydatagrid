@@ -8,4 +8,15 @@
 
 .datagrid-container {
   height: 500px;
+  width: 100%;
+}
+
+.jp-LinkedOutputView .jp-OutputArea .jupyter-widgets .datagrid-container {
+  min-height: 360px;  /* Min-height required for mirred output in jlab < 0.31.6 */
+  height: 100%;
+}
+
+.jupyterlab-sidecar .jp-OutputArea-child .jupyter-widgets .datagrid-container {
+  min-height: 360px;  /* Min-height required for mirred output in jlab < 0.31.6 */
+  height: 100%;
 }
