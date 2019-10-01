@@ -24,7 +24,7 @@ import {
 } from './core/basicselectionmodel';
 
 import {
-  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
+  DOMWidgetModel, DOMWidgetView, WidgetModel, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -67,6 +67,25 @@ type Dict<T> = { [keys: string]: T; };
 
 
 export
+class SelectedCells extends WidgetModel {
+  defaults() {
+    return {...super.defaults(),
+      _model_name: SelectedCells.model_name,
+      _model_module: SelectedCells.model_module,
+      _model_module_version: SelectedCells.model_module_version
+    };
+  }
+
+  static model_name = 'SelectedCells';
+  static model_module = MODULE_NAME;
+  static model_module_version = MODULE_VERSION;
+
+  static serializers: ISerializers = {
+    ...WidgetModel.serializers
+  }
+}
+
+export
   class DataGridModel extends DOMWidgetModel {
   defaults() {
     return {
@@ -86,7 +105,9 @@ export
       data: {},
       renderers: {},
       default_renderer: null,
-      selection_mode: 'none'
+      selection_mode: 'none',
+      selections: [],
+      selected_cells: null,
     };
   }
 
@@ -96,6 +117,7 @@ export
     this.on('change:data', this.updateData.bind(this));
     this.on('change:_transforms', this.updateTransforms.bind(this));
     this.on('change:selection_mode', this.updateSelectionModel, this);
+    this.on('change:selections', this.updateSelections, this);
     this.updateData();
     this.updateTransforms();
     this.updateSelectionModel();
@@ -148,6 +170,52 @@ export
     this.selectionModel = new BasicSelectionModel({ model: this.data_model });
     this.selectionModel.selectionMode = selectionMode;
     this.trigger('selection-model-changed');
+
+    this.selectionModel.changed.connect((sender: BasicSelectionModel, args: void) => {
+      if (this.synchingWithKernel) {
+        return;
+      }
+
+      const selectionIter = sender.selections().iter();
+      const selections: any[] = [];
+      let selection = null;
+      while (selection = selectionIter.next()) {
+        selections.push({
+          r1: selection.r1,
+          r2: selection.r2,
+          c1: selection.c1,
+          c2: selection.c2
+        });
+      }
+
+      this.set('selections', selections);
+      this.save_changes();
+    }, this);
+  }
+
+  updateSelections() {
+    if (!this.selectionModel) {
+      return;
+    }
+
+    this.synchingWithKernel = true;
+
+    const selections = this.get('selections');
+    this.selectionModel.clear();
+
+    for (let selection of selections) {
+      this.selectionModel.select({
+        r1: selection.r1,
+        c1: selection.c1,
+        r2: selection.r2,
+        c2: selection.c2,
+        cursorRow:selection.r1,
+        cursorColumn: selection.c1,
+        clear: "none"
+      });
+    }
+
+    this.synchingWithKernel = false;
   }
 
   static serializers: ISerializers = {
@@ -167,6 +235,7 @@ export
 
   data_model: ViewBasedJSONModel;
   selectionModel: BasicSelectionModel | null;
+  synchingWithKernel: boolean = false;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {

@@ -16,7 +16,54 @@ from ipywidgets import DOMWidget, Widget, widget_serialization
 
 from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
+from math import floor
 
+
+class SelectedCells(Widget):
+    _model_name = Unicode('SelectedCells').tag(sync=True)
+    _model_module = Unicode(module_name).tag(sync=True)
+    _model_module_version = Unicode(module_version).tag(sync=True)
+
+    def __init__(self, grid, **kwargs):
+        super(SelectedCells, self).__init__(**kwargs)
+        self._grid = grid
+
+    def __iter__(self):
+        self._rect_index = 0
+        self._cell_index = 0
+        return self
+
+    def __next__(self):
+        cell_rects = self._grid.selections
+        if self._rect_index >= len(cell_rects):
+            raise StopIteration
+
+        rect = cell_rects[self._rect_index]
+        row_col = self._index_to_row_col(rect, self._cell_index)
+        self._cell_index += 1
+
+        if row_col is None:
+            self._rect_index += 1
+            self._cell_index = 0
+            #print("_rect_index {rect}, _cell_index {cell}".format(rect=self._rect_index, cell=self._cell_index))
+            return self.__next__()
+        else:
+            return {
+                'r': row_col['row'],
+                'c': row_col['column']
+            }
+
+    def _index_to_row_col(self, rect, index):
+        #print("_index_to_row_col {rect}, index {index}".format(rect=rect, index=index))
+        num_rows = rect['r2'] - rect['r1'] + 1
+        num_cols = rect['c2'] - rect['c1'] + 1
+        if index > (num_rows * num_cols - 1):
+            return None
+
+        return {
+            'row': rect['r1'] + floor(index / num_cols),
+            'column': rect['c1'] + index % num_cols
+        }
 
 class DataGrid(DOMWidget):
     _model_name = Unicode('DataGridModel').tag(sync=True)
@@ -40,6 +87,7 @@ class DataGrid(DOMWidget):
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
+    selections = List(Dict).tag(sync=True, **widget_serialization)
 
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell."""
@@ -68,3 +116,30 @@ class DataGrid(DOMWidget):
     @default('default_renderer')
     def _default_renderer(self):
         return TextRenderer()
+
+    def select_rectangle(self, rectangle):
+        self.selections.append(rectangle)
+        self.send_state('selections')
+
+    def deselect_rectangle(self, rectangle):
+        pass
+
+    def select_cell(self, cell):
+        self.select_rectangle({
+            'r1': cell['r'],
+            'c1': cell['c'],
+            'r2': cell['r'],
+            'c2': cell['c']
+        })
+
+    def deselect_cell(self, cell):
+        self.deselect_rectangle({
+            'r1': cell['r'],
+            'c1': cell['c'],
+            'r2': cell['r'],
+            'c2': cell['c']
+        })
+
+    @property
+    def selected_cells(self):
+        return iter(SelectedCells(grid=self))
