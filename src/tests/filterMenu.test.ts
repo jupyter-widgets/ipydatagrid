@@ -11,7 +11,11 @@ describe('Test .hasValidFilterValue()', () => {
     { type: 'number', data: [1, 2, 3], value: ['5', '2'], expected: true },
     { type: 'number', data: [1, 2, 3], value: ['5', ''], expected: false },
     { type: 'number', data: [1, 2, 3], value: ['', '5'], expected: false },
-    { type: 'number', data: [1, 2, 3], value: [''], expected: false }
+    { type: 'number', data: [1, 2, 3], value: [''], expected: false },
+    { type: 'number', data: [1, 2, 3], value: 0, expected: true },
+    { type: 'number', data: [1, 2, 3], value: '0', expected: true },
+    { type: 'number', data: [1, 2, 3], value: ['0', '2'], expected: true },
+    { type: 'number', data: [1, 2, 3], value: ['5', '0'], expected: true },
   ];
 
   testCases.forEach((testCase) => {
