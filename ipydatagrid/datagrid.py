@@ -69,6 +69,17 @@ class SelectedCells(Widget):
 
         return cells
 
+    def all_values(self):
+        values = []
+        col_offset = self._grid.get_row_header_length()
+        it = self.__iter__()
+
+        for cell in it:
+            value = self._grid.get_cell_value_by_index(cell['c'] + col_offset, cell['r'])
+            values.append(value)
+
+        return values
+
     def _cell_in_rect(self, cell, rect):
         return cell['r'] >= rect['r1'] and cell['r'] <= rect['r2'] and \
                cell['c'] >= rect['c1'] and cell['c'] <= rect['c2']
@@ -117,9 +128,23 @@ class DataGrid(DOMWidget):
     selections = List(Dict).tag(sync=True, **widget_serialization)
 
     def get_cell_value(self, column, row_index):
-        """Gets the value for a single cell."""
+        """Gets the value for a single cell by column name and row index."""
 
         return self.data['data'][row_index][column]
+
+    def get_cell_value_by_index(self, column_index, row_index):
+        """Gets the value for a single cell by column index and row index."""
+
+        column = self._column_index_to_name(column_index)
+        if column is not None:
+            return self.data['data'][row_index][column]
+        return None
+
+    def get_row_header_length(self):
+        if 'schema' not in self.data or 'primaryKey' not in self.data['schema']:
+            return 0
+
+        return len(self.data['schema']['primaryKey'])
 
     def get_visible_data(self):
         """Returns the dataset of the current View."""
@@ -165,5 +190,29 @@ class DataGrid(DOMWidget):
         return SelectedCells(grid=self).all()
 
     @property
+    def selected_cell_values(self):
+        return SelectedCells(grid=self).all_values()
+
+    @property
     def selected_cell_iterator(self):
         return SelectedCells(grid=self)
+
+    def _column_index_to_name(self, column_index):
+        if 'schema' not in self.data or 'fields' not in self.data['schema'] or \
+            len(self.data['schema']['fields']) <= column_index:
+            return None
+
+        return self.data['schema']['fields'][column_index]['name']
+
+    def _column_name_to_index(self, column_name):
+        if 'schema' not in self.data or 'fields' not in self.data['schema']:
+            return None
+
+        index = 0
+
+        for field in self.data['schema']['fields']:
+            if field['name'] == column_name:
+                return index
+            index += 1
+
+        return None
