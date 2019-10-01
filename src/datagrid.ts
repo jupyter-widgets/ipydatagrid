@@ -176,25 +176,29 @@ export
         return;
       }
 
+      this.synchingWithKernel = true;
+
       const selectionIter = sender.selections().iter();
       const selections: any[] = [];
       let selection = null;
       while (selection = selectionIter.next()) {
         selections.push({
-          r1: selection.r1,
-          r2: selection.r2,
-          c1: selection.c1,
-          c2: selection.c2
+          r1: Math.min(selection.r1, selection.r2),
+          r2: Math.max(selection.r1, selection.r2),
+          c1: Math.min(selection.c1, selection.c2),
+          c2: Math.max(selection.c1, selection.c2),
         });
       }
 
       this.set('selections', selections);
       this.save_changes();
+
+      this.synchingWithKernel = false;
     }, this);
   }
 
   updateSelections() {
-    if (!this.selectionModel) {
+    if (!this.selectionModel || this.synchingWithKernel) {
       return;
     }
 

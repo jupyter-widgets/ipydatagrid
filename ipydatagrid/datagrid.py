@@ -126,6 +126,11 @@ class DataGrid(DOMWidget):
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
 
+    def __init__(self, **kwargs):
+        super(DataGrid, self).__init__(**kwargs)
+        
+        self.observe(self._selections_changed, 'selections')
+
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell by column name and row index."""
 
@@ -167,7 +172,12 @@ class DataGrid(DOMWidget):
         self.send_state('selections')
 
     def select_rectangle(self, rectangle):
-        self.selections.append(rectangle)
+        self.selections.append({
+            'r1': min(rectangle['r1'], rectangle['r2']),
+            'c1': min(rectangle['c1'], rectangle['c2']),
+            'r2': max(rectangle['r1'], rectangle['r2']),
+            'c2': max(rectangle['c1'], rectangle['c2'])
+        })
         self.send_state('selections')
 
     def select_cell(self, cell):
@@ -189,6 +199,18 @@ class DataGrid(DOMWidget):
     @property
     def selected_cell_iterator(self):
         return SelectedCells(grid=self)
+
+    def _selections_changed(self, change):
+        self.selections = change['new']
+        for rectangle in self.selections:
+            r1 = min(rectangle['r1'], rectangle['r2'])
+            c1 = min(rectangle['c1'], rectangle['c2'])
+            r2 = max(rectangle['r1'], rectangle['r2'])
+            c2 = max(rectangle['c1'], rectangle['c2'])
+            rectangle['r1'] = r1
+            rectangle['c1'] = c1
+            rectangle['r2'] = r2
+            rectangle['c2'] = c2
 
     def _get_row_header_length(self):
         if 'schema' not in self.data or 'primaryKey' not in self.data['schema']:
