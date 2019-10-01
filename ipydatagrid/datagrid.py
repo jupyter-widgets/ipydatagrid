@@ -45,24 +45,51 @@ class SelectedCells(Widget):
         if row_col is None:
             self._rect_index += 1
             self._cell_index = 0
-            #print("_rect_index {rect}, _cell_index {cell}".format(rect=self._rect_index, cell=self._cell_index))
+            return self.__next__()
+        elif self._cell_in_previous_selected_rects(row_col):
             return self.__next__()
         else:
-            return {
-                'r': row_col['row'],
-                'c': row_col['column']
-            }
+            return row_col
+
+    def __len__(self):
+        length = 0
+        it = self.__iter__()
+
+        for _ in it:
+            length += 1
+
+        return length
+
+    def all(self):
+        cells = []
+        it = self.__iter__()
+
+        for cell in it:
+            cells.append(cell)
+
+        return cells
+
+    def _cell_in_rect(self, cell, rect):
+        return cell['r'] >= rect['r1'] and cell['r'] <= rect['r2'] and \
+               cell['c'] >= rect['c1'] and cell['c'] <= rect['c2']
+
+    def _cell_in_previous_selected_rects(self, cell):
+        cell_rects = self._grid.selections
+        for i in range(0, self._rect_index):
+            if self._cell_in_rect(cell, cell_rects[i]):
+                return True
+        
+        return False
 
     def _index_to_row_col(self, rect, index):
-        #print("_index_to_row_col {rect}, index {index}".format(rect=rect, index=index))
         num_rows = rect['r2'] - rect['r1'] + 1
         num_cols = rect['c2'] - rect['c1'] + 1
         if index > (num_rows * num_cols - 1):
             return None
 
         return {
-            'row': rect['r1'] + floor(index / num_cols),
-            'column': rect['c1'] + index % num_cols
+            'r': rect['r1'] + floor(index / num_cols),
+            'c': rect['c1'] + index % num_cols
         }
 
 class DataGrid(DOMWidget):
@@ -117,12 +144,13 @@ class DataGrid(DOMWidget):
     def _default_renderer(self):
         return TextRenderer()
 
+    def clear_selection(self):
+        self.selections.clear()
+        self.send_state('selections')
+
     def select_rectangle(self, rectangle):
         self.selections.append(rectangle)
         self.send_state('selections')
-
-    def deselect_rectangle(self, rectangle):
-        pass
 
     def select_cell(self, cell):
         self.select_rectangle({
@@ -132,14 +160,10 @@ class DataGrid(DOMWidget):
             'c2': cell['c']
         })
 
-    def deselect_cell(self, cell):
-        self.deselect_rectangle({
-            'r1': cell['r'],
-            'c1': cell['c'],
-            'r2': cell['r'],
-            'c2': cell['c']
-        })
-
     @property
     def selected_cells(self):
-        return iter(SelectedCells(grid=self))
+        return SelectedCells(grid=self).all()
+
+    @property
+    def selected_cell_iterator(self):
+        return SelectedCells(grid=self)
