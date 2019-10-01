@@ -63,10 +63,15 @@ export class InteractiveFilterDialog extends Widget {
    * inappropriate values.
    */
   hasValidFilterValue(): boolean {
-    if (!this._filterValue) {
+    if (this._filterValue === '' || this._filterValue === undefined) {
       return false;
     } else if (Array.isArray(this._filterValue)) {
-      if (!this._filterValue[0] || !this._filterValue[1]) {
+      if (
+        this._filterValue[0] === ''
+        || this._filterValue[0] === undefined
+        || this._filterValue[1] === ''
+        || this._filterValue[1] === undefined
+      ) {
         return false;
       }
     }
@@ -329,7 +334,7 @@ export class InteractiveFilterDialog extends Widget {
               ? Number(elem.value)
               : elem.value;
           },
-          value: (this._filterValue && !Array.isArray(this._filterValue))
+          value: (this._filterValue !== undefined && !Array.isArray(this._filterValue))
             ? String(this._filterValue)
             : ''
         }),
@@ -349,6 +354,7 @@ export class InteractiveFilterDialog extends Widget {
    * can cause attribute changes that are not recognized by VirtualDOM.
    */
   createDualValueNode(): VirtualElement {
+    const value = <any[]>this._filterValue;
     return h.li(
       { className: 'p-Menu-item' }, h.div(
         { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
@@ -369,7 +375,7 @@ export class InteractiveFilterDialog extends Widget {
           },
           // this._filterValue is converted to an array in
           // this.createOperatorList
-          value: String((<any[]>this._filterValue)[0] || '')
+          value: value[0] !== undefined ? String(value[0]) : ''
         }),
         'and ',
         h.input({
@@ -389,7 +395,7 @@ export class InteractiveFilterDialog extends Widget {
           },
           // this._filterValue is converted to an array in
           // this.createOperatorList
-          value: String((<any[]>this._filterValue)[1] || '')
+          value: value[1] !== undefined ? String(value[1]) : ''
         }),
         h.button({
           className: "jupyter-widgets jupyter-button widget-button",
