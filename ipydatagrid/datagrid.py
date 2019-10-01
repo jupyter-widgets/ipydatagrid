@@ -71,11 +71,10 @@ class SelectedCells(Widget):
 
     def all_values(self):
         values = []
-        col_offset = self._grid.get_row_header_length()
         it = self.__iter__()
 
         for cell in it:
-            value = self._grid.get_cell_value_by_index(cell['c'] + col_offset, cell['r'])
+            value = self._grid.get_cell_value_by_index(cell['c'], cell['r'])
             values.append(value)
 
         return values
@@ -140,12 +139,6 @@ class DataGrid(DOMWidget):
             return self.data['data'][row_index][column]
         return None
 
-    def get_row_header_length(self):
-        if 'schema' not in self.data or 'primaryKey' not in self.data['schema']:
-            return 0
-
-        return len(self.data['schema']['primaryKey'])
-
     def get_visible_data(self):
         """Returns the dataset of the current View."""
 
@@ -197,22 +190,29 @@ class DataGrid(DOMWidget):
     def selected_cell_iterator(self):
         return SelectedCells(grid=self)
 
+    def _get_row_header_length(self):
+        if 'schema' not in self.data or 'primaryKey' not in self.data['schema']:
+            return 0
+
+        return len(self.data['schema']['primaryKey'])
+
     def _column_index_to_name(self, column_index):
-        if 'schema' not in self.data or 'fields' not in self.data['schema'] or \
-            len(self.data['schema']['fields']) <= column_index:
+        if 'schema' not in self.data or 'fields' not in self.data['schema']:
             return None
 
-        return self.data['schema']['fields'][column_index]['name']
+        primary_keys = [] if 'primaryKey' not in self.data['schema'] else self.data['schema']['primaryKey']
+        col_headers = [field['name'] for field in self.data['schema']['fields'] if field['name'] not in primary_keys]
+
+        return None if len(col_headers) <= column_index else col_headers[column_index]
 
     def _column_name_to_index(self, column_name):
         if 'schema' not in self.data or 'fields' not in self.data['schema']:
             return None
 
-        index = 0
+        primary_keys = [] if 'primaryKey' not in self.data['schema'] else self.data['schema']['primaryKey']
+        col_headers = [field['name'] for field in self.data['schema']['fields'] if field['name'] not in primary_keys]
 
-        for field in self.data['schema']['fields']:
-            if field['name'] == column_name:
-                return index
-            index += 1
-
-        return None
+        try:
+            return col_headers.index(column_name)
+        except ValueError:
+            return None
