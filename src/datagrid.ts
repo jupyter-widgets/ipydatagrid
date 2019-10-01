@@ -24,7 +24,7 @@ import {
 } from './core/basicselectionmodel';
 
 import {
-  DOMWidgetModel, DOMWidgetView, WidgetModel, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
+  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -65,26 +65,6 @@ import {
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
 
-
-export
-class SelectedCells extends WidgetModel {
-  defaults() {
-    return {...super.defaults(),
-      _model_name: SelectedCells.model_name,
-      _model_module: SelectedCells.model_module,
-      _model_module_version: SelectedCells.model_module_version
-    };
-  }
-
-  static model_name = 'SelectedCells';
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
-
-  static serializers: ISerializers = {
-    ...WidgetModel.serializers
-  }
-}
-
 export
   class DataGridModel extends DOMWidgetModel {
   defaults() {
@@ -106,8 +86,7 @@ export
       renderers: {},
       default_renderer: null,
       selection_mode: 'none',
-      selections: [],
-      selected_cells: null,
+      selections: []
     };
   }
 

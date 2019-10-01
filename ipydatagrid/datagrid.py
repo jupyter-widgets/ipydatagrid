@@ -12,20 +12,16 @@ from traitlets import (
     Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default
 )
 from copy import deepcopy
-from ipywidgets import DOMWidget, Widget, widget_serialization
+from ipywidgets import DOMWidget, widget_serialization
 
 from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
 from math import floor
 
 
-class SelectedCells(Widget):
-    _model_name = Unicode('SelectedCells').tag(sync=True)
-    _model_module = Unicode(module_name).tag(sync=True)
-    _model_module_version = Unicode(module_version).tag(sync=True)
-
+class SelectionHelper():
     def __init__(self, grid, **kwargs):
-        super(SelectedCells, self).__init__(**kwargs)
+        super(SelectionHelper, self).__init__(**kwargs)
         self._grid = grid
 
     def __iter__(self):
@@ -190,15 +186,15 @@ class DataGrid(DOMWidget):
 
     @property
     def selected_cells(self):
-        return SelectedCells(grid=self).all()
+        return SelectionHelper(grid=self).all()
 
     @property
     def selected_cell_values(self):
-        return SelectedCells(grid=self).all_values()
+        return SelectionHelper(grid=self).all_values()
 
     @property
     def selected_cell_iterator(self):
-        return SelectedCells(grid=self)
+        return SelectionHelper(grid=self)
 
     def _selections_changed(self, change):
         self.selections = change['new']
