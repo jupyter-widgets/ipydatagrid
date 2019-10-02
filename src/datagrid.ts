@@ -65,6 +65,57 @@ import {
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
 
+class IIPyDataGridMouseHandler extends BasicMouseHandler {
+  /**
+   * Construct a new datagrid mouse handler.
+   *
+   * @param dataGridView - The DataGridView object for which mouse events are handled.
+   */
+  constructor(dataGridView: DataGridView) {
+    super();
+
+    this._dataGridView = dataGridView;
+  }
+
+  /**
+   * Handle the mouse down event for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The mouse down event of interest.
+   */
+  onMouseDown(grid: DataGrid, event: MouseEvent): void {
+    const hit = grid.hitTest(event.clientX, event.clientY);
+    const hitRegion = hit.region;
+    const buttonSize = HeaderRenderer.buttonSize;
+    const buttonPadding = HeaderRenderer.buttonPadding;
+
+    if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
+      const columnWidth = grid.columnSize(
+        hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
+      const rowHeight = grid.rowSize('column-header', hit.row);
+      const isMenuClick =
+        hit.x > (columnWidth - buttonSize - buttonPadding) &&
+        hit.x < (columnWidth - buttonPadding) &&
+        hit.y > (rowHeight - buttonSize - buttonPadding) &&
+        hit.y < (rowHeight - buttonPadding);
+
+      if (isMenuClick) {
+        this._dataGridView.contextMenu.open(grid, {
+          ...hit, x: event.clientX, y: event.clientY
+        });
+
+        return;
+      }
+    }
+
+    super.onMouseDown(grid, event);
+  }
+
+  private _dataGridView: DataGridView;
+};
+
+
 export
   class DataGridModel extends DOMWidgetModel {
   defaults() {
@@ -221,55 +272,6 @@ export
   synchingWithKernel: boolean = false;
 }
 
-class IIPyDataGridMouseHandler extends BasicMouseHandler {
-  /**
-   * Construct a new datagrid mouse handler.
-   *
-   * @param dataGridView - The DataGridView object for which mouse events are handled.
-   */
-  constructor(dataGridView: DataGridView) {
-    super();
-
-    this._dataGridView = dataGridView;
-  }
-
-  /**
-   * Handle the mouse down event for the data grid.
-   *
-   * @param grid - The data grid of interest.
-   *
-   * @param event - The mouse down event of interest.
-   */
-  onMouseDown(grid: DataGrid, event: MouseEvent): void {
-    const hit = grid.hitTest(event.clientX, event.clientY);
-    const hitRegion = hit.region;
-    const buttonSize = HeaderRenderer.buttonSize;
-    const buttonPadding = HeaderRenderer.buttonPadding;
-
-    if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
-      const columnWidth = grid.columnSize(
-        hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
-      const rowHeight = grid.rowSize('column-header', hit.row);
-      const isMenuClick =
-        hit.x > (columnWidth - buttonSize - buttonPadding) &&
-        hit.x < (columnWidth - buttonPadding) &&
-        hit.y > (rowHeight - buttonSize - buttonPadding) &&
-        hit.y < (rowHeight - buttonPadding);
-
-      if (isMenuClick) {
-        this._dataGridView.contextMenu.open(grid, {
-          ...hit, x: event.clientX, y: event.clientY
-        });
-
-        return;
-      }
-    }
-
-    super.onMouseDown(grid, event);
-  }
-
-  private _dataGridView: DataGridView;
-};
 
 export
 class DataGridView extends DOMWidgetView {
