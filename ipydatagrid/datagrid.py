@@ -167,10 +167,16 @@ class DataGrid(DOMWidget):
         self.selections.clear()
         self.send_state('selections')
 
-    def select(self, row1, column1, row2=None, column2=None):
+    def select(self, row1, column1, row2=None, column2=None, clear_mode='none'):
         if row2 is None or column2 is None:
             row2 = row1
             column2 = column1
+
+        if clear_mode == 'all':
+            self.selections.clear()
+        elif clear_mode == 'current':
+            if len(self.selections) > 0:
+                self.selections.pop()
 
         self.selections.append({
             'r1': min(row1, row2), 'c1': min(column1, column2),
