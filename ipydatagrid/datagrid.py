@@ -167,22 +167,16 @@ class DataGrid(DOMWidget):
         self.selections.clear()
         self.send_state('selections')
 
-    def select_rectangle(self, rectangle):
+    def select(self, row1, column1, row2=None, column2=None):
+        if row2 is None or column2 is None:
+            row2 = row1
+            column2 = column1
+
         self.selections.append({
-            'r1': min(rectangle['r1'], rectangle['r2']),
-            'c1': min(rectangle['c1'], rectangle['c2']),
-            'r2': max(rectangle['r1'], rectangle['r2']),
-            'c2': max(rectangle['c1'], rectangle['c2'])
+            'r1': min(row1, row2), 'c1': min(column1, column2),
+            'r2': max(row1, row2), 'c2': max(column1, column2)
         })
         self.send_state('selections')
-
-    def select_cell(self, cell):
-        self.select_rectangle({
-            'r1': cell['r'],
-            'c1': cell['c'],
-            'r2': cell['r'],
-            'c2': cell['c']
-        })
 
     @property
     def selected_cells(self):
