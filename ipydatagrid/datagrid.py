@@ -29,14 +29,14 @@ class SelectionHelper():
     def __iter__(self):
         self._rect_index = 0
         self._cell_index = 0
+        self._selections = [self._transform_rect_for_selection_mode(rect) for rect in self._grid.selections]
         return self
 
     def __next__(self):
-        cell_rects = self._grid.selections
-        if self._rect_index >= len(cell_rects):
+        if self._rect_index >= len(self._selections):
             raise StopIteration
 
-        rect = self._transform_rect_for_selection_mode(cell_rects[self._rect_index])
+        rect = self._selections[self._rect_index]
         row_col = self._index_to_row_col(rect, self._cell_index)
         self._cell_index += 1
 
@@ -82,9 +82,8 @@ class SelectionHelper():
                cell['c'] >= rect['c1'] and cell['c'] <= rect['c2']
 
     def _cell_in_previous_selected_rects(self, cell):
-        cell_rects = self._grid.selections
         for i in range(0, self._rect_index):
-            if self._cell_in_rect(cell, cell_rects[i]):
+            if self._cell_in_rect(cell, self._selections[i]):
                 return True
         
         return False
