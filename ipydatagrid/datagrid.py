@@ -23,6 +23,8 @@ class SelectionHelper():
     def __init__(self, grid, **kwargs):
         super(SelectionHelper, self).__init__(**kwargs)
         self._grid = grid
+        self._num_columns = -1
+        self._num_rows = -1
 
     def __iter__(self):
         self._rect_index = 0
@@ -34,7 +36,7 @@ class SelectionHelper():
         if self._rect_index >= len(cell_rects):
             raise StopIteration
 
-        rect = cell_rects[self._rect_index]
+        rect = self._transform_rect_for_selection_mode(cell_rects[self._rect_index])
         row_col = self._index_to_row_col(rect, self._cell_index)
         self._cell_index += 1
 
@@ -97,6 +99,40 @@ class SelectionHelper():
             'r': rect['r1'] + floor(index / num_cols),
             'c': rect['c1'] + index % num_cols
         }
+
+    def _transform_rect_for_selection_mode(self, rect):
+        selection_mode = self._grid.selection_mode
+        if selection_mode == 'row':
+            return {
+                'r1': rect['r1'], 'c1': 0,
+                'r2': rect['r2'], 'c2': self._get_num_columns() - 1
+            }
+        elif selection_mode == 'column':
+            return {
+                'r1': 0, 'c1': rect['c1'],
+                'r2': self._get_num_rows() - 1, 'c2': rect['c2']
+            }
+        else:
+            return rect
+
+    def _get_num_columns(self):
+        if self._num_columns != -1:
+            return self._num_columns
+
+        data = self._grid.data
+        primary_keys = [] if 'primaryKey' not in data['schema'] else data['schema']['primaryKey']
+        col_headers = [field['name'] for field in data['schema']['fields'] if field['name'] not in primary_keys]
+        self._num_columns = len(col_headers)
+        return self._num_columns
+
+    def _get_num_rows(self):
+        if self._num_rows != -1:
+            return self._num_rows
+        
+        data = self._grid.data
+        self._num_rows = 0 if 'data' not in data else len(data['data'])
+        return self._num_rows
+
 
 class DataGrid(DOMWidget):
     _model_name = Unicode('DataGridModel').tag(sync=True)
@@ -207,12 +243,6 @@ class DataGrid(DOMWidget):
             rectangle['c1'] = c1
             rectangle['r2'] = r2
             rectangle['c2'] = c2
-
-    def _get_row_header_length(self):
-        if 'schema' not in self.data or 'primaryKey' not in self.data['schema']:
-            return 0
-
-        return len(self.data['schema']['primaryKey'])
 
     def _column_index_to_name(self, column_index):
         if 'schema' not in self.data or 'fields' not in self.data['schema']:
