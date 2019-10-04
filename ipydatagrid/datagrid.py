@@ -20,6 +20,11 @@ from math import floor
 
 
 class SelectionHelper():
+
+    """A Helper Class for processing selections. Provides an iterator
+    to traverse selected cells.
+    """
+
     def __init__(self, grid, **kwargs):
         super(SelectionHelper, self).__init__(**kwargs)
         self._grid = grid
@@ -59,6 +64,10 @@ class SelectionHelper():
         return length
 
     def all(self):
+        """
+        Returns all selected cells as a list. Each cell is represented as a dictionary
+        with keys 'r': row and 'c': column
+        """
         cells = []
         it = self.__iter__()
 
@@ -68,6 +77,9 @@ class SelectionHelper():
         return cells
 
     def all_values(self):
+        """
+        Returns values for all selected cells as a list.
+        """
         values = []
         it = self.__iter__()
 
@@ -134,6 +146,60 @@ class SelectionHelper():
 
 
 class DataGrid(DOMWidget):
+
+    """A Grid Widget with filter, sort and selection capabilities.
+
+    Attributes
+    ----------
+    base_row_size : int (default: 20)
+        Default row height
+    base_column_size : int (default: 64)
+        Default column width
+    base_row_header_size : int (default: 64)
+        Default row header width
+    base_column_header_size : int (default: 20)
+        Default column header height
+    header_visibility : {'all', 'row', 'column', 'none'} (default: 'all')
+        Header visibility mode
+        'all': both row and column headers visible
+        'row': only row headers visible
+        'column': only column headers visible
+        'none': neither row and column headers visible
+    data : dict
+        Data to display on Data Grid. Dictionary must have a 'data' key which
+        holds row data as list of dictionaries. Each row data contains keys
+        corresponding to columns of grid. Dictionary must also have 'schema' key
+        with description of columns. Further details for the format can be found at
+        https://specs.frictionlessdata.io/table-schema/
+    renderers : dict
+        Custom renderers to use for cell rendering. Keys of dictionary specify
+        column name, and value specifies the renderer
+    default_renderer : CellRenderer (default: TextRenderer)
+        Default renderer to use for cell rendering
+    selection_mode : {'row', 'column', 'cell', 'none'} (default: 'none')
+        Selection mode used when user clicks on grid or makes selections
+        programmatically.
+        'row': Selecting a cell will select all the cells on the same row
+        'column': Selecting a cell will select all the cells on the same column
+        'cell': Individual cell selection
+        'none': Selection disabled
+    selections : list of dict
+        List of all selections. Selections are represented as rectangular
+        regions. Rectangles are defined as dictionaries with keys:
+        'r1': start row, 'c1': start column, 'r2': end row, 'c2': end column.
+        Start of rectangle is top-left corner and end is bottom-right corner
+
+    Accessors (not observable traitlets)
+    ---------
+    selected_cells : list of dict
+        List of selected cells. Each cell is represented as a dictionary
+        with keys 'r': row and 'c': column
+    selected_cell_values : list
+        List of values for all selected cells.
+    selected_cell_iterator : iterator
+        An iterator to traverse selected cells one by one.
+    """
+
     _model_name = Unicode('DataGridModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
@@ -160,6 +226,9 @@ class DataGrid(DOMWidget):
     def __init__(self, **kwargs):
         super(DataGrid, self).__init__(**kwargs)
         
+        # Modify selections to make sure rectangles are from top-left to bottom-right.
+        # If a widget user observes for this attribute, it is guaranteed
+        # to be called after this, since observer list is implemented as queue
         self.observe(self._selections_changed, 'selections')
 
     def get_cell_value(self, column, row_index):
@@ -199,10 +268,31 @@ class DataGrid(DOMWidget):
         return TextRenderer()
 
     def clear_selection(self):
+        """Clears all selections."""
         self.selections.clear()
         self.send_state('selections')
 
     def select(self, row1, column1, row2=None, column2=None, clear_mode='none'):
+        """
+        Select an individual cell or rectangular cell region.
+        Parameters
+        ----------
+        row1 : int
+            Row index for individual cell selection or
+            start row index for rectangular region selection.
+        column1 : int
+            Column index for individual cell selection or
+            start column index for rectangular region selection.
+        row2 : int or None, optional (default: None)
+            End row index for rectangular region selection.
+        column2 : int or None, optional (default: None)
+            End column index for rectangular region selection.
+        clear_mode : string, optional, {'all', 'current', 'none'} (default: 'none')
+            Clear mode to use when there are pre-existing selections.
+            'all' removes all pre-existing selections
+            'current' removes last pre-existing selection
+            'none' keeps pre-existing selections
+        """
         if row2 is None or column2 is None:
             row2 = row1
             column2 = column1
@@ -221,14 +311,24 @@ class DataGrid(DOMWidget):
 
     @property
     def selected_cells(self):
+        """
+        List of selected cells. Each cell is represented as a dictionary
+        with keys 'r': row and 'c': column
+        """
         return SelectionHelper(grid=self).all()
 
     @property
     def selected_cell_values(self):
+        """
+        List of values for all selected cells.
+        """
         return SelectionHelper(grid=self).all_values()
 
     @property
     def selected_cell_iterator(self):
+        """
+        An iterator to traverse selected cells one by one.
+        """
         return SelectionHelper(grid=self)
 
     def _selections_changed(self, change):
