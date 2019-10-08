@@ -65,7 +65,6 @@ import {
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
 
-
 export
   class DataGridModel extends DOMWidgetModel {
   defaults() {
@@ -86,7 +85,8 @@ export
       data: {},
       renderers: {},
       default_renderer: null,
-      selection_mode: 'none'
+      selection_mode: 'none',
+      selections: []
     };
   }
 
@@ -96,6 +96,7 @@ export
     this.on('change:data', this.updateData.bind(this));
     this.on('change:_transforms', this.updateTransforms.bind(this));
     this.on('change:selection_mode', this.updateSelectionModel, this);
+    this.on('change:selections', this.updateSelections, this);
     this.updateData();
     this.updateTransforms();
     this.updateSelectionModel();
@@ -148,6 +149,56 @@ export
     this.selectionModel = new BasicSelectionModel({ model: this.data_model });
     this.selectionModel.selectionMode = selectionMode;
     this.trigger('selection-model-changed');
+
+    this.selectionModel.changed.connect((sender: BasicSelectionModel, args: void) => {
+      if (this.synchingWithKernel) {
+        return;
+      }
+
+      this.synchingWithKernel = true;
+
+      const selectionIter = sender.selections().iter();
+      const selections: any[] = [];
+      let selection = null;
+      while (selection = selectionIter.next()) {
+        selections.push({
+          r1: Math.min(selection.r1, selection.r2),
+          r2: Math.max(selection.r1, selection.r2),
+          c1: Math.min(selection.c1, selection.c2),
+          c2: Math.max(selection.c1, selection.c2),
+        });
+      }
+
+      this.set('selections', selections);
+      this.save_changes();
+
+      this.synchingWithKernel = false;
+    }, this);
+  }
+
+  updateSelections() {
+    if (!this.selectionModel || this.synchingWithKernel) {
+      return;
+    }
+
+    this.synchingWithKernel = true;
+
+    const selections = this.get('selections');
+    this.selectionModel.clear();
+
+    for (let selection of selections) {
+      this.selectionModel.select({
+        r1: selection.r1,
+        c1: selection.c1,
+        r2: selection.r2,
+        c2: selection.c2,
+        cursorRow:selection.r1,
+        cursorColumn: selection.c1,
+        clear: "none"
+      });
+    }
+
+    this.synchingWithKernel = false;
   }
 
   static serializers: ISerializers = {
@@ -167,6 +218,7 @@ export
 
   data_model: ViewBasedJSONModel;
   selectionModel: BasicSelectionModel | null;
+  synchingWithKernel: boolean = false;
 }
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
