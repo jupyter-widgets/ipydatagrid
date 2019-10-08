@@ -9,7 +9,7 @@ TODO: Add module docstring
 """
 
 from traitlets import (
-    Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default
+    Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default, validate
 )
 from copy import deepcopy
 from ipywidgets import DOMWidget, widget_serialization
@@ -223,14 +223,6 @@ class DataGrid(DOMWidget):
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
 
-    def __init__(self, **kwargs):
-        super(DataGrid, self).__init__(**kwargs)
-        
-        # Modify selections to make sure rectangles are from top-left to bottom-right.
-        # If a widget user observes for this attribute, it is guaranteed
-        # to be called after this, since observer list is implemented as queue
-        self.observe(self._selections_changed, 'selections')
-
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell by column name and row index."""
 
@@ -331,9 +323,11 @@ class DataGrid(DOMWidget):
         """
         return SelectionHelper(grid=self)
 
-    def _selections_changed(self, change):
-        self.selections = change['new']
-        for rectangle in self.selections:
+    @validate('selections')
+    def _validate_selections(self, proposal):
+        selections = proposal['value']
+        
+        for rectangle in selections:
             r1 = min(rectangle['r1'], rectangle['r2'])
             c1 = min(rectangle['c1'], rectangle['c2'])
             r2 = max(rectangle['r1'], rectangle['r2'])
@@ -342,6 +336,8 @@ class DataGrid(DOMWidget):
             rectangle['c1'] = c1
             rectangle['r2'] = r2
             rectangle['c2'] = c2
+
+        return selections
 
     def _column_index_to_name(self, column_index):
         if 'schema' not in self.data or 'fields' not in self.data['schema']:
