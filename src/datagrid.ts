@@ -186,10 +186,6 @@ export
   }
 
   updateSelectionModel() {
-    if (this.selectionModel) {
-      this.selectionModel.clear();
-    }
-
     const selectionMode = this.get('selection_mode');
 
     if (selectionMode === 'none') {
