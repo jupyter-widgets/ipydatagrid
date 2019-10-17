@@ -175,6 +175,7 @@ export
     })
 
     this.updateTransforms();
+    this.trigger('data-model-changed');
     this.updateSelectionModel();
   }
 
@@ -319,7 +320,7 @@ class DataGridView extends DOMWidgetView {
       this.grid.selectionModel = this.model.selectionModel;
       this.updateGridRenderers();
 
-      this.model.on('change:data', () => {
+      this.model.on('data-model-changed', () => {
         this.grid.model = this.model.data_model;
         this.updateHeaderRenderer();
         this.filterDialog.model = this.model.data_model;
