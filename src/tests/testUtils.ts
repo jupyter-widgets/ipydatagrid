@@ -88,6 +88,19 @@ export namespace DataGenerator {
   }
 }
 
-
-
+/**
+ * Mock widget manager for testing.
+ */
+export class WidgetManager {
+  create_view(model: any) {
+    return new Promise((resolve, reject) => {
+      resolve(jest.fn())
+    })
+  }
+  display_view(model: any) {
+    return new Promise((resolve, reject) => {
+      resolve(jest.fn())
+    })
+  }
+}
 
