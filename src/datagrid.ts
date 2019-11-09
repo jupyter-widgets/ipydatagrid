@@ -13,15 +13,11 @@ import {
 
 import {
   BasicKeyHandler
-} from './core/basickeyhandler';
+} from '@phosphor/datagrid';
 
 import {
-  BasicMouseHandler
-} from './core/basicmousehandler';
-
-import {
-  BasicSelectionModel
-} from './core/basicselectionmodel';
+  BasicMouseHandler, BasicSelectionModel, CellRenderer
+} from '@phosphor/datagrid';
 
 import {
   DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
@@ -45,7 +41,7 @@ import {
 
 import {
   DataGrid
-} from './core/ipydatagrid';
+} from '@phosphor/datagrid';
 
 // Import CSS
 import '../css/datagrid.css'
@@ -155,6 +151,7 @@ export
 
   updateData() {
     this.data_model = new ViewBasedJSONModel(this.get('data'));
+    this.data_model = new ViewBasedJSONModel(this.get('data'));
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
       this.save_changes();
@@ -198,7 +195,7 @@ export
       return;
     }
 
-    this.selectionModel = new BasicSelectionModel({ model: this.data_model });
+    this.selectionModel = new BasicSelectionModel({ dataModel: this.data_model });
     this.selectionModel.selectionMode = selectionMode;
     this.trigger('selection-model-changed');
 
@@ -244,7 +241,7 @@ export
         c1: selection.c1,
         r2: selection.r2,
         c2: selection.c2,
-        cursorRow:selection.r1,
+        cursorRow: selection.r1,
         cursorColumn: selection.c1,
         clear: "none"
       });
@@ -275,7 +272,7 @@ export
 
 
 export
-class DataGridView extends DOMWidgetView {
+  class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
@@ -314,14 +311,14 @@ class DataGridView extends DOMWidgetView {
 
       this.updateGridStyle();
 
-      this.grid.model = this.model.data_model;
+      this.grid.dataModel = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this.grid.selectionModel = this.model.selectionModel;
       this.updateGridRenderers();
 
       this.model.on('data-model-changed', () => {
-        this.grid.model = this.model.data_model;
+        this.grid.dataModel = this.model.data_model;
         this.updateHeaderRenderer();
         this.filterDialog.model = this.model.data_model;
       });
@@ -366,11 +363,27 @@ class DataGridView extends DOMWidgetView {
         this.grid.selectionModel = this.model.selectionModel;
       });
 
+      //@ts-ignore
       this.pWidget.addWidget(this.grid);
     });
   }
 
+  /**
+   * 
+   * RendererMap.Resolver function to select a CellRenderer based on the
+   * provided cell metadata.
+   * 
+   * @param config - CellConfig for the cell to be rendered.
+   */
+  private _rendererResolver(config: CellRenderer.CellConfig): CellRenderer {
+    const columnName: string = config.metadata['name'];
+    return this.renderers.hasOwnProperty(columnName)
+      ? this.renderers[columnName].renderer
+      : this.default_renderer.renderer
+  }
+
   private updateRenderers() {
+
     // Unlisten to previous renderers
     if (this.default_renderer) {
       this.stopListening(this.default_renderer, 'renderer-changed');
@@ -405,15 +418,7 @@ class DataGridView extends DOMWidgetView {
   }
 
   private updateGridRenderers() {
-    if (this.grid.cellRenderers.get('body', {}) !== this.default_renderer.renderer) {
-      this.grid.cellRenderers.set('body', {}, this.default_renderer.renderer);
-    }
-
-    for (const key in this.renderers) {
-      if (this.grid.cellRenderers.get('body', { 'name': key }) !== this.renderers[key].renderer) {
-        this.grid.cellRenderers.set('body', { 'name': key }, this.renderers[key].renderer);
-      }
-    }
+    this.grid.cellRenderers.update({ 'body': this._rendererResolver.bind(this) });
   }
 
   protected updateGridStyle() {
@@ -424,7 +429,7 @@ class DataGridView extends DOMWidgetView {
       horizontalAlignment: 'center',
       verticalAlignment: 'center'
     });
-    this.grid.cellRenderers.set('row-header', {}, rowHeaderRenderer);
+    this.grid.cellRenderers.update({ 'row-header': rowHeaderRenderer });
 
     const scrollShadow = {
       size: 4,
@@ -455,8 +460,9 @@ class DataGridView extends DOMWidgetView {
       horizontalAlignment: 'center'
     });
     headerRenderer.model = this.model.data_model;
-    this.grid.cellRenderers.set('column-header', {}, headerRenderer);
-    this.grid.cellRenderers.set('corner-header', {}, headerRenderer);
+
+    this.grid.cellRenderers.update({ 'column-header': headerRenderer });
+    this.grid.cellRenderers.update({ 'corner-header': headerRenderer });
   }
 
   private _createCommandRegistry(): CommandRegistry {

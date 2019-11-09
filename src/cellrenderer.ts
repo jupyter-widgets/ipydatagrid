@@ -132,7 +132,7 @@ abstract class CellRendererView extends WidgetView {
     let options: any = {};
     for (const attr of this.model.get_attrs()) {
       if (attr.phosphorName) {
-        options[attr.phosphorName] = (config: CellRenderer.ICellConfig) => {
+        options[attr.phosphorName] = (config: CellRenderer.CellConfig) => {
           return this.process(attr.name, config, attr.defaultValue);
         };
       }
@@ -172,7 +172,7 @@ abstract class CellRendererView extends WidgetView {
    *
    * @param defaultValue - The default attribute value.
    */
-  protected process(name: string, config: CellRenderer.ICellConfig, defaultValue: Scalar): any {
+  protected process(name: string, config: CellRenderer.CellConfig, defaultValue: Scalar): any {
     const processor = this.processors[name];
 
     if (Scalar.isScalar(processor)) {
@@ -264,7 +264,7 @@ class TextRendererView extends CellRendererView {
   }
 
   getFormatter(options: TextRenderer.formatGeneric.IOptions = {}): TextRenderer.FormatFunc {
-    return (config: CellRenderer.ICellConfig) => {
+    return (config: CellRenderer.CellConfig) => {
       let formattedValue: string;
 
       if (config.value === null) {

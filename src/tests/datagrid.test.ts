@@ -18,6 +18,10 @@ import {
   WidgetManager
 } from './testUtils';
 
+import {
+  CellRenderer, DataModel
+} from '@phosphor/datagrid'
+
 /**
  * Tests that assigning new data to the `data` attribute of the widget behaves
  * as intended.
@@ -74,14 +78,16 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({
       data: testData.set1, modelAttributes: { selection_mode: 'cell' }
     });
-    const oldColHead = grid.view.grid.cellRenderers.get('column-header', {});
-    const oldCornerHead = grid.view.grid.cellRenderers.get('column-header', {});
+    const cornerCellConfig = Private.createCellConfig('corner-header');
+    const columnCellConfig = Private.createCellConfig('column-header');
+    const oldColHead = grid.view.grid.cellRenderers.get(cornerCellConfig);
+    const oldCornerHead = grid.view.grid.cellRenderers.get(columnCellConfig);
     grid.model.set('data', testData.set2);
     expect(
-      grid.view.grid.cellRenderers.get('corner-header', {})
+      grid.view.grid.cellRenderers.get(cornerCellConfig)
     ).not.toBe(oldCornerHead);
     expect(
-      grid.view.grid.cellRenderers.get('column-header', {})
+      grid.view.grid.cellRenderers.get(columnCellConfig)
     ).not.toBe(oldColHead);
   });
 });
@@ -148,5 +154,24 @@ namespace Private {
       data: [4, 5, 6], name: 'test2', type: 'number'
     });
     return { set1: data1, set2: data2 };
+  }
+
+  /**
+   * Returns a CellConfig for getting CellRenderers
+   * 
+   * @param region The CellRegion to be added to the CellConfig
+   */
+  export function createCellConfig(region: DataModel.CellRegion): CellRenderer.CellConfig {
+    return {
+      column: 0,
+      height: 0,
+      metadata: {},
+      region: region,
+      row: 0,
+      value: 0,
+      width: 0,
+      x: 0,
+      y: 0
+    }
   }
 }

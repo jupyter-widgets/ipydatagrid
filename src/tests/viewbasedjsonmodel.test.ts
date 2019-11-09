@@ -21,8 +21,8 @@ describe('Test interactions with View', () => {
   test('.metadata()', () => {
     const model = Private.createSimpleModel();
     const mock = jest.spyOn(View.prototype, 'metadata');
-    model.metadata('body', 0);
-    expect(mock).toHaveBeenCalledWith('body', 0);
+    model.metadata('body', 0, 0);
+    expect(mock).toHaveBeenCalledWith('body', 0, 0);
   })
   test('.uniqueValues()', () => {
     const model = Private.createSimpleModel();

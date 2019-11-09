@@ -2,7 +2,7 @@ import { InteractiveFilterDialog } from '../core/filterMenu';
 import { ViewBasedJSONModel } from '../core/viewbasedjsonmodel';
 import { DataGenerator } from './testUtils';
 import { Transform } from '../core/transform';
-import { DataModel } from '../core/datamodel';
+import { DataModel } from '@phosphor/datagrid';
 
 describe('Test .hasValidFilterValue()', () => {
   const testCases: Private.ValidFilterValueTestCase[] = [
@@ -112,7 +112,7 @@ describe('.open()', () => {
     dialog.open(openOptions);
     expect(dialog.columnIndex).toBe(openOptions.columnIndex);
     expect(dialog.columnDType).toBe(dialog.model.metadata(
-      openOptions.region, openOptions.columnIndex)['type']
+      openOptions.region, 0, openOptions.columnIndex)['type']
     )
   })
 })
