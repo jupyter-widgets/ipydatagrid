@@ -8,15 +8,19 @@ import {
 } from '@phosphor/datagrid';
 
 import {
+  toArray
+} from '@phosphor/algorithm';
+
+import {
   CommandRegistry
 } from '@phosphor/commands';
 
 import {
-  BasicKeyHandler
+  BasicKeyHandler, DataModel
 } from '@phosphor/datagrid';
 
 import {
-  BasicMouseHandler, BasicSelectionModel, CellRenderer
+  BasicMouseHandler, BasicSelectionModel, CellRenderer, DataGrid
 } from '@phosphor/datagrid';
 
 import {
@@ -38,10 +42,6 @@ import {
 import {
   HeaderRenderer
 } from './core/headerRenderer';
-
-import {
-  DataGrid
-} from '@phosphor/datagrid';
 
 // Import CSS
 import '../css/datagrid.css'
@@ -286,6 +286,188 @@ export
     this.el = this.pWidget.node;
   }
 
+  copyToClipboard(): void {
+    const grid = <DataGrid><unknown>this;
+    // Fetch the data model.
+    let dataModel = grid.dataModel;
+
+    // Bail early if there is no data model.
+    if (!dataModel) {
+      return;
+    }
+
+    // Fetch the selection model.
+    let selectionModel = grid.selectionModel;
+
+    // Bail early if there is no selection model.
+    if (!selectionModel) {
+      return;
+    }
+
+    // Coerce the selections to an array.
+    let selections = toArray(selectionModel.selections());
+
+    // Bail early if there are no selections.
+    if (selections.length === 0) {
+      return;
+    }
+
+    // Alert that multiple selections cannot be copied.
+    if (selections.length > 1) {
+      alert('Cannot copy multiple grid selections.');
+      return;
+    }
+
+    // Fetch the model counts.
+    let br = dataModel.rowCount('body');
+    let bc = dataModel.columnCount('body');
+
+    // Bail early if there is nothing to copy.
+    if (br === 0 || bc === 0) {
+      return;
+    }
+
+    // Unpack the selection.
+    let { r1, c1, r2, c2 } = selections[0];
+
+    // Clamp the selection to the model bounds.
+    r1 = Math.max(0, Math.min(r1, br - 1));
+    c1 = Math.max(0, Math.min(c1, bc - 1));
+    r2 = Math.max(0, Math.min(r2, br - 1));
+    c2 = Math.max(0, Math.min(c2, bc - 1));
+
+    // Ensure the limits are well-orderd.
+    if (r2 < r1) [r1, r2] = [r2, r1];
+    if (c2 < c1) [c1, c2] = [c2, c1];
+
+    // Fetch the header counts.
+    let rhc = dataModel.columnCount('row-header');
+    let chr = dataModel.rowCount('column-header');
+
+    // Unpack the copy config.
+    let separator = grid.copyConfig.separator;
+    let format = grid.copyConfig.format;
+    let headers = grid.copyConfig.headers;
+    let warningThreshold = grid.copyConfig.warningThreshold;
+
+    // Compute the number of cells to be copied.
+    let rowCount = r2 - r1 + 1;
+    let colCount = c2 - c1 + 1;
+    switch (headers) {
+      case 'none':
+        rhc = 0;
+        chr = 0;
+        break;
+      case 'row':
+        chr = 0;
+        colCount += rhc;
+        break;
+      case 'column':
+        rhc = 0;
+        rowCount += chr;
+        break;
+      case 'all':
+        rowCount += chr;
+        colCount += rhc;
+        break;
+      default:
+        throw 'unreachable';
+    }
+
+    // Compute the total cell count.
+    let cellCount = rowCount * colCount;
+
+    // Allow the user to cancel a large copy request.
+    if (cellCount > warningThreshold) {
+      let msg = `Copying ${cellCount} cells may take a while. Continue?`;
+      if (!window.confirm(msg)) {
+        return;
+      }
+    }
+
+    // Set up the format args.
+    let args = {
+      region: 'body' as DataModel.CellRegion,
+      row: 0,
+      column: 0,
+      value: null as any,
+      metadata: {} as DataModel.Metadata
+    };
+
+    // Allocate the array of rows.
+    let rows = new Array<string[]>(rowCount);
+
+    // Iterate over the rows.
+    for (let j = 0; j < rowCount; ++j) {
+      // Allocate the array of cells.
+      let cells = new Array<string>(colCount);
+
+      // Iterate over the columns.
+      for (let i = 0; i < colCount; ++i) {
+        // Set up the format variables.
+        let region: DataModel.CellRegion;
+        let row: number;
+        let column: number;
+
+        // Populate the format variables.
+        if (j < chr && i < rhc) {
+          region = 'corner-header';
+          row = j;
+          column = i;
+        } else if (j < chr) {
+          region = 'column-header';
+          row = j;
+          column = i - rhc + c1;
+        } else if (i < rhc) {
+          region = 'row-header';
+          row = j - chr + r1;
+          column = i;
+        } else {
+          region = 'body';
+          row = j - chr + r1;
+          column = i - rhc + c1;
+        }
+
+        // Populate the format args.
+        args.region = region;
+        args.row = row;
+        args.column = column;
+        args.value = dataModel.data(region, row, column);
+        args.metadata = dataModel.metadata(region, row, column);
+
+        // Format the cell.
+        cells[i] = format(args);
+      }
+
+      // Save the row of cells.
+      rows[j] = cells;
+    }
+
+    // Convert the cells into lines.
+    let lines = rows.map(cells => cells.join(separator));
+
+    // Convert the lines into text.
+    let text = lines.join('\n');
+
+    // Copy the text to the clipboard.
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+
+    // Text area has to be visible on page for copy without Clipboard API,
+    // So we create an "invisible" element, add it to the body, then remove
+    // when no longer needed.
+
+    textArea.style.height = '0px';
+    textArea.style.width = '0px';
+    textArea.style.overflow = 'hidden';
+    textArea.id = 'ipydatagrid-textarea'
+    textArea.style.position = 'absolute';
+    document.body.appendChild(textArea)
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+  }
+
   render() {
     this.el.classList.add('datagrid-container');
 
@@ -299,6 +481,10 @@ export
         },
         headerVisibility: this.model.get('header_visibility'),
       });
+
+      // Replace method of copying to clipboard with one that allows
+      // a ClipboardEvent to reach document.body
+      this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid)
 
       this.filterDialog = new InteractiveFilterDialog({
         model: this.model.data_model
