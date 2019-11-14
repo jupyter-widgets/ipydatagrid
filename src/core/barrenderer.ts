@@ -59,7 +59,7 @@ class BarRenderer extends TextRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  paint(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+  paint(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     const showText = CellRenderer.resolveOption(this.showText, config);
 
     this.drawBackground(gc, config);
@@ -78,7 +78,7 @@ class BarRenderer extends TextRenderer {
    *
    * @param field - The field descriptor for the column, or `null`.
    */
-  prepare(gc: GraphicsContext, config: CellRenderer.IColumnConfig): void {
+  prepare(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     // Look up the default state from the renderer.
     let { font, textColor, barColor, backgroundColor, horizontalAlignment } = this;
 
@@ -114,7 +114,7 @@ class BarRenderer extends TextRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  drawBar(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+  drawBar(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     const barColor = CellRenderer.resolveOption(this.barColor, config);
     let barValue = CellRenderer.resolveOption(this.barValue, config);
     const vAlign = CellRenderer.resolveOption(this.barVerticalAlignment, config);

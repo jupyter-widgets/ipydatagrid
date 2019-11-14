@@ -22,7 +22,7 @@ export class HeaderRenderer extends TextRenderer {
   *
   * @param config - The configuration data for the cell.
   */
-  drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+  drawText(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     // Resolve the font for the cell.
     let font = CellRenderer.resolveOption(this.font, config);
 
