@@ -72,7 +72,7 @@ class View {
    *
    * @returns The metadata for the column.
    */
-  metadata(region: DataModel.CellRegion, column: number): DataModel.Metadata {
+  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
     if (region === 'body' || region === 'column-header') {
       return this._bodyFields[column];
     }
@@ -138,7 +138,7 @@ class View {
    * @param columnIndex - The index to retrieve unique values for.
    */
   uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[]{
-    let columnName = this.metadata(region, columnIndex)['name'];
+    let columnName = this.metadata(region, 0, columnIndex)['name'];
     let uniqueVals = new Set();
     for (let row of this._data) {
       uniqueVals.add(row[columnName]);

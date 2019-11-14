@@ -1,14 +1,10 @@
 import {
-  DataGrid
-} from './ipydatagrid';
+  DataGrid, DataModel
+} from '@phosphor/datagrid';
 
 import {
   CommandRegistry
 } from '@phosphor/commands'
-
-import {
-  DataModel
-} from './datamodel';
 
 import {
   Menu

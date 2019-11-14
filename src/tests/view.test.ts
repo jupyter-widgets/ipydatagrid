@@ -1,7 +1,6 @@
-
 import { DataGenerator } from './testUtils';
 import { View } from '../core/view';
-import { DataModel } from '../core/datamodel';
+import { DataModel } from '@phosphor/datagrid';
 
 describe('Test .metadata()', () => {
   const testData = DataGenerator.multiCol({
@@ -20,7 +19,7 @@ describe('Test .metadata()', () => {
   ];
   testCases.forEach(val => {
     test(`cellregion-${val.region}-${val.column}`, () => {
-      expect(view.metadata(val.region, val.column)['name']).toBe(val.expected)
+      expect(view.metadata(val.region, 0, val.column)['name']).toBe(val.expected)
     });
   })
 });

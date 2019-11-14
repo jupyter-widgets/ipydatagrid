@@ -46,7 +46,7 @@ class VegaExprModel extends WidgetModel {
     this.on('change:value', this.updateFunction.bind(this));
   }
 
-  process(config: CellRenderer.ICellConfig, defaultValue: any) {
+  process(config: CellRenderer.CellConfig, defaultValue: any) {
     return this._function(config, defaultValue, vegaFunctions.functionContext);
   }
 
@@ -69,7 +69,7 @@ class VegaExprModel extends WidgetModel {
 
 export
 class VegaExprView extends WidgetView {
-  process(config: CellRenderer.ICellConfig, defaultValue: any) {
+  process(config: CellRenderer.CellConfig, defaultValue: any) {
     return this.model.process(config, defaultValue);
   }
 

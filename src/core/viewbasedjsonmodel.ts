@@ -1,6 +1,6 @@
 import {
-  DataModel,
-} from './datamodel';
+  DataModel
+} from '@phosphor/datagrid';
 
 import {
   each
@@ -115,8 +115,8 @@ export class ViewBasedJSONModel extends DataModel {
    *
    * @returns The metadata for the column.
    */
-  metadata(region: DataModel.CellRegion, column: number): DataModel.Metadata {
-    return this.currentView.metadata(region, column);
+  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
+    return this.currentView.metadata(region, row, column);
   }
 
   /**
@@ -253,7 +253,7 @@ export class ViewBasedJSONModel extends DataModel {
     };
     // Create new row and add it to new dataset
     const newRow = { ...this._dataset.data[lookupIndex] };
-    newRow[this.metadata('body', options.column)['name']] = options.value;
+    newRow[this.metadata('body', 0, options.column)['name']] = options.value;
     const newData = Array.from(this._dataset.data);
     newData[lookupIndex] = newRow;
 

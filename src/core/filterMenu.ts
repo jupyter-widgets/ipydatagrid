@@ -162,6 +162,7 @@ export class InteractiveFilterDialog extends Widget {
     this._columnIndex = options.columnIndex;
     this._columnDType = this._model.metadata(
       options.region,
+      0,
       options.columnIndex
     )['type'];
     this._region = options.region;
