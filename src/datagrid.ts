@@ -13,11 +13,19 @@ import {
 
 import {
   BasicKeyHandler
-} from '@phosphor/datagrid';
+} from './core/basickeyhandler';
 
 import {
-  BasicMouseHandler, BasicSelectionModel, CellRenderer
-} from '@phosphor/datagrid';
+  BasicMouseHandler
+} from './core/basicmousehandler';
+
+import {
+  BasicSelectionModel
+} from './core/basicselectionmodel';
+
+import {
+  CellRenderer
+} from './core/cellrenderer';
 
 import {
   DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
@@ -41,7 +49,7 @@ import {
 
 import {
   DataGrid
-} from '@phosphor/datagrid';
+} from './core/datagrid';
 
 // Import CSS
 import '../css/datagrid.css'

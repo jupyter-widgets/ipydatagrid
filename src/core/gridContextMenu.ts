@@ -1,6 +1,10 @@
 import {
-  DataGrid, DataModel
-} from '@phosphor/datagrid';
+  DataGrid
+} from './datagrid';
+
+import {
+  DataModel
+} from './datamodel';
 
 import {
   CommandRegistry
