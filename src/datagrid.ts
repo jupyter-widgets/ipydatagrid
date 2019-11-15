@@ -141,7 +141,8 @@ export
       renderers: {},
       default_renderer: null,
       selection_mode: 'none',
-      selections: []
+      selections: [],
+      editable: false
     };
   }
 
@@ -322,6 +323,7 @@ export
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this.grid.selectionModel = this.model.selectionModel;
+      this.grid.editingEnabled = this.model.get('editable');
       this.updateGridRenderers();
 
       this.model.on('data-model-changed', () => {
@@ -368,6 +370,10 @@ export
 
       this.model.on('selection-model-changed', () => {
         this.grid.selectionModel = this.model.selectionModel;
+      });
+
+      this.model.on('change:editable', () => {
+        this.grid.editingEnabled = this.model.get('editable');
       });
 
       //@ts-ignore

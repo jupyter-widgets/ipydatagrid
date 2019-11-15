@@ -222,6 +222,7 @@ class DataGrid(DOMWidget):
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
+    editable = Bool(False).tag(sync=True)
 
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell by column name and row index."""
@@ -338,6 +339,15 @@ class DataGrid(DOMWidget):
             rectangle['c2'] = c2
 
         return selections
+
+    @validate('editable')
+    def _validate_editable(self, proposal):
+        value = proposal['value']
+        
+        if value and self.selection_mode == 'none':
+            self.selection_mode = 'cell'
+
+        return value
 
     def _column_index_to_name(self, column_index):
         if 'schema' not in self.data or 'fields' not in self.data['schema']:

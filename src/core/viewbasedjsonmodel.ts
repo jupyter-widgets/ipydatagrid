@@ -1,6 +1,6 @@
 import {
-  DataModel
-} from '@phosphor/datagrid';
+  DataModel, MutableDataModel
+} from './datamodel';
 
 import {
   each
@@ -29,7 +29,7 @@ import {
 /**
  * A view based data model implementation for in-memory JSON data.
  */
-export class ViewBasedJSONModel extends DataModel {
+export class ViewBasedJSONModel extends MutableDataModel {
 
   /**
    * Create a data model with static JSON data.
@@ -132,6 +132,12 @@ export class ViewBasedJSONModel extends DataModel {
    */
   data(region: DataModel.CellRegion, row: number, column: number): any {
     return this.currentView.data(region, row, column);
+  }
+
+  setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
+    this.updateCellValue({ region: region, row: row, column: column, value: value });
+
+    return true;
   }
 
   /**
