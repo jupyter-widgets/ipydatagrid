@@ -232,7 +232,13 @@ class DataGrid(DOMWidget):
         def handle_custom_msg(_, content, buffers):
             event_type = content["type"]
             if event_type == 'cell-changed':
-                self._cell_change_handlers(self, content["row"], content["column_index"], content["value"])
+                column = self._column_index_to_name(content["column_index"])
+                self._cell_change_handlers({
+                    'row': content["row"],
+                    'column': column,
+                    'column_index': content["column_index"],
+                    'value': content["value"]
+                })
 
         self.on_msg(handle_custom_msg)
 
@@ -251,6 +257,15 @@ class DataGrid(DOMWidget):
 
         return False
 
+    def get_cell_value_by_index(self, column_index, row_index):
+        """Gets the value for a single cell by column index and row index."""
+
+        column = self._column_index_to_name(column_index)
+        if column is not None:
+            return self.data['data'][row_index][column]
+
+        return None
+
     def set_cell_value_by_index(self, column_index, row_index, value):
         """Sets the value for a single cell by column index and row index."""
 
@@ -265,7 +280,7 @@ class DataGrid(DOMWidget):
     def _notify_cell_change(self, row, column, value):
         column_index = self._column_name_to_index(column)
         # notify python listeners
-        self._cell_change_handlers(self, {'row': row, 'column': column, 'column_index': column_index, 'value': value})
+        self._cell_change_handlers({'row': row, 'column': column, 'column_index': column_index, 'value': value})
         # notify front-end
         self.comm.send(data={'type': 'cell-changed', 'row': row, 'column': column, 'column_index': column_index, 'value': value})
 
