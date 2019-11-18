@@ -269,9 +269,11 @@ export class ViewBasedJSONModel extends MutableDataModel {
       schema: this._dataset.schema
     };
 
-    this.dataSync.emit({
-      type: 'cell-updated',
-    });
+    if (options.syncData) {
+      this.dataSync.emit({
+        type: 'cell-updated',
+      });
+    }
 
     // We need to rerun the transforms, as the changed cell may change the order
     // or visibility of other rows
@@ -366,22 +368,27 @@ namespace ViewBasedJSONModel {
     /**
      * The `CellRegion` of the cell to be updated.
      */
-    region: DataModel.CellRegion
+    region: DataModel.CellRegion;
 
     /**
      * The index of the target row in the current view.
      */
-    column: number
+    column: number;
 
     /**
      * The index of the target row in the current view.
      */
-    row: number
+    row: number;
 
     /**
      * The new value to replace the old one.
      */
-    value: any
+    value: any;
+
+    /**
+     * The flag to trigger full data sync with backend.
+     */
+    syncData?: boolean;
   }
 
   /**
