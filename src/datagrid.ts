@@ -157,10 +157,9 @@ export
     this.updateTransforms();
     this.updateSelectionModel();
 
-    this.comm.on_msg((msg) => {
-      const data = msg.content.data;
-      if (data.type === 'cell-changed') {
-        this.data_model.setData('body', data.row, data.column_index, data.value);
+    this.on('msg:custom', (content) => {
+      if (content.event_type === 'cell-changed') {
+        this.data_model.setData('body', content.row, content.column_index, content.value);
       }
     });
   }
@@ -192,7 +191,7 @@ export
         this.comm.send({
           method: 'custom',
           content: {
-            type: 'cell-changed', region: args.region, row: args.row, column_index: args.column, value: value
+            event_type: 'cell-changed', region: args.region, row: args.row, column_index: args.column, value: value
           }
         }, null);
       }

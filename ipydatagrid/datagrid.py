@@ -230,8 +230,7 @@ class DataGrid(DOMWidget):
         super(DataGrid, self).__init__(**kwargs)
 
         def handle_custom_msg(_, content, buffers):
-            event_type = content["type"]
-            if event_type == 'cell-changed':
+            if content["event_type"] == 'cell-changed':
                 column = self._column_index_to_name(content["column_index"])
                 self._cell_change_handlers({
                     'row': content["row"],
@@ -282,7 +281,16 @@ class DataGrid(DOMWidget):
         # notify python listeners
         self._cell_change_handlers({'row': row, 'column': column, 'column_index': column_index, 'value': value})
         # notify front-end
-        self.comm.send(data={'type': 'cell-changed', 'row': row, 'column': column, 'column_index': column_index, 'value': value})
+        self.comm.send(data={
+            'method': 'custom',
+            'content': {
+                'event_type': 'cell-changed',
+                'row': row,
+                'column': column,
+                'column_index': column_index,
+                'value': value
+            }
+        })
 
     def get_visible_data(self):
         """Returns the dataset of the current View."""
