@@ -231,12 +231,15 @@ class DataGrid(DOMWidget):
 
         def handle_custom_msg(_, content, buffers):
             if content["event_type"] == 'cell-changed':
+                row = content["row"]
                 column = self._column_index_to_name(content["column_index"])
+                value =  content["value"]
+                self.data['data'][row][column] = value
                 self._cell_change_handlers({
-                    'row': content["row"],
+                    'row': row,
                     'column': column,
                     'column_index': content["column_index"],
-                    'value': content["value"]
+                    'value':value
                 })
 
         self.on_msg(handle_custom_msg)
