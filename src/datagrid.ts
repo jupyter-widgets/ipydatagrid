@@ -156,6 +156,13 @@ export
     this.updateData();
     this.updateTransforms();
     this.updateSelectionModel();
+
+    this.comm.on_msg((msg) => {
+      const data = msg.content.data;
+      if (data.type === 'cell-changed') {
+        this.data_model.setData('body', data.row, data.column_index, data.value);
+      }
+    });
   }
 
   updateData() {
@@ -178,6 +185,18 @@ export
           throw 'unreachable';
       }
     })
+
+    this.data_model.changed.connect((sender: ViewBasedJSONModel, args: any) => {
+      if (args.type === 'cells-changed') {
+        const value = this.data_model.data(args.region, args.row, args.column);
+        this.comm.send({
+          method: 'custom',
+          content: {
+            type: 'cell-changed', region: args.region, row: args.row, column_index: args.column, value: value
+          }
+        }, null);
+      }
+    });
 
     this.updateTransforms();
     this.trigger('data-model-changed');

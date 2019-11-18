@@ -136,6 +136,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
   setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
     this.updateCellValue({ region: region, row: row, column: column, value: value });
+    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1});
 
     return true;
   }
