@@ -228,22 +228,23 @@ class DataGrid(DOMWidget):
 
     def __init__(self, **kwargs):
         super(DataGrid, self).__init__(**kwargs)
+        self.on_msg(self.__handle_custom_msg)
 
-        def handle_custom_msg(_, content, buffers):
-            if content["event_type"] == 'cell-changed':
-                row = content["row"]
-                column = self._column_index_to_name(content["column_index"])
-                value =  content["value"]
-                self.data['data'][row][column] = value
-                self._cell_change_handlers({
-                    'row': row,
-                    'column': column,
-                    'column_index': content["column_index"],
-                    'value':value
-                })
-
-        self.on_msg(handle_custom_msg)
-
+    def __handle_custom_msg(self, _, content, buffers):
+        if content["event_type"] == 'cell-changed':
+            row = content["row"]
+            column = self._column_index_to_name(content["column_index"])
+            value =  content["value"]
+            # update data on kernel
+            self.data['data'][row][column] = value
+            # notify python listeners
+            self._cell_change_handlers({
+                'row': row,
+                'column': column,
+                'column_index': content["column_index"],
+                'value':value
+            })
+    
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell by column name and row index."""
 
