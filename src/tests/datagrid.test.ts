@@ -3,7 +3,7 @@ import {
 } from '../datagrid';
 
 import {
-  DataGenerator
+  DataGenerator, MockWidgetManager, MockComm
 } from '../tests/testUtils'
 
 import {
@@ -13,10 +13,6 @@ import {
 import {
   Transform
 } from '../core/transform';
-
-import {
-  WidgetManager
-} from './testUtils';
 
 import {
   CellRenderer, DataModel
@@ -35,6 +31,16 @@ describe('Test trait: data', () => {
     grid.model.set('data', testData.set2);
     expect(grid.model.data_model.dataset).toEqual(testData.set2);
     expect(grid.model.data_model).not.toBe(oldDataModel);
+  });
+
+  test('Comm message sent to backend on frontend cell update', async () => {
+    const testData = Private.createBasicTestData();
+    const grid = await Private.createGridWidget({ data: testData.set1 });
+    const dataModel = grid.model.data_model;
+    grid.model.set('data', testData.set2);
+    const mock = jest.spyOn(grid.model.comm, 'send');
+    dataModel.setData('body', 1, 0, 1.23);
+    expect(mock).toBeCalled();
   });
 
   test('Selection model updated on trait update', async () => {
@@ -101,10 +107,11 @@ namespace Private {
   export function createGridWidget(
     options: ICreateGridWidgetOptions): Promise<GridWidgetComponents> {
     return new Promise(async (resolve) => {
-      const widgetManager = new WidgetManager()
+      const widgetManager = new MockWidgetManager()
+      const comm = new MockComm();
       const gridModel = new DataGridModel(
         { ...options.modelAttributes, data: options.data },
-        { model_id: 'testModel', widget_manager: widgetManager }
+        { model_id: 'testModel', comm: comm, widget_manager: widgetManager }
       );
       const gridView = new DataGridView({ model: gridModel })
       await gridView.render();
