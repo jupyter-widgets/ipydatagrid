@@ -3,8 +3,10 @@ import {
 } from '../core/viewbasedjsonmodel'
 
 import {
-  IClassicComm, ICallbacks, WidgetView
+  IClassicComm, ICallbacks, WidgetView, WidgetModel
 } from '@jupyter-widgets/base';
+
+import { JSONObject } from '@phosphor/coreutils';
 
 /**
  * A namespace for functions that generate tables for testing.
@@ -158,4 +160,20 @@ export class MockComm implements IClassicComm {
   _on_close: Function;
 
   private static numComms: number = 0;
+}
+
+
+export
+function emulateCustomCommMessage(model: WidgetModel, channel: "iopub" | "shell", content: JSONObject) {
+  // @ts-ignore
+  model._handle_comm_msg({
+    channel: channel,
+    content: {
+      comm_id: '',
+      data: {
+        method: 'custom',
+        content: content
+      }
+    }
+  });
 }

@@ -3,7 +3,7 @@ import {
 } from '../datagrid';
 
 import {
-  DataGenerator, MockWidgetManager, MockComm
+  DataGenerator, MockWidgetManager, MockComm, emulateCustomCommMessage
 } from '../tests/testUtils'
 
 import {
@@ -42,6 +42,31 @@ describe('Test trait: data', () => {
     dataModel.setData('body', 1, 0, 1.23);
     expect(mock).toBeCalled();
   });
+
+  test('Comm message sent to frontend on backend cell update', async () => {
+    const testData = Private.createBasicTestData();
+    const grid = await Private.createGridWidget({ data: testData.set1 });
+    const row = 1, column = 0;
+    const value = 1.23;
+    grid.model.set('data', testData.set2);
+
+    return new Promise((resolve, reject) => {
+      grid.model.on('msg:custom', (content) => {
+        if (content.event_type === 'cell-changed') {
+          expect(content.row).toBe(row);
+          expect(content.column_index).toBe(column);
+          expect(content.value).toBe(value);
+          resolve();
+        }
+      });
+
+      emulateCustomCommMessage(grid.model, 'iopub', {
+        event_type: 'cell-changed', row: row, column_index: column, value: value
+      });
+    });
+  });
+
+  
 
   test('Selection model updated on trait update', async () => {
     const testData = Private.createBasicTestData();
