@@ -66,7 +66,29 @@ describe('Test trait: data', () => {
     });
   });
 
-  
+  test('Backend driven cell update propagates properly', async () => {
+    const testData = Private.createBasicTestData();
+    const grid = await Private.createGridWidget({ data: testData.set1 });
+    const row = 1, column = 0;
+    const value = 1.23;
+    grid.model.set('data', testData.set2);
+
+    return new Promise((resolve, reject) => {
+      grid.model.data_model.changed.connect((model: ViewBasedJSONModel, args: any) => {
+        if (args.type === 'cells-changed') {
+          const updatedValue = model.data(args.region, args.row, args.column);
+          expect(args.row).toBe(row);
+          expect(args.column).toBe(column);
+          expect(updatedValue).toBe(value);
+          resolve();
+        }
+      });
+
+      emulateCustomCommMessage(grid.model, 'iopub', {
+        event_type: 'cell-changed', row: row, column_index: column, value: value
+      });
+    });
+  });
 
   test('Selection model updated on trait update', async () => {
     const testData = Private.createBasicTestData();
