@@ -36,6 +36,10 @@ import {
 } from './core/filterMenu';
 
 import {
+  Transform
+} from './core/transform'
+
+import {
   HeaderRenderer
 } from './core/headerRenderer';
 
@@ -492,12 +496,22 @@ export
         })
       }
     });
-    commands.addCommand(IPyDataGridContextMenu.CommandID.RevertGrid, {
-      label: 'Revert grid',
-      mnemonic: 8,
-      iconClass: 'fa fa-refresh',
+    commands.addCommand(IPyDataGridContextMenu.CommandID.ClearThisFilter, {
+      label: 'Clear This Filter',
+      mnemonic: -1,
       execute: (args) => {
-        this.model.data_model.clearTransforms();
+        const commandArgs = <IPyDataGridContextMenu.CommandArgs>args;
+        const schemaIndex: number = this.model.data_model.getSchemaIndex(commandArgs.region, commandArgs.columnIndex);
+        this.model.data_model.removeTransform(schemaIndex, 'filter');
+      }
+    });
+    commands.addCommand(IPyDataGridContextMenu.CommandID.ClearFiltersInAllColumns, {
+      label: 'Clear Filters in All Columns',
+      mnemonic: -1,
+      execute: (args) => {
+        const activeTransforms: Transform.TransformSpec[] = this.model.data_model.activeTransforms;
+        const newTransforms = activeTransforms.filter(val => val.type !== 'filter')
+        this.model.data_model.replaceTransforms(newTransforms)
       }
     });
     commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog, {
