@@ -223,6 +223,13 @@ export class ViewBasedJSONModel extends DataModel {
   }
 
   /**
+   * Returns the active transforms for the current model
+   */
+  get activeTransforms(): Transform.TransformSpec[] {
+    return this._transformState.activeTransforms;
+  }
+
+  /**
    * Updates the indicated value in the dataset.
    *
    * Note: provided row/column values should correspond to the currently

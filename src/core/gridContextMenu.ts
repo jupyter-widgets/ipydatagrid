@@ -123,7 +123,11 @@ export class IPyDataGridContextMenu extends GridContextMenu {
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.RevertGrid,
+          command: IPyDataGridContextMenu.CommandID.ClearThisFilter,
+          args: args
+        });
+        this._menu.addItem({
+          command: IPyDataGridContextMenu.CommandID.ClearFiltersInAllColumns,
           args: args
         });
         break;
@@ -145,7 +149,11 @@ export class IPyDataGridContextMenu extends GridContextMenu {
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.RevertGrid,
+          command: IPyDataGridContextMenu.CommandID.ClearThisFilter,
+          args: args
+        });
+        this._menu.addItem({
+          command: IPyDataGridContextMenu.CommandID.ClearFiltersInAllColumns,
           args: args
         });
         break;
@@ -193,7 +201,9 @@ export namespace IPyDataGridContextMenu {
     SortDescending = 'sort:Desc',
     OpenFilterByConditionDialog = 'filterCondition:openDialog',
     OpenFilterByValueDialog = 'filterValue:openDialog',
-    RevertGrid = 'grid:reset'
+    RevertGrid = 'grid:reset',
+    ClearThisFilter = 'filter:clearCurrentColumn',
+    ClearFiltersInAllColumns = 'filter:clearAllColumns'
   }
 
   /**
