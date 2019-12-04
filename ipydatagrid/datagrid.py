@@ -12,7 +12,7 @@ from traitlets import (
     Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default, validate
 )
 from copy import deepcopy
-from ipywidgets import DOMWidget, widget_serialization
+from ipywidgets import DOMWidget, widget_serialization, CallbackDispatcher
 
 from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
@@ -222,11 +222,43 @@ class DataGrid(DOMWidget):
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
+    editable = Bool(False).tag(sync=True)
 
+    _cell_change_handlers = CallbackDispatcher()
+
+    def __init__(self, **kwargs):
+        super(DataGrid, self).__init__(**kwargs)
+        self.on_msg(self.__handle_custom_msg)
+
+    def __handle_custom_msg(self, _, content, buffers):
+        if content["event_type"] == 'cell-changed':
+            row = content["row"]
+            column = self._column_index_to_name(content["column_index"])
+            value =  content["value"]
+            # update data on kernel
+            self.data['data'][row][column] = value
+            # notify python listeners
+            self._cell_change_handlers({
+                'row': row,
+                'column': column,
+                'column_index': content["column_index"],
+                'value':value
+            })
+    
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell by column name and row index."""
 
         return self.data['data'][row_index][column]
+
+    def set_cell_value(self, column, row_index, value):
+        """Sets the value for a single cell by column name and row index."""
+
+        if row_index >= 0 and row_index < len(self.data['data']) and column in self.data['data'][row_index]:
+            self.data['data'][row_index][column] = value
+            self._notify_cell_change(row_index, column, value)
+            return True
+
+        return False
 
     def get_cell_value_by_index(self, column_index, row_index):
         """Gets the value for a single cell by column index and row index."""
@@ -234,7 +266,35 @@ class DataGrid(DOMWidget):
         column = self._column_index_to_name(column_index)
         if column is not None:
             return self.data['data'][row_index][column]
+
         return None
+
+    def set_cell_value_by_index(self, column_index, row_index, value):
+        """Sets the value for a single cell by column index and row index."""
+
+        column = self._column_index_to_name(column_index)
+        if column is not None and row_index >= 0 and row_index < len(self.data['data']):
+            self.data['data'][row_index][column] = value
+            self._notify_cell_change(row_index, column, value)
+            return True
+
+        return False
+
+    def _notify_cell_change(self, row, column, value):
+        column_index = self._column_name_to_index(column)
+        # notify python listeners
+        self._cell_change_handlers({'row': row, 'column': column, 'column_index': column_index, 'value': value})
+        # notify front-end
+        self.comm.send(data={
+            'method': 'custom',
+            'content': {
+                'event_type': 'cell-changed',
+                'row': row,
+                'column': column,
+                'column_index': column_index,
+                'value': value
+            }
+        })
 
     def get_visible_data(self):
         """Returns the dataset of the current View."""
@@ -338,6 +398,29 @@ class DataGrid(DOMWidget):
             rectangle['c2'] = c2
 
         return selections
+
+    @validate('editable')
+    def _validate_editable(self, proposal):
+        value = proposal['value']
+        
+        if value and self.selection_mode == 'none':
+            self.selection_mode = 'cell'
+
+        return value
+
+    def on_cell_change(self, callback, remove=False):
+        """Register a callback to execute when a cell value changed.
+
+        The callback will be called with one argument, the dictionary
+        containing cell information with keys
+        "row", "column", "column_index", "value".
+
+        Parameters
+        ----------
+        remove: bool (optional)
+            Set to true to remove the callback from the list of callbacks.
+        """
+        self._cell_change_handlers.register_callback(callback, remove=remove)
 
     def _column_index_to_name(self, column_index):
         if 'schema' not in self.data or 'fields' not in self.data['schema']:

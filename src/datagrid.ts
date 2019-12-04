@@ -13,11 +13,19 @@ import {
 
 import {
   BasicKeyHandler
-} from '@phosphor/datagrid';
+} from './core/basickeyhandler';
 
 import {
-  BasicMouseHandler, BasicSelectionModel, CellRenderer
-} from '@phosphor/datagrid';
+  BasicMouseHandler
+} from './core/basicmousehandler';
+
+import {
+  BasicSelectionModel
+} from './core/basicselectionmodel';
+
+import {
+  CellRenderer
+} from './core/cellrenderer';
 
 import {
   DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
@@ -45,7 +53,7 @@ import {
 
 import {
   DataGrid
-} from '@phosphor/datagrid';
+} from './core/datagrid';
 
 // Import CSS
 import '../css/datagrid.css'
@@ -137,7 +145,8 @@ export
       renderers: {},
       default_renderer: null,
       selection_mode: 'none',
-      selections: []
+      selections: [],
+      editable: false
     };
   }
 
@@ -151,6 +160,12 @@ export
     this.updateData();
     this.updateTransforms();
     this.updateSelectionModel();
+
+    this.on('msg:custom', (content) => {
+      if (content.event_type === 'cell-changed') {
+        this.data_model.setData('body', content.row, content.column_index, content.value);
+      }
+    });
   }
 
   updateData() {
@@ -173,6 +188,18 @@ export
           throw 'unreachable';
       }
     })
+
+    this.data_model.changed.connect((sender: ViewBasedJSONModel, args: any) => {
+      if (args.type === 'cells-changed') {
+        const value = this.data_model.data(args.region, args.row, args.column);
+        this.comm.send({
+          method: 'custom',
+          content: {
+            event_type: 'cell-changed', region: args.region, row: args.row, column_index: args.column, value: value
+          }
+        }, null);
+      }
+    });
 
     this.updateTransforms();
     this.trigger('data-model-changed');
@@ -318,6 +345,7 @@ export
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this.grid.selectionModel = this.model.selectionModel;
+      this.grid.editingEnabled = this.model.get('editable');
       this.updateGridRenderers();
 
       this.model.on('data-model-changed', () => {
@@ -364,6 +392,10 @@ export
 
       this.model.on('selection-model-changed', () => {
         this.grid.selectionModel = this.model.selectionModel;
+      });
+
+      this.model.on('change:editable', () => {
+        this.grid.editingEnabled = this.model.get('editable');
       });
 
       //@ts-ignore

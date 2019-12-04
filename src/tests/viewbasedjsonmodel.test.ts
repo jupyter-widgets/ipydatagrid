@@ -90,6 +90,33 @@ describe('Test signal getters', () => {
   })
 })
 
+describe('Test mutable dataset', () => {
+  test('.setData()', () => {
+    const model = Private.createSimpleModel();
+    const row = 1, column = 0;
+    const initialValue: number = model.data('body', row, column);
+    expect(initialValue).toBe(2);
+    model.setData('body', row, column, 1.23);
+    const newValue: number = model.data('body', row, column);
+    expect(newValue).toBe(1.23);
+  });
+
+  test('cell data changed signal received', async () => {
+    return new Promise((resolve, reject) => {
+      const model = Private.createSimpleModel();
+      const row = 1, column = 0;
+      model.changed.connect((model: ViewBasedJSONModel, args: any) => {
+        if (args.type === 'cells-changed') {
+          expect(args.row).toBe(row);
+          expect(args.column).toBe(column);
+          resolve();
+        }
+      });
+      model.setData('body', row, column, 1.23);
+    });
+  });
+});
+
 namespace Private {
   export function createSimpleModel(): ViewBasedJSONModel {
     const testData = DataGenerator.singleCol({

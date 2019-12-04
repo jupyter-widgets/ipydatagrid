@@ -2,6 +2,12 @@ import {
   ViewBasedJSONModel
 } from '../core/viewbasedjsonmodel'
 
+import {
+  IClassicComm, ICallbacks, WidgetView, WidgetModel
+} from '@jupyter-widgets/base';
+
+import { JSONObject } from '@phosphor/coreutils';
+
 /**
  * A namespace for functions that generate tables for testing.
  * 
@@ -34,21 +40,21 @@ export namespace DataGenerator {
     }
   }
 
-  export function multiCol(options: IMultiColOptions): ViewBasedJSONModel.IData{
-    const fields = options.data.map(val=>{
-      return {name: val.name, type: val.type}
+  export function multiCol(options: IMultiColOptions): ViewBasedJSONModel.IData {
+    const fields = options.data.map(val => {
+      return { name: val.name, type: val.type }
     });
     const rows = [];
 
-    for (let i=0;i<options.length;i++){
+    for (let i = 0; i < options.length; i++) {
       const row: { [key: string]: any } = {};
-      options.data.forEach(col=>{
+      options.data.forEach(col => {
         row[col.name] = col.data[i];
         row['index'] = i;
       });
       rows.push(row)
     }
-  
+
     return {
       'schema': {
         'fields': [
@@ -91,7 +97,7 @@ export namespace DataGenerator {
 /**
  * Mock widget manager for testing.
  */
-export class WidgetManager {
+export class MockWidgetManager {
   create_view(model: any) {
     return new Promise((resolve, reject) => {
       resolve(jest.fn())
@@ -102,5 +108,72 @@ export class WidgetManager {
       resolve(jest.fn())
     })
   }
+
+  callbacks(view?: WidgetView): ICallbacks {
+    return {};
+  }
 }
 
+/**
+ * Mock Comm for testing.
+ */
+export class MockComm implements IClassicComm {
+  constructor() {
+    this.comm_id = `mock-comm-id-${MockComm.numComms}`;
+    MockComm.numComms += 1;
+  }
+  on_open(fn: Function) {
+    this._on_open = fn;
+  }
+  on_close(fn: Function) {
+    this._on_close = fn;
+  }
+  on_msg(fn: Function) {
+    this._on_msg = fn;
+  }
+  _process_msg(msg: any) {
+    if (this._on_msg) {
+      return this._on_msg(msg);
+    } else {
+      return Promise.resolve();
+    }
+  }
+  open() {
+    if (this._on_open) {
+      this._on_open();
+    }
+    return '';
+  }
+  close() {
+    if (this._on_close) {
+      this._on_close();
+    }
+    return '';
+  }
+  send() {
+    return '';
+  }
+  comm_id: string;
+  target_name: string;
+  _on_msg: Function;
+  _on_open: Function;
+  _on_close: Function;
+
+  private static numComms: number = 0;
+}
+
+
+export
+function emulateCustomCommMessage(model: WidgetModel, channel: "iopub" | "shell", content: JSONObject) {
+  // @ts-ignore
+  model._handle_comm_msg({
+    channel: channel,
+    content: {
+      comm_id: '',
+      data: {
+        method: 'custom',
+        content: content
+      }
+    }
+  });
+}

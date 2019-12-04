@@ -3,7 +3,7 @@ import {
 } from '../datagrid';
 
 import {
-  DataGenerator
+  DataGenerator, MockWidgetManager, MockComm, emulateCustomCommMessage
 } from '../tests/testUtils'
 
 import {
@@ -13,10 +13,6 @@ import {
 import {
   Transform
 } from '../core/transform';
-
-import {
-  WidgetManager
-} from './testUtils';
 
 import {
   CellRenderer, DataModel
@@ -35,6 +31,63 @@ describe('Test trait: data', () => {
     grid.model.set('data', testData.set2);
     expect(grid.model.data_model.dataset).toEqual(testData.set2);
     expect(grid.model.data_model).not.toBe(oldDataModel);
+  });
+
+  test('Comm message sent to backend on frontend cell update', async () => {
+    const testData = Private.createBasicTestData();
+    const grid = await Private.createGridWidget({ data: testData.set1 });
+    const dataModel = grid.model.data_model;
+    grid.model.set('data', testData.set2);
+    const mock = jest.spyOn(grid.model.comm, 'send');
+    dataModel.setData('body', 1, 0, 1.23);
+    expect(mock).toBeCalled();
+  });
+
+  test('Comm message sent to frontend on backend cell update', async () => {
+    const testData = Private.createBasicTestData();
+    const grid = await Private.createGridWidget({ data: testData.set1 });
+    const row = 1, column = 0;
+    const value = 1.23;
+    grid.model.set('data', testData.set2);
+
+    return new Promise((resolve, reject) => {
+      grid.model.on('msg:custom', (content) => {
+        if (content.event_type === 'cell-changed') {
+          expect(content.row).toBe(row);
+          expect(content.column_index).toBe(column);
+          expect(content.value).toBe(value);
+          resolve();
+        }
+      });
+
+      emulateCustomCommMessage(grid.model, 'iopub', {
+        event_type: 'cell-changed', row: row, column_index: column, value: value
+      });
+    });
+  });
+
+  test('Backend driven cell update propagates properly', async () => {
+    const testData = Private.createBasicTestData();
+    const grid = await Private.createGridWidget({ data: testData.set1 });
+    const row = 1, column = 0;
+    const value = 1.23;
+    grid.model.set('data', testData.set2);
+
+    return new Promise((resolve, reject) => {
+      grid.model.data_model.changed.connect((model: ViewBasedJSONModel, args: any) => {
+        if (args.type === 'cells-changed') {
+          const updatedValue = model.data(args.region, args.row, args.column);
+          expect(args.row).toBe(row);
+          expect(args.column).toBe(column);
+          expect(updatedValue).toBe(value);
+          resolve();
+        }
+      });
+
+      emulateCustomCommMessage(grid.model, 'iopub', {
+        event_type: 'cell-changed', row: row, column_index: column, value: value
+      });
+    });
   });
 
   test('Selection model updated on trait update', async () => {
@@ -101,10 +154,11 @@ namespace Private {
   export function createGridWidget(
     options: ICreateGridWidgetOptions): Promise<GridWidgetComponents> {
     return new Promise(async (resolve) => {
-      const widgetManager = new WidgetManager()
+      const widgetManager = new MockWidgetManager()
+      const comm = new MockComm();
       const gridModel = new DataGridModel(
         { ...options.modelAttributes, data: options.data },
-        { model_id: 'testModel', widget_manager: widgetManager }
+        { model_id: 'testModel', comm: comm, widget_manager: widgetManager }
       );
       const gridView = new DataGridView({ model: gridModel })
       await gridView.render();

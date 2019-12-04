@@ -1,6 +1,6 @@
 import {
-  DataModel
-} from '@phosphor/datagrid';
+  DataModel, MutableDataModel
+} from './datamodel';
 
 import {
   each
@@ -29,7 +29,7 @@ import {
 /**
  * A view based data model implementation for in-memory JSON data.
  */
-export class ViewBasedJSONModel extends DataModel {
+export class ViewBasedJSONModel extends MutableDataModel {
 
   /**
    * Create a data model with static JSON data.
@@ -132,6 +132,13 @@ export class ViewBasedJSONModel extends DataModel {
    */
   data(region: DataModel.CellRegion, row: number, column: number): any {
     return this.currentView.data(region, row, column);
+  }
+
+  setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
+    this.updateCellValue({ region: region, row: row, column: column, value: value });
+    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1});
+
+    return true;
   }
 
   /**
@@ -269,9 +276,11 @@ export class ViewBasedJSONModel extends DataModel {
       schema: this._dataset.schema
     };
 
-    this.dataSync.emit({
-      type: 'cell-updated',
-    });
+    if (options.syncData) {
+      this.dataSync.emit({
+        type: 'cell-updated',
+      });
+    }
 
     // We need to rerun the transforms, as the changed cell may change the order
     // or visibility of other rows
@@ -366,22 +375,27 @@ namespace ViewBasedJSONModel {
     /**
      * The `CellRegion` of the cell to be updated.
      */
-    region: DataModel.CellRegion
+    region: DataModel.CellRegion;
 
     /**
      * The index of the target row in the current view.
      */
-    column: number
+    column: number;
 
     /**
      * The index of the target row in the current view.
      */
-    row: number
+    row: number;
 
     /**
      * The new value to replace the old one.
      */
-    value: any
+    value: any;
+
+    /**
+     * The flag to trigger full data sync with backend.
+     */
+    syncData?: boolean;
   }
 
   /**
