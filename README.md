@@ -3,19 +3,34 @@
 
 Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 
+
+## Menu
+- [Installation](#Installation)
+- [Development installation](#Development-installation)
+- [Usage and Examples](#Usage-and-Examples)
+- [Contributions](#Contributions)
+- [License](#License)
+- [Code of Conduct](#Code-of-Conduct)
+- [Security Vulnerability reporting](#Security-Vulnerability-reporting)
+
 ## Installation
 
-You can install using `pip`:
+You can install `ipydatagrid` using `pip` or `conda`:
 
+Using `pip`:
 ```bash
 pip install ipydatagrid
 ```
 
-Or if you use jupyterlab:
+Using `conda`:
+```bash
+conda install ipydatagrid
+```
+
+To enable `ipydatagrid` with JupyterLab:
 
 ```bash
-pip install ipydatagrid
-jupyter labextension install @jupyter-widgets/jupyterlab-manager
+jupyter labextension install jupyter-datagrid
 ```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
@@ -23,3 +38,59 @@ the nbextension:
 ```bash
 jupyter nbextension enable --py [--sys-prefix|--user|--system] ipydatagrid
 ```
+
+## Development installation
+
+For a development installation:
+
+```bash
+git clone https://github.com/bloomberg/ipydatagrid.git
+cd ipydatagrid
+pip install -v -e .
+```
+
+Enabling development install for Jupyter notebook:
+```bash
+jupyter nbextension install --py --symlink --sys-prefix ipydatagrid
+jupyter nbextension enable --py --sys-prefix ipydatagrid
+```
+
+Enabling development install for JupyterLab:
+```bash
+jupyter labextension install .
+```
+
+Note for developers: the `--symlink` argument on Linux or OS X allows one to modify the JavaScript code in-place. This feature is not available with Windows.
+`
+
+## Usage and Examples
+Tutorial and example notebooks can be found in the `/examples` directory.
+
+## Contributions
+
+We :heart: contributions.
+
+Have you had a good experience with this project? Why not share some love and contribute code, or just let us know about any issues you had with it?
+
+We welcome issue reports [here](../../issues); be sure to choose the proper issue template for your issue, so that we can be sure you're providing the necessary information.
+
+Before sending a [Pull Request](../../pulls), please make sure you read our
+[Contribution Guidelines](https://github.com/bloomberg/.github/blob/master/CONTRIBUTING.md).
+
+## License
+
+Please read the [LICENSE](LICENSE) file.
+
+## Code of Conduct
+
+This project has adopted a [Code of Conduct](https://github.com/bloomberg/.github/blob/master/CODE_OF_CONDUCT.md).
+If you have any concerns about the Code, or behavior which you have experienced in the project, please
+contact us at opensource@bloomberg.net.
+
+## Security Vulnerability Reporting
+
+If you believe you have identified a security vulnerability in this project, please send email to the project
+team at opensource@bloomberg.net, detailing the suspected issue and any methods you've found to reproduce it.
+
+Please do NOT open an issue in the GitHub repository, as we'd prefer to keep vulnerability reports private until
+we've had an opportunity to review and address them.
