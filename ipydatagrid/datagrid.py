@@ -17,6 +17,7 @@ from ipywidgets import DOMWidget, widget_serialization, CallbackDispatcher
 from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
 from math import floor
+import pandas as pd
 
 
 class SelectionHelper():
@@ -165,12 +166,8 @@ class DataGrid(DOMWidget):
         'row': only row headers visible
         'column': only column headers visible
         'none': neither row and column headers visible
-    data : dict
-        Data to display on Data Grid. Dictionary must have a 'data' key which
-        holds row data as list of dictionaries. Each row data contains keys
-        corresponding to columns of grid. Dictionary must also have 'schema' key
-        with description of columns. Further details for the format can be found at
-        https://specs.frictionlessdata.io/table-schema/
+    data : pandas dataframe
+        Data to display on Data Grid.
     renderers : dict
         Custom renderers to use for cell rendering. Keys of dictionary specify
         column name, and value specifies the renderer
@@ -216,7 +213,7 @@ class DataGrid(DOMWidget):
 
     _transforms = List(Dict).tag(sync=True, **widget_serialization)
     _visible_rows = List(Int).tag(sync=True)
-    data = Dict().tag(sync=True)
+    _data = Dict().tag(sync=True)
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
@@ -226,17 +223,18 @@ class DataGrid(DOMWidget):
 
     _cell_change_handlers = CallbackDispatcher()
 
-    def __init__(self, **kwargs):
+    def __init__(self, dataframe, **kwargs):
+        self.data = dataframe
         super(DataGrid, self).__init__(**kwargs)
         self.on_msg(self.__handle_custom_msg)
-
+        
     def __handle_custom_msg(self, _, content, buffers):
         if content["event_type"] == 'cell-changed':
             row = content["row"]
             column = self._column_index_to_name(content["column_index"])
             value =  content["value"]
             # update data on kernel
-            self.data['data'][row][column] = value
+            self._data['data'][row][column] = value
             # notify python listeners
             self._cell_change_handlers({
                 'row': row,
@@ -244,17 +242,26 @@ class DataGrid(DOMWidget):
                 'column_index': content["column_index"],
                 'value':value
             })
-    
+
+    @property
+    def data(self):
+        return pd.DataFrame(self._data['data']).set_index(self._data['schema']['primaryKey'])
+
+    @data.setter
+    def data(self, data):
+        self._data = {'data': data.reset_index().to_dict(orient='records'),
+                      'schema': pd.io.json.build_table_schema(data)}
+
     def get_cell_value(self, column, row_index):
         """Gets the value for a single cell by column name and row index."""
 
-        return self.data['data'][row_index][column]
+        return self._data['data'][row_index][column]
 
     def set_cell_value(self, column, row_index, value):
         """Sets the value for a single cell by column name and row index."""
 
-        if row_index >= 0 and row_index < len(self.data['data']) and column in self.data['data'][row_index]:
-            self.data['data'][row_index][column] = value
+        if row_index >= 0 and row_index < len(self._data['data']) and column in self._data['data'][row_index]:
+            self._data['data'][row_index][column] = value
             self._notify_cell_change(row_index, column, value)
             return True
 
@@ -265,7 +272,7 @@ class DataGrid(DOMWidget):
 
         column = self._column_index_to_name(column_index)
         if column is not None:
-            return self.data['data'][row_index][column]
+            return self._data['data'][row_index][column]
 
         return None
 
@@ -273,8 +280,8 @@ class DataGrid(DOMWidget):
         """Sets the value for a single cell by column index and row index."""
 
         column = self._column_index_to_name(column_index)
-        if column is not None and row_index >= 0 and row_index < len(self.data['data']):
-            self.data['data'][row_index][column] = value
+        if column is not None and row_index >= 0 and row_index < len(self._data['data']):
+            self._data['data'][row_index][column] = value
             self._notify_cell_change(row_index, column, value)
             return True
 
@@ -299,7 +306,7 @@ class DataGrid(DOMWidget):
     def get_visible_data(self):
         """Returns the dataset of the current View."""
 
-        data = deepcopy(self.data)
+        data = deepcopy(self._data)
         if self._visible_rows:
             data['data'] = [data['data'][i] for i in self._visible_rows]
         return data
@@ -423,20 +430,20 @@ class DataGrid(DOMWidget):
         self._cell_change_handlers.register_callback(callback, remove=remove)
 
     def _column_index_to_name(self, column_index):
-        if 'schema' not in self.data or 'fields' not in self.data['schema']:
+        if 'schema' not in self._data or 'fields' not in self._data['schema']:
             return None
 
-        primary_keys = [] if 'primaryKey' not in self.data['schema'] else self.data['schema']['primaryKey']
-        col_headers = [field['name'] for field in self.data['schema']['fields'] if field['name'] not in primary_keys]
+        primary_keys = [] if 'primaryKey' not in self._data['schema'] else self._data['schema']['primaryKey']
+        col_headers = [field['name'] for field in self._data['schema']['fields'] if field['name'] not in primary_keys]
 
         return None if len(col_headers) <= column_index else col_headers[column_index]
 
     def _column_name_to_index(self, column_name):
-        if 'schema' not in self.data or 'fields' not in self.data['schema']:
+        if 'schema' not in self._data or 'fields' not in self._data['schema']:
             return None
 
-        primary_keys = [] if 'primaryKey' not in self.data['schema'] else self.data['schema']['primaryKey']
-        col_headers = [field['name'] for field in self.data['schema']['fields'] if field['name'] not in primary_keys]
+        primary_keys = [] if 'primaryKey' not in self._data['schema'] else self._data['schema']['primaryKey']
+        col_headers = [field['name'] for field in self._data['schema']['fields'] if field['name'] not in primary_keys]
 
         try:
             return col_headers.index(column_name)
