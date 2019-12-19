@@ -141,7 +141,7 @@ export
       baseRowHeaderSize: 64,
       baseColumnHeaderSize: 20,
       headerVisibility: 'all',
-      data: {},
+      _data: {},
       renderers: {},
       default_renderer: null,
       selection_mode: 'none',
@@ -153,7 +153,7 @@ export
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
-    this.on('change:data', this.updateData.bind(this));
+    this.on('change:_data', this.updateData.bind(this));
     this.on('change:_transforms', this.updateTransforms.bind(this));
     this.on('change:selection_mode', this.updateSelectionModel, this);
     this.on('change:selections', this.updateSelections, this);
@@ -169,7 +169,7 @@ export
   }
 
   updateData() {
-    this.data_model = new ViewBasedJSONModel(this.get('data'));
+    this.data_model = new ViewBasedJSONModel(this.get('_data'));
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
       this.save_changes();
@@ -181,7 +181,7 @@ export
           this.save_changes();
           break;
         case ('cell-updated'):
-          this.set('data', this.data_model.dataset);
+          this.set('_data', this.data_model.dataset);
           this.save_changes();
           break;
         default:
