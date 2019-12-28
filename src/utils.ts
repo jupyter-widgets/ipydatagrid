@@ -44,6 +44,8 @@ namespace Theme {
       '--jp-brand-color2': '#64b5f6',
       '--jp-brand-color3': '#bbdefb',
       '--jp-brand-color4': '#e3f2fd',
+      '--jp-brand-color5': '#00e6ff',
+      '--jp-brand-color6': '#fbe14c'
     };
 
     return defaults[name] ? defaults[name] : '';

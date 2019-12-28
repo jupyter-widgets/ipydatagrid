@@ -95,7 +95,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
     const hitRegion = hit.region;
-    const buttonSize = HeaderRenderer.buttonSize;
+    const buttonSize = HeaderRenderer.iconWidth * 1.5;
     const buttonPadding = HeaderRenderer.buttonPadding;
 
     if (hitRegion === 'corner-header' || hitRegion === 'column-header') {

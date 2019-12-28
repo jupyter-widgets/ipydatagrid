@@ -10,6 +10,8 @@ import {
   Theme
 } from '../utils';
 
+import { TransformStateManager } from './transformStateManager';
+
 /**
  * A custom cell renderer for headers that provides a menu icon.
  */
@@ -115,35 +117,30 @@ export class HeaderRenderer extends TextRenderer {
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
-    const backgroundSize = HeaderRenderer.buttonSize + HeaderRenderer.buttonPadding;
+    const backgroundSize = HeaderRenderer.iconWidth
+      + HeaderRenderer.iconWidth
+      + HeaderRenderer.iconSpacing
+      + 2 * HeaderRenderer.buttonPadding;
+
     gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
     gc.fillRect(
       (config.x + config.width - backgroundSize),
       (config.y + config.height - backgroundSize),
-      backgroundSize, 
+      backgroundSize,
       backgroundSize
-    )
+    );
+
 
     const iconStart = config.x
       + config.width
       - HeaderRenderer.iconWidth
       - HeaderRenderer.buttonPadding;
 
-    // Draw menu icon
-    gc.beginPath();
-    gc.moveTo(
-      iconStart,
-      config.height - HeaderRenderer.buttonPadding - HeaderRenderer.iconHeight
-    );
-    gc.lineTo(
-      iconStart + (HeaderRenderer.iconWidth / 2),
-      config.height - HeaderRenderer.buttonPadding
-    );
-    gc.lineTo(
-      iconStart + HeaderRenderer.iconWidth,
-      config.height - HeaderRenderer.buttonPadding - HeaderRenderer.iconHeight
-    );
-    gc.closePath();
+    // Draw filter icon 
+    this.drawFilterIcon(gc, config);
+    // Sets filter icon to gray fill
+    gc.fillStyle = Theme.getBorderColor(1);
+    gc.fill();
 
     // Check for transform metadata
     if (this._model) {
@@ -152,17 +149,162 @@ export class HeaderRenderer extends TextRenderer {
         config.region,
         config.column
       );
-      if (this._model.transformMetadata(schemaIndex)
-        && (this._model.transformMetadata(schemaIndex))!['filter']) {
-        gc.fillStyle = Theme.getBrandColor(1);
-        gc.fill()
-        return;
+
+      const colMetaData: TransformStateManager.IColumn | undefined =
+        this._model.transformMetadata(schemaIndex);
+
+      // Fill filter icon if filter applied
+      if (colMetaData
+        && (colMetaData['filter'])) {
+        gc.fillStyle = Theme.getBrandColor(6);
+        gc.fill();
+      }
+
+      // Fill sort icon if sort applied
+      if (colMetaData) {
+
+        // Display ascending or descending icon depending on order
+        if (!colMetaData!['sort']!.desc) {
+          this.drawSortArrow(gc, config, iconStart, true);
+          gc.fillStyle = Theme.getBrandColor(5);
+          gc.fill();
+
+        } else {
+          this.drawSortArrow(gc, config, iconStart, false);
+          gc.fillStyle = Theme.getBrandColor(5);
+          gc.fill();
+        }
       }
     }
-    gc.fillStyle = color;
-    gc.fill();
   }
 
+  /**
+   * Draw the filter icon for the cell
+   * 
+   * @param gc - The graphics context to use for drawing.
+   *
+   * @param config - The configuration data for the cell.
+   */
+  drawFilterIcon(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
+
+    const filterIconStart = config.x
+      + config.width
+      - HeaderRenderer.iconWidth
+      - HeaderRenderer.buttonPadding;
+
+
+    let filterRightStemWidthX: number = HeaderRenderer.iconWidth / 2 + 1;
+    let filterLeftStemWidthX: number = HeaderRenderer.iconWidth / 2 - 1;
+    let filterTop: number = config.height - HeaderRenderer.iconHeight - 1;
+
+    gc.beginPath();
+    // Start drawing in top left of filter icon
+    gc.moveTo(
+      filterIconStart,
+      filterTop
+    );
+
+    gc.lineTo(filterIconStart + HeaderRenderer.iconWidth,
+      filterTop);
+    // Y is the y value of the top of the stem
+    gc.lineTo(filterIconStart + filterRightStemWidthX,
+      config.height - HeaderRenderer.iconHeight + 2);
+    // Y is the y value of the bottom of the stem
+    gc.lineTo(filterIconStart + filterRightStemWidthX,
+      config.height - 1.5 * HeaderRenderer.buttonPadding);
+    gc.lineTo(filterIconStart + filterLeftStemWidthX,
+      config.height - 2 * HeaderRenderer.buttonPadding);
+    gc.lineTo(filterIconStart + filterLeftStemWidthX,
+      config.height - HeaderRenderer.iconHeight + 2);
+    gc.closePath();
+
+  }
+
+  /**
+   * Draw the ascending and descending sort icons for the cell 
+   * 
+   * @param gc - The graphics context to use for drawing.
+   *
+   * @param config - The configuration data for the cell.
+   * 
+   * @param filterIconStart - The bottom right corner of drawing area.
+   * 
+   * @param asc - Indicates whether to draw ascending or descending icon.
+   */
+  drawSortArrow(gc: GraphicsContext, config: CellRenderer.CellConfig, filterIconStart: number, asc: boolean): void {
+    
+    let arrowWidth = HeaderRenderer.iconWidth - 2;
+    const sortIconStart = filterIconStart
+      - HeaderRenderer.iconSpacing;
+    let ascArrowRightStemWidth: number = sortIconStart
+      - arrowWidth / 2
+      + 0.5;
+    let descArrowRightStemWidth: number = sortIconStart
+      - arrowWidth / 2
+      - 0.5;
+    let arrowHeadSideY: number = config.height
+      - HeaderRenderer.buttonPadding
+      - HeaderRenderer.iconHeight
+      + 4;
+    let arrowMiddle: number = sortIconStart
+      - arrowWidth / 2;
+    let ascArrowTipY: number = config.height
+      - HeaderRenderer.iconHeight
+      - 1;
+    let ascArrowBottomY: number = config.height
+      - 1.5 * HeaderRenderer.buttonPadding;
+
+    gc.beginPath();
+
+    if (asc) {
+      // Draw starting in middle of arrow
+      // Y is the tip of the ascending arrow
+      gc.moveTo(arrowMiddle, ascArrowTipY);
+      gc.lineTo(sortIconStart, arrowHeadSideY);
+      gc.lineTo(sortIconStart,
+        arrowHeadSideY + 1);
+
+      // Draw to middle of arrow
+      gc.lineTo(ascArrowRightStemWidth, arrowHeadSideY + 1);
+
+      // Y is the bottom of the arrow stem
+      gc.lineTo(arrowMiddle + 0.5, ascArrowBottomY);
+      gc.lineTo(arrowMiddle - 0.5, ascArrowBottomY);
+      gc.lineTo(arrowMiddle - 0.5,
+        arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart - arrowWidth,
+        arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart - arrowWidth,
+        arrowHeadSideY);
+
+    } else {
+
+      // Draw starting in middle of arrow
+      // Y is the tip of the descending arrow
+      gc.moveTo(arrowMiddle, ascArrowBottomY);
+      gc.lineTo(sortIconStart - arrowWidth,
+        config.height - arrowHeadSideY + 2);
+      gc.lineTo(sortIconStart - arrowWidth,
+        config.height - arrowHeadSideY + 1);
+      // Draw to middle of arrow
+      gc.lineTo(descArrowRightStemWidth,
+        config.height - arrowHeadSideY + 1);
+
+      // Y is the bottom of the arrow stem
+      gc.lineTo(descArrowRightStemWidth, ascArrowTipY);
+      gc.lineTo(arrowMiddle + 0.5, ascArrowTipY);
+
+      // Draw left side of descending arrow
+      gc.lineTo(arrowMiddle + 0.5,
+        config.height - arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart,
+        config.height - arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart,
+        config.height - arrowHeadSideY + 2);
+    }
+    gc.closePath();
+    
+  }
 
   /**
    * Sets the data model that should provide metadata for this renderer.
@@ -176,9 +318,10 @@ export class HeaderRenderer extends TextRenderer {
    * of hit testing.
    */
   static buttonSize: number = 11;
-  static iconWidth: number = 12;
-  static iconHeight: number = 6;
-  static buttonPadding: number = 5;
+  static iconHeight: number = 12;
+  static iconWidth: number = 7;
+  static buttonPadding: number = 3;
+  static iconSpacing: number = 1.5;
 
   private _model: ViewBasedJSONModel | undefined = undefined
 }
