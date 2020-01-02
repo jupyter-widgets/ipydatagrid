@@ -257,10 +257,11 @@ class DataGrid(DOMWidget):
 
         return self._data['data'][row_index][column]
 
-    def set_cell_value(self, column, row_index, value):
-        """Sets the value for a single cell by column name and row index."""
+    def set_cell_value(self, column, primary_key, value):
+        """Sets the value for a single cell by column name and primary key."""
 
-        if row_index >= 0 and row_index < len(self._data['data']) and column in self._data['data'][row_index]:
+        row_index = self._get_row_index_of_primary_key(primary_key)
+        if column in self._data['data'][row_index] and row_index is not None:
             self._data['data'][row_index][column] = value
             self._notify_cell_change(row_index, column, value)
             return True
@@ -449,3 +450,17 @@ class DataGrid(DOMWidget):
             return col_headers.index(column_name)
         except ValueError:
             return None
+
+    def _get_row_index_of_primary_key(self, value):
+        value = value if isinstance(value, list) else [value]
+        primary_key = self._data['schema']['primaryKey']
+        if len(value) != len(primary_key):
+            raise ValueError('The provided primary key value must be the same length as the primary key.')
+        row_index = None
+
+        for i, row in enumerate(self._data['data']):
+            if all([row[primary_key[j]] == value[j] for j in range(len(primary_key))]):
+                row_index = i
+                break
+
+        return row_index

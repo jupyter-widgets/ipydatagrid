@@ -134,7 +134,39 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return this.currentView.data(region, row, column);
   }
 
+  /**
+   * Updates the cell value of the currently displayed View.
+   *
+   * @param region - The cell region of interest.
+   *
+   * @param row - The row index of the cell of interest.
+   *
+   * @param column - The column index of the cell of interest.
+   *
+   * @param value - The new value to update the indicated cell with.
+   *
+   */
   setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
+    const datasetRow = this.getDatasetRowFromView(row)
+    this.updateCellValue({ region: region, row: datasetRow, column: column, value: value });
+    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1});
+
+    return true;
+  }
+
+  /**
+   * Updates the cell value of the currently displayed View.
+   *
+   * @param region - The cell region of interest.
+   *
+   * @param row - The row index of the cell of interest.
+   *
+   * @param column - The column index of the cell of interest.
+   *
+   * @param value - The new value to update the indicated cell with.
+   *
+   */
+  setModelData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
     this.updateCellValue({ region: region, row: row, column: column, value: value });
     this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1});
 
@@ -245,6 +277,24 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @param options - The options for this method.
    */
+  getDatasetRowFromView(row: number): number {
+
+    // Get the index of the row in the full dataset to be updated
+    const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
+      ? this._dataset.schema.primaryKey
+      : [this._dataset.schema.primaryKey];
+    let keyValues = primaryKey.map(key =>
+      this._currentView.dataset[row][key]
+    );
+    const lookupIndex: number = this._primaryKeyMap.get(JSON.stringify(keyValues))!;
+    return lookupIndex;
+  }
+
+  /**
+   * Updates a value in the full dataset of the model.
+   *
+   * @param options - The options for this function.
+   */
   updateCellValue(options: ViewBasedJSONModel.IUpdateCellValuesOptions): void {
     // Bail if cell region isn't the body
     // TODO: Support modifying the schema
@@ -252,24 +302,11 @@ export class ViewBasedJSONModel extends MutableDataModel {
       return;
     }
 
-    // Get the index of the row in the full dataset to be updated
-    const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
-      ? this._dataset.schema.primaryKey
-      : [this._dataset.schema.primaryKey];
-    let keyValues = primaryKey.map(key =>
-      this._currentView.dataset[options.row][key]
-    );
-    const lookupIndex = this._primaryKeyMap.get(JSON.stringify(keyValues));
-
-    // Bail if row in dataset could not be found
-    if (lookupIndex === undefined) {
-      return;
-    };
     // Create new row and add it to new dataset
-    const newRow = { ...this._dataset.data[lookupIndex] };
+    const newRow = { ...this._dataset.data[options.row] };
     newRow[this.metadata('body', 0, options.column)['name']] = options.value;
     const newData = Array.from(this._dataset.data);
-    newData[lookupIndex] = newRow;
+    newData[options.row] = newRow;
 
     this._dataset = {
       data: newData,

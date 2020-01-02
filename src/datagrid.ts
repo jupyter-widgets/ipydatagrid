@@ -163,7 +163,7 @@ export
 
     this.on('msg:custom', (content) => {
       if (content.event_type === 'cell-changed') {
-        this.data_model.setData('body', content.row, content.column_index, content.value);
+        this.data_model.setModelData('body', content.row, content.column_index, content.value);
       }
     });
   }
@@ -192,10 +192,15 @@ export
     this.data_model.changed.connect((sender: ViewBasedJSONModel, args: any) => {
       if (args.type === 'cells-changed') {
         const value = this.data_model.data(args.region, args.row, args.column);
+        const datasetRow = this.data_model.getDatasetRowFromView(args.row)
         this.comm.send({
           method: 'custom',
           content: {
-            event_type: 'cell-changed', region: args.region, row: args.row, column_index: args.column, value: value
+            event_type: 'cell-changed', 
+            region: args.region, 
+            row: datasetRow,
+            column_index: args.column,
+            value: value
           }
         }, null);
       }
