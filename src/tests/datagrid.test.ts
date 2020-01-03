@@ -28,7 +28,7 @@ describe('Test trait: data', () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const oldDataModel = grid.model.data_model;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(grid.model.data_model.dataset).toEqual(testData.set2);
     expect(grid.model.data_model).not.toBe(oldDataModel);
   });
@@ -37,7 +37,7 @@ describe('Test trait: data', () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const dataModel = grid.model.data_model;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     const mock = jest.spyOn(grid.model.comm, 'send');
     dataModel.setData('body', 1, 0, 1.23);
     expect(mock).toBeCalled();
@@ -48,7 +48,7 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const row = 1, column = 0;
     const value = 1.23;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
 
     return new Promise((resolve, reject) => {
       grid.model.on('msg:custom', (content) => {
@@ -71,7 +71,7 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const row = 1, column = 0;
     const value = 1.23;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
 
     return new Promise((resolve, reject) => {
       grid.model.data_model.changed.connect((model: ViewBasedJSONModel, args: any) => {
@@ -96,7 +96,7 @@ describe('Test trait: data', () => {
       data: testData.set1, modelAttributes: { selection_mode: 'cell' }
     });
     const oldSelectionModel = grid.model.selectionModel;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(grid.model.selectionModel).not.toBe(oldSelectionModel);
   });
 
@@ -117,7 +117,7 @@ describe('Test trait: data', () => {
       transform.columnIndex
     );
     const oldDataModel = grid.model.data_model
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(grid.model.data_model).not.toBe(oldDataModel);
     expect(grid.model.data_model.transformMetadata(
       transform.columnIndex
@@ -135,7 +135,7 @@ describe('Test trait: data', () => {
     const columnCellConfig = Private.createCellConfig('column-header');
     const oldColHead = grid.view.grid.cellRenderers.get(cornerCellConfig);
     const oldCornerHead = grid.view.grid.cellRenderers.get(columnCellConfig);
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(
       grid.view.grid.cellRenderers.get(cornerCellConfig)
     ).not.toBe(oldCornerHead);
@@ -157,7 +157,7 @@ namespace Private {
       const widgetManager = new MockWidgetManager()
       const comm = new MockComm();
       const gridModel = new DataGridModel(
-        { ...options.modelAttributes, data: options.data },
+        { ...options.modelAttributes, _data: options.data },
         { model_id: 'testModel', comm: comm, widget_manager: widgetManager }
       );
       const gridView = new DataGridView({ model: gridModel })
