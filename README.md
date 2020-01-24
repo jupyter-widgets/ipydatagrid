@@ -30,7 +30,7 @@ conda install ipydatagrid
 To enable `ipydatagrid` with JupyterLab:
 
 ```bash
-jupyter labextension install jupyter-datagrid
+jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-datagrid
 ```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
