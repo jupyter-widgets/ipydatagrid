@@ -547,6 +547,15 @@ class NumberCellEditor extends TextCellEditor {
 
     return floatValue;
   }
+
+  protected deserialize(value: any): any {
+    // for irrepresentable numbers show empty string in input 
+    if (!Number.isFinite(value)) {
+      return '';
+    }
+
+    return super.deserialize(value);
+  }
 }
 
 export

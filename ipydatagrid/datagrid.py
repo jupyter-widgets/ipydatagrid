@@ -18,6 +18,7 @@ from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
 from math import floor
 import pandas as pd
+import numpy as np
 
 
 class SelectionHelper():
@@ -145,6 +146,28 @@ class SelectionHelper():
         self._num_rows = 0 if 'data' not in data else len(data['data'])
         return self._num_rows
 
+# modified from ipywidgets original
+def _data_to_json(x, obj):
+    if isinstance(x, dict):
+        return {k: _data_to_json(v, obj) for k, v in x.items()}
+    elif isinstance(x, (list, tuple)):
+        return [_data_to_json(v, obj) for v in x]
+    else:
+        if isinstance(x, float):
+            if np.isnan(x):
+                return '$NaN$'
+            elif np.isposinf(x):
+                return '$Infinity$'
+            elif np.isneginf(x):
+                return '$NegInfinity$'
+        elif x == pd.NaT:
+            return '$NaT$'
+        return x
+
+_data_serialization = {
+    'from_json': widget_serialization['from_json'],
+    'to_json': _data_to_json
+}
 
 class DataGrid(DOMWidget):
 
@@ -213,7 +236,7 @@ class DataGrid(DOMWidget):
 
     _transforms = List(Dict).tag(sync=True, **widget_serialization)
     _visible_rows = List(Int).tag(sync=True)
-    _data = Dict().tag(sync=True)
+    _data = Dict().tag(sync=True, **_data_serialization)
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
