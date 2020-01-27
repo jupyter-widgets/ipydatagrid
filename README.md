@@ -39,6 +39,8 @@ the nbextension:
 jupyter nbextension enable --py [--sys-prefix|--user|--system] ipydatagrid
 ```
 
+NOTE: For examples using Scales from bqplot to work as intended, the bqplot notebook and lab extensions must be installed as well. See the [bqplot repo](https://github.com/bloomberg/bqplot) for installation instructions:
+
 ## Development installation
 
 For a development installation:
