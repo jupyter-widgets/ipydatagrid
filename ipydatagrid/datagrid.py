@@ -160,7 +160,7 @@ def _data_to_json(x, obj):
                 return '$Infinity$'
             elif np.isneginf(x):
                 return '$NegInfinity$'
-        elif x == pd.NaT:
+        elif x is pd.NaT:
             return '$NaT$'
         return x
 
