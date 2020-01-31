@@ -196,8 +196,8 @@ export
         this.comm.send({
           method: 'custom',
           content: {
-            event_type: 'cell-changed', 
-            region: args.region, 
+            event_type: 'cell-changed',
+            region: args.region,
             row: datasetRow,
             column_index: args.column,
             value: value
@@ -513,9 +513,13 @@ export
       iconClass: 'fa fa-arrow-up',
       execute: (args): void => {
         const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
+        const colIndex = this.model.data_model.getSchemaIndex(
+          cellClick.region,
+          cellClick.columnIndex
+        );
         this.model.data_model.addTransform({
           type: 'sort',
-          columnIndex: cellClick.columnIndex + 1,
+          columnIndex: colIndex,
           desc: false
         })
       }
@@ -526,9 +530,13 @@ export
       iconClass: 'fa fa-arrow-down',
       execute: (args) => {
         const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
+        const colIndex = this.model.data_model.getSchemaIndex(
+          cellClick.region,
+          cellClick.columnIndex
+        );
         this.model.data_model.addTransform({
           type: 'sort',
-          columnIndex: cellClick.columnIndex + 1,
+          columnIndex: colIndex,
           desc: true
         })
       }
