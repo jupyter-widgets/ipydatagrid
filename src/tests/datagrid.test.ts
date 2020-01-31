@@ -28,7 +28,7 @@ describe('Test trait: data', () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const oldDataModel = grid.model.data_model;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(grid.model.data_model.dataset).toEqual(testData.set2);
     expect(grid.model.data_model).not.toBe(oldDataModel);
   });
@@ -37,7 +37,7 @@ describe('Test trait: data', () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const dataModel = grid.model.data_model;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     const mock = jest.spyOn(grid.model.comm, 'send');
     dataModel.setData('body', 1, 0, 1.23);
     expect(mock).toBeCalled();
@@ -48,7 +48,7 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const row = 1, column = 0;
     const value = 1.23;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
 
     return new Promise((resolve, reject) => {
       grid.model.on('msg:custom', (content) => {
@@ -71,7 +71,7 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const row = 1, column = 0;
     const value = 1.23;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
 
     return new Promise((resolve, reject) => {
       grid.model.data_model.changed.connect((model: ViewBasedJSONModel, args: any) => {
@@ -96,7 +96,7 @@ describe('Test trait: data', () => {
       data: testData.set1, modelAttributes: { selection_mode: 'cell' }
     });
     const oldSelectionModel = grid.model.selectionModel;
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(grid.model.selectionModel).not.toBe(oldSelectionModel);
   });
 
@@ -117,7 +117,7 @@ describe('Test trait: data', () => {
       transform.columnIndex
     );
     const oldDataModel = grid.model.data_model
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(grid.model.data_model).not.toBe(oldDataModel);
     expect(grid.model.data_model.transformMetadata(
       transform.columnIndex
@@ -135,7 +135,7 @@ describe('Test trait: data', () => {
     const columnCellConfig = Private.createCellConfig('column-header');
     const oldColHead = grid.view.grid.cellRenderers.get(cornerCellConfig);
     const oldCornerHead = grid.view.grid.cellRenderers.get(columnCellConfig);
-    grid.model.set('data', testData.set2);
+    grid.model.set('_data', testData.set2);
     expect(
       grid.view.grid.cellRenderers.get(cornerCellConfig)
     ).not.toBe(oldCornerHead);
@@ -143,7 +143,69 @@ describe('Test trait: data', () => {
       grid.view.grid.cellRenderers.get(columnCellConfig)
     ).not.toBe(oldColHead);
   });
+
+
+  test('Correct index of the grid is determined from column name', async () => {
+    const testData = Private.createMultiIndexData();
+    const grid = await Private.createGridWidget({
+      data: testData.set1
+    });
+
+    // Testing primary keys
+    expect(grid.view.columnNameToIndex('index1')).toBe(0);
+    expect(grid.view.columnNameToIndex('index2')).toBe(1);
+
+    // Testing columns
+    expect(grid.view.columnNameToIndex('col1')).toBe(0);
+    expect(grid.view.columnNameToIndex('col2')).toBe(1);
+  })
+
+  test('Correct column name is determined from column index', async () => {
+    const testData = Private.createMultiIndexData();
+    const grid = await Private.createGridWidget({
+      data: testData.set1
+    });
+
+    // Testing primary keys
+    expect(grid.view.columnIndexToName(0, 'row-header')).toBe('index1');
+    expect(grid.view.columnIndexToName(1, 'row-header')).toBe('index2');
+
+    // Testing columns
+    expect(grid.view.columnIndexToName(0, 'body')).toBe('col1');
+    expect(grid.view.columnIndexToName(1, 'body')).toBe('col2');
+  })
+
+  test('Correct column region is determined from column name', async () => {
+    const testData = Private.createMultiIndexData();
+    const grid = await Private.createGridWidget({
+      data: testData.set1
+    });
+
+    // Testing primary keys
+    expect(grid.view.columnNameToRegion('index1')).toBe('row-header');
+    expect(grid.view.columnNameToRegion('index2')).toBe('row-header');
+
+    // Testing columns
+    expect(grid.view.columnNameToRegion('col1')).toBe('body');
+    expect(grid.view.columnNameToRegion('col2')).toBe('body');
+  })
 });
+
+
+test('Testing resizeColumns() is called upon model update', async () => {
+
+  const testData = Private.createMultiIndexData();
+  const grid = await Private.createGridWidget({
+    data: testData.set1
+  });
+  const mock = jest.spyOn(grid.view.grid, 'resizeColumn');
+
+  let mockDict = { 'col1': 200 };
+  grid.model.set('column_widths', mockDict);
+  grid.model.save_changes();
+
+  expect(mock).toHaveBeenCalledWith('body', 0, 200);
+})
 
 namespace Private {
   /**
@@ -157,7 +219,7 @@ namespace Private {
       const widgetManager = new MockWidgetManager()
       const comm = new MockComm();
       const gridModel = new DataGridModel(
-        { ...options.modelAttributes, data: options.data },
+        { ...options.modelAttributes, _data: options.data },
         { model_id: 'testModel', comm: comm, widget_manager: widgetManager }
       );
       const gridView = new DataGridView({ model: gridModel })
@@ -208,6 +270,25 @@ namespace Private {
       data: [4, 5, 6], name: 'test2', type: 'number'
     });
     return { set1: data1, set2: data2 };
+  }
+
+  /**
+  * 
+  * Creates test data for multi index and multi column data
+  */
+  export function createMultiIndexData() {
+    const data1 = DataGenerator.multiIndexCol({
+      data: [
+        { data: [0, 0, 0], name: 'index1', type: 'number' },
+        { data: [0, 0, 0], name: 'index2', type: 'number' },
+        { data: [1, 2, 3], name: 'col1', type: 'number' },
+        { data: [1, 2, 3], name: 'col2', type: 'number' }
+      ],
+      length: 2,
+      primaryKeyData: ['index1', 'index2']
+    }
+    );
+    return { set1: data1 };
   }
 
   /**
