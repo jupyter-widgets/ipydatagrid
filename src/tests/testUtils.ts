@@ -68,6 +68,37 @@ export namespace DataGenerator {
   }
 
   /**
+   * A function that returns a table with multiple indices and multiple columns
+   *
+   * @param options - The options for creating a table.
+   */
+  export function multiIndexCol(options: IMultiIndexColOptions): ViewBasedJSONModel.IData {
+
+    const fields = options.data.map(val => {
+      return { name: val.name, type: val.type }
+    });
+    const rows = [];
+
+    for (let i = 0; i < options.length; i++) {
+      const row: { [key: string]: any } = {};
+      options.data.forEach(col => {
+        row[col.name] = col.data[i];
+        row['index'] = i;
+      });
+      rows.push(row)
+    }
+
+    return {
+      'schema': {
+        'fields': fields,
+        'primaryKey': options.primaryKeyData
+      },
+      'data': rows
+    }
+  }
+
+
+  /**
    * An options object for initializing single column table for testing.
    */
   export interface ISingleColOptions {
@@ -91,6 +122,12 @@ export namespace DataGenerator {
   export interface IMultiColOptions {
     data: DataGenerator.ISingleColOptions[]
     length: number
+  }
+
+  export interface IMultiIndexColOptions {
+    data: DataGenerator.ISingleColOptions[]
+    length: number
+    primaryKeyData: any[]
   }
 }
 
@@ -164,7 +201,7 @@ export class MockComm implements IClassicComm {
 
 
 export
-function emulateCustomCommMessage(model: WidgetModel, channel: "iopub" | "shell", content: JSONObject) {
+  function emulateCustomCommMessage(model: WidgetModel, channel: "iopub" | "shell", content: JSONObject) {
   // @ts-ignore
   model._handle_comm_msg({
     channel: channel,

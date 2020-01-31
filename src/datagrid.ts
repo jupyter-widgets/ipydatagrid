@@ -16,6 +16,10 @@ import {
 } from './core/basickeyhandler';
 
 import {
+  DataModel
+} from './core/datamodel';
+
+import {
   BasicMouseHandler
 } from './core/basicmousehandler';
 
@@ -28,7 +32,12 @@ import {
 } from './core/cellrenderer';
 
 import {
-  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models
+  JSONExt
+} from '@phosphor/coreutils';
+
+import {
+  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget,
+  ISerializers, resolvePromisesDict, unpack_models
 } from '@jupyter-widgets/base';
 
 import {
@@ -70,8 +79,21 @@ import {
   Theme
 } from './utils'
 
+import { IMessageHandler, Message, MessageLoop } from '@phosphor/messaging';
+
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
+
+/*
+ This type has some of the properties of the ResizeColumnRequest Message which 
+ is what is being intercepted in the Message Hook. Because the original Message
+ is in a Private namespace and we cannot access it, we are using this type.
+ */
+type IPyDataGridColumnResizeMessage = {
+  region: DataModel.ColumnRegion;
+  index: number;
+  size: number;
+}
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
   /**
@@ -98,6 +120,8 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
     const buttonSize = HeaderRenderer.iconWidth * 1.5;
     const buttonPadding = HeaderRenderer.buttonPadding;
 
+    this._onMouseDown = true;
+
     if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
       const columnWidth = grid.columnSize(
         hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
@@ -116,11 +140,20 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
         return;
       }
     }
-
     super.onMouseDown(grid, event);
   }
 
+  onMouseUp(grid: DataGrid, event: MouseEvent): void {
+    this._onMouseDown = false;
+    super.onMouseUp(grid, event);
+  }
+
+  getOnMouseDown(): boolean {
+    return this._onMouseDown;
+  }
+
   private _dataGridView: DataGridView;
+  private _onMouseDown: boolean = false;
 };
 
 
@@ -146,7 +179,8 @@ export
       default_renderer: null,
       selection_mode: 'none',
       selections: [],
-      editable: false
+      editable: false,
+      column_widths: {}
     };
   }
 
@@ -307,7 +341,7 @@ export
 
 
 export
-  class DataGridView extends DOMWidgetView {
+  class DataGridView extends DOMWidgetView implements IMessageHandler {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
@@ -319,6 +353,43 @@ export
     }
 
     this.el = this.pWidget.node;
+  }
+
+  /**
+  * Process a message sent to the widget.
+  *
+  * @param msg - The message sent to the widget.
+  */
+  processMessage(msg: Message): void { }
+
+  /**
+   * Intercepts the column-resize-request message sent to a message handler
+   * and updates the data model to have the correct column widths
+   *
+   * @param handler - The target handler of the message.
+   *
+   * @param msg - The message to be sent to the handler.
+   *
+   * @returns `true` if the message should continue to be processed
+   *   as normal, or `false` if processing should cease immediately.
+   */
+  messageHook(handler: IMessageHandler, msg: Message): boolean {
+
+    if (handler === this.grid.viewport) {
+      let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
+
+      if (msg.type === 'column-resize-request' && mouseHandler.getOnMouseDown()) {
+        const resizeMsg = <IPyDataGridColumnResizeMessage><unknown>msg;
+        let columnName: string = this.columnIndexToName(resizeMsg.index, resizeMsg.region);
+        const dict = JSONExt.deepCopy(this.model.get('column_widths'));
+
+        dict[columnName] = resizeMsg.size;
+        this.model.set('column_widths', dict);
+        this.model.save_changes();
+        return true;
+      }
+    }
+    return true;
   }
 
   render() {
@@ -333,7 +404,10 @@ export
           columnHeaderHeight: this.model.get('base_column_header_size')
         },
         headerVisibility: this.model.get('header_visibility'),
+
       });
+
+      MessageLoop.installMessageHook(this.grid.viewport, this);
 
       this.filterDialog = new InteractiveFilterDialog({
         model: this.model.data_model
@@ -352,6 +426,7 @@ export
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editingEnabled = this.model.get('editable');
       this.updateGridRenderers();
+      this.updateColumnWidths();
 
       this.model.on('data-model-changed', () => {
         this.grid.dataModel = this.model.data_model;
@@ -371,6 +446,10 @@ export
           ...this.grid.defaultSizes,
           columnWidth: this.model.get('base_column_size')
         };
+      });
+
+      this.model.on('change:column_widths', () => {
+        this.updateColumnWidths();
       });
 
       this.model.on('change:base_row_header_size', () => {
@@ -459,6 +538,85 @@ export
 
   private updateGridRenderers() {
     this.grid.cellRenderers.update({ 'body': this._rendererResolver.bind(this) });
+  }
+
+  public columnNameToIndex(name: string) {
+    const schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
+    const primaryKeysLength: number = schema.primaryKey.length;
+
+    let index = -1;
+
+    if (schema.primaryKey.includes(name)) {
+      index = schema.primaryKey.indexOf(name);
+    } else {
+      const fields: ViewBasedJSONModel.IField[] = schema.fields;
+
+      fields.forEach((value, i) => {
+        if (value.name == name) {
+          index = i - primaryKeysLength;
+        }
+      })
+    }
+    return index;
+  }
+
+  public columnIndexToName(index: number, region: DataModel.CellRegion) {
+
+    let schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
+
+    if (region == 'row-header') {
+      return schema.primaryKey[index];
+    } else {
+      return schema.fields[schema.primaryKey.length + index].name;
+    }
+  }
+
+  public columnNameToRegion(name: string) {
+
+    let schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
+
+    if (schema.primaryKey.includes(name)) {
+      return 'row-header';
+    } else {
+      return 'body';
+    }
+  }
+
+  /**
+   * This function resets the column sizes to the base column size and functions
+   * identically to phosphor's resetColumns() but does not call _repaintOverlay
+   * or _repaintContent in the process.
+   */
+  private resetAllColumnWidths() {
+
+    let column_base_size: number = this.model.get('base_column_size');
+
+    // Resizing columns from body region
+    for (let i = 0; i < this.grid.columnCount('body'); i++) {
+      this.grid.resizeColumn('body', i, column_base_size)
+    }
+
+    // Resizing columns from row header region
+    for (let i = 0; i < this.grid.columnCount('column-header'); i++) {
+      this.grid.resizeColumn('row-header', i, column_base_size)
+    }
+  }
+
+  public updateColumnWidths() {
+    let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
+
+    // Do not want this callback to be executed when user resizes using the mouse
+    if (!mouseHandler.getOnMouseDown()) {
+      let column_widths_dict = this.model.get('column_widths');
+
+      this.resetAllColumnWidths();
+
+      for (let key in column_widths_dict) {
+        let index: number = this.columnNameToIndex(key);
+        let region: DataModel.ColumnRegion = <DataModel.ColumnRegion>this.columnNameToRegion(key);
+        this.grid.resizeColumn(region, index, column_widths_dict[key]);
+      }
+    }
   }
 
   protected updateGridStyle() {
