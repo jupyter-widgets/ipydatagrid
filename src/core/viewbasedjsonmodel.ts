@@ -149,7 +149,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
   setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
     const datasetRow = this.getDatasetRowFromView(row)
     this.updateCellValue({ region: region, row: datasetRow, column: column, value: value });
-    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1});
+    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1 });
 
     return true;
   }
@@ -168,7 +168,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   setModelData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
     this.updateCellValue({ region: region, row: row, column: column, value: value });
-    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1});
+    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1 });
 
     return true;
   }
@@ -249,12 +249,20 @@ export class ViewBasedJSONModel extends MutableDataModel {
   }
 
   /**
-   * Returns an array of unique values contained in the provided column index.
-   * 
+   * Returns a Promise that resolves to an array of unique values contained in
+   * the provided column index.
+   *
    * @param columnIndex - The index to retrieve unique values for.
    */
-  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
-    return this.currentView.uniqueValues(region, columnIndex);
+  async uniqueValues(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const columnName = this.metadata(region, 0, columnIndex)['name'];
+      let uniqueVals = new Set();
+      for (let row of this.dataset.data) {
+        uniqueVals.add(row[columnName]);
+      };
+      resolve(Array.from(uniqueVals));
+    });
   }
 
   get transformStateChanged(): ISignal<this, TransformStateManager.IEvent> {

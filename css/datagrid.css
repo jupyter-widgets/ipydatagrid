@@ -1,5 +1,6 @@
 :root {
   --datagrid-padding: 3px;
+  --ipydatagrid-filter-dialog-width: 220px;
 }
 
 .p-DataGrid {
@@ -35,7 +36,7 @@
   border: 2px solid red;
 }
 
-.cell-editor-container > form {
+.cell-editor-container>form {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -56,4 +57,33 @@
 
 .boolean-cell-editor {
   margin: 0;
+}
+
+.ipydatagrid-filterMenu {
+  border: 1px solid var(--jp-border-color1, #BDBDBD);
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, .2);
+  background: var(--jp-layout-color1, white);
+  z-index: 10;
+  padding: 5px;
+  min-height: 143px;
+}
+
+.ipydatagrid-unique-value-grid {
+  min-height: 200px;
+  min-width: var(--ipydatagrid-filter-dialog-width);
+  z-index: 1;
+}
+
+.ipydatagrid-filter-title {
+  min-height: 25px;
+  min-width: var(--ipydatagrid-filter-dialog-width);
+}
+
+.ipydatagrid-filter-apply {
+  min-height: 30px;
+}
+
+.ipydatagrid-filter-condition-select {
+  min-height: 35px;
+  min-width: var(--ipydatagrid-filter-dialog-width);
 }
