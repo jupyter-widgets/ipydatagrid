@@ -661,10 +661,16 @@ export
 
   private updateHeaderRenderer() {
     const headerRenderer = new HeaderRenderer({
-      textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
-      horizontalAlignment: 'center'
-    });
+      textOptions: {
+        textColor: Theme.getFontColor(1),
+        backgroundColor: Theme.getBackgroundColor(2),
+        horizontalAlignment: 'center'
+      },
+      isLightTheme: this.isLightTheme,
+      model: this.model.data_model
+    }
+    );
+
     headerRenderer.model = this.model.data_model;
 
     this.grid.cellRenderers.update({ 'column-header': headerRenderer });
@@ -956,6 +962,8 @@ export
 
   contextMenu: IPyDataGridContextMenu;
   filterDialog: InteractiveFilterDialog;
+
+  isLightTheme: boolean = true;
 }
 
 export {
