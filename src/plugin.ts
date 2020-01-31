@@ -45,6 +45,13 @@ export default datagridPlugin;
 function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWidgetRegistry, themeManager: IThemeManager): void {
   // Exporting a patched DataGridView widget which handles dynamic theme changes
   class DataGridView extends widgetExports.DataGridView {
+
+    initialize() {
+      if (themeManager.theme != null) {
+         this.isLightTheme = themeManager.isLight(themeManager.theme);
+      }
+    }
+
     render() {
       return super.render().then(() => {
         if (themeManager) {
@@ -54,6 +61,9 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
     }
 
     private onThemeChanged() {
+      if (themeManager.theme != null) {
+          this.isLightTheme = themeManager.isLight(themeManager.theme);
+      }
       this.updateGridStyle();
       this.default_renderer.onThemeChanged();
 
