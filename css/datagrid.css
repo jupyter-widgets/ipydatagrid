@@ -57,3 +57,11 @@
 .boolean-cell-editor {
   margin: 0;
 }
+
+.ipydatagrid-context-menu {
+  border: 1px solid var(--jp-border-color0, #000000);
+  font-family: 'BB.Prop', Arial, Helvetica, sans-serif;
+  padding-top: 7px;
+  padding-bottom: 4px;
+  padding-left: 3px;
+}

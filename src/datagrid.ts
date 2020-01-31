@@ -508,7 +508,7 @@ export
   private _createCommandRegistry(): CommandRegistry {
     const commands = new CommandRegistry();
     commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
-      label: 'Sort ASC',
+      label: 'Sort Ascending',
       mnemonic: 1,
       iconClass: 'fa fa-arrow-up',
       execute: (args): void => {
@@ -521,7 +521,7 @@ export
       }
     });
     commands.addCommand(IPyDataGridContextMenu.CommandID.SortDescending, {
-      label: 'Sort DESC',
+      label: 'Sort Descending',
       mnemonic: 1,
       iconClass: 'fa fa-arrow-down',
       execute: (args) => {
