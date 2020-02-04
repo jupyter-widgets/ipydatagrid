@@ -208,6 +208,12 @@ class DataGrid(DOMWidget):
         regions. Rectangles are defined as dictionaries with keys:
         'r1': start row, 'c1': start column, 'r2': end row, 'c2': end column.
         Start of rectangle is top-left corner and end is bottom-right corner
+    editable : boolean (default: false)
+        Boolean indicating whether cell grid can be directly edited
+    column_widths : Dict of strings to int (default: {})
+        Dict to specify custom column sizes
+        The keys (strings) indicate the names of the columns
+        The values (integers) indicate the widths
 
     Accessors (not observable traitlets)
     ---------
@@ -243,6 +249,8 @@ class DataGrid(DOMWidget):
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
     editable = Bool(False).tag(sync=True)
+    column_widths = Dict({}).tag(sync=True)
+
 
     _cell_change_handlers = CallbackDispatcher()
 

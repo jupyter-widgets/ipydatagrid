@@ -31,6 +31,7 @@ export
    */
   constructor(options: GridContextMenu.IOptions) {
     this._menu = new Menu({ commands: options.commands });
+    this._menu.addClass('ipydatagrid-context-menu');
   }
 
   /**
@@ -191,9 +192,9 @@ export namespace IPyDataGridContextMenu {
      */
     grid: DataGrid,
 
-  /**
-   * The command registry used by the menu.
-   */
+    /**
+     * The command registry used by the menu.
+     */
     commands: CommandRegistry
   }
 

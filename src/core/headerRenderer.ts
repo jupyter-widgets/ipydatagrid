@@ -17,6 +17,11 @@ import { TransformStateManager } from './transformStateManager';
  */
 export class HeaderRenderer extends TextRenderer {
 
+  constructor(options:HeaderRenderer.IOptions) {
+    super(options.textOptions);
+    this._isLightTheme = options.isLightTheme;
+  }
+
   /**
   * Draw the text for the cell.
   *
@@ -135,7 +140,7 @@ export class HeaderRenderer extends TextRenderer {
       + config.width
       - HeaderRenderer.iconWidth
       - HeaderRenderer.buttonPadding;
-
+    
     // Draw filter icon 
     this.drawFilterIcon(gc, config);
     // Sets filter icon to gray fill
@@ -154,9 +159,10 @@ export class HeaderRenderer extends TextRenderer {
         this._model.transformMetadata(schemaIndex);
 
       // Fill filter icon if filter applied
-      if (colMetaData
+      if (colMetaData  
         && (colMetaData['filter'])) {
-        gc.fillStyle = Theme.getBrandColor(6);
+          
+        gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
         gc.fill();
       }
 
@@ -166,14 +172,12 @@ export class HeaderRenderer extends TextRenderer {
         // Display ascending or descending icon depending on order
         if (!colMetaData!['sort']!.desc) {
           this.drawSortArrow(gc, config, iconStart, true);
-          gc.fillStyle = Theme.getBrandColor(5);
-          gc.fill();
 
         } else {
-          this.drawSortArrow(gc, config, iconStart, false);
-          gc.fillStyle = Theme.getBrandColor(5);
-          gc.fill();
+          this.drawSortArrow(gc, config, iconStart, false);   
         }
+        gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 7 : 5);
+        gc.fill();
       }
     }
   }
@@ -324,6 +328,7 @@ export class HeaderRenderer extends TextRenderer {
   static iconSpacing: number = 1.5;
 
   private _model: ViewBasedJSONModel | undefined = undefined
+  private _isLightTheme:boolean;
 }
 
 /**
@@ -341,5 +346,6 @@ export namespace HeaderRenderer {
     model: ViewBasedJSONModel
 
     textOptions: TextRenderer.IOptions
+    isLightTheme: boolean
   }
 }

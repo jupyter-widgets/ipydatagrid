@@ -4,7 +4,11 @@
 import * as _ from 'underscore';
 
 import {
-  TextRenderer
+  toArray
+} from '@phosphor/algorithm';
+
+import {
+  TextRenderer, DataModel
 } from '@phosphor/datagrid';
 
 import {
@@ -14,6 +18,10 @@ import {
 import {
   BasicKeyHandler
 } from './core/basickeyhandler';
+
+import {
+  DataModel
+} from './core/datamodel';
 
 import {
   BasicMouseHandler
@@ -28,7 +36,12 @@ import {
 } from './core/cellrenderer';
 
 import {
-  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget, ISerializers, resolvePromisesDict, unpack_models, WidgetModel
+  JSONExt
+} from '@phosphor/coreutils';
+
+import {
+  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget,
+  ISerializers, resolvePromisesDict, unpack_models, WidgetModel
 } from '@jupyter-widgets/base';
 
 import {
@@ -70,8 +83,21 @@ import {
   Theme
 } from './utils'
 
+import { IMessageHandler, Message, MessageLoop } from '@phosphor/messaging';
+
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
+
+/*
+ This type has some of the properties of the ResizeColumnRequest Message which 
+ is what is being intercepted in the Message Hook. Because the original Message
+ is in a Private namespace and we cannot access it, we are using this type.
+ */
+type IPyDataGridColumnResizeMessage = {
+  region: DataModel.ColumnRegion;
+  index: number;
+  size: number;
+}
 
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
   /**
@@ -98,6 +124,8 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
     const buttonSize = HeaderRenderer.iconWidth * 1.5;
     const buttonPadding = HeaderRenderer.buttonPadding;
 
+    this._onMouseDown = true;
+
     if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
       const columnWidth = grid.columnSize(
         hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
@@ -116,11 +144,20 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
         return;
       }
     }
-
     super.onMouseDown(grid, event);
   }
 
+  onMouseUp(grid: DataGrid, event: MouseEvent): void {
+    this._onMouseDown = false;
+    super.onMouseUp(grid, event);
+  }
+
+  getOnMouseDown(): boolean {
+    return this._onMouseDown;
+  }
+
   private _dataGridView: DataGridView;
+  private _onMouseDown: boolean = false;
 };
 
 
@@ -146,7 +183,8 @@ export
       default_renderer: null,
       selection_mode: 'none',
       selections: [],
-      editable: false
+      editable: false,
+      column_widths: {}
     };
   }
 
@@ -196,8 +234,8 @@ export
         this.comm.send({
           method: 'custom',
           content: {
-            event_type: 'cell-changed', 
-            region: args.region, 
+            event_type: 'cell-changed',
+            region: args.region,
             row: datasetRow,
             column_index: args.column,
             value: value
@@ -337,7 +375,7 @@ function unpack_data(
 }
 
 export
-  class DataGridView extends DOMWidgetView {
+  class DataGridView extends DOMWidgetView implements IMessageHandler {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     return this.pWidget.node;
@@ -349,6 +387,43 @@ export
     }
 
     this.el = this.pWidget.node;
+  }
+
+  /**
+  * Process a message sent to the widget.
+  *
+  * @param msg - The message sent to the widget.
+  */
+  processMessage(msg: Message): void { }
+
+  /**
+   * Intercepts the column-resize-request message sent to a message handler
+   * and updates the data model to have the correct column widths
+   *
+   * @param handler - The target handler of the message.
+   *
+   * @param msg - The message to be sent to the handler.
+   *
+   * @returns `true` if the message should continue to be processed
+   *   as normal, or `false` if processing should cease immediately.
+   */
+  messageHook(handler: IMessageHandler, msg: Message): boolean {
+
+    if (handler === this.grid.viewport) {
+      let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
+
+      if (msg.type === 'column-resize-request' && mouseHandler.getOnMouseDown()) {
+        const resizeMsg = <IPyDataGridColumnResizeMessage><unknown>msg;
+        let columnName: string = this.columnIndexToName(resizeMsg.index, resizeMsg.region);
+        const dict = JSONExt.deepCopy(this.model.get('column_widths'));
+
+        dict[columnName] = resizeMsg.size;
+        this.model.set('column_widths', dict);
+        this.model.save_changes();
+        return true;
+      }
+    }
+    return true;
   }
 
   render() {
@@ -363,7 +438,10 @@ export
           columnHeaderHeight: this.model.get('base_column_header_size')
         },
         headerVisibility: this.model.get('header_visibility'),
+
       });
+
+      MessageLoop.installMessageHook(this.grid.viewport, this);
 
       this.filterDialog = new InteractiveFilterDialog({
         model: this.model.data_model
@@ -374,6 +452,10 @@ export
         commands: this._createCommandRegistry()
       });
 
+      // Replace method of copying to clipboard with one that allows
+      // a ClipboardEvent to reach document.body
+      this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid)
+
       this.updateGridStyle();
 
       this.grid.dataModel = this.model.data_model;
@@ -382,6 +464,7 @@ export
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editingEnabled = this.model.get('editable');
       this.updateGridRenderers();
+      this.updateColumnWidths();
 
       this.model.on('data-model-changed', () => {
         this.grid.dataModel = this.model.data_model;
@@ -401,6 +484,10 @@ export
           ...this.grid.defaultSizes,
           columnWidth: this.model.get('base_column_size')
         };
+      });
+
+      this.model.on('change:column_widths', () => {
+        this.updateColumnWidths();
       });
 
       this.model.on('change:base_row_header_size', () => {
@@ -491,6 +578,85 @@ export
     this.grid.cellRenderers.update({ 'body': this._rendererResolver.bind(this) });
   }
 
+  public columnNameToIndex(name: string) {
+    const schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
+    const primaryKeysLength: number = schema.primaryKey.length;
+
+    let index = -1;
+
+    if (schema.primaryKey.includes(name)) {
+      index = schema.primaryKey.indexOf(name);
+    } else {
+      const fields: ViewBasedJSONModel.IField[] = schema.fields;
+
+      fields.forEach((value, i) => {
+        if (value.name == name) {
+          index = i - primaryKeysLength;
+        }
+      })
+    }
+    return index;
+  }
+
+  public columnIndexToName(index: number, region: DataModel.CellRegion) {
+
+    let schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
+
+    if (region == 'row-header') {
+      return schema.primaryKey[index];
+    } else {
+      return schema.fields[schema.primaryKey.length + index].name;
+    }
+  }
+
+  public columnNameToRegion(name: string) {
+
+    let schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
+
+    if (schema.primaryKey.includes(name)) {
+      return 'row-header';
+    } else {
+      return 'body';
+    }
+  }
+
+  /**
+   * This function resets the column sizes to the base column size and functions
+   * identically to phosphor's resetColumns() but does not call _repaintOverlay
+   * or _repaintContent in the process.
+   */
+  private resetAllColumnWidths() {
+
+    let column_base_size: number = this.model.get('base_column_size');
+
+    // Resizing columns from body region
+    for (let i = 0; i < this.grid.columnCount('body'); i++) {
+      this.grid.resizeColumn('body', i, column_base_size)
+    }
+
+    // Resizing columns from row header region
+    for (let i = 0; i < this.grid.columnCount('column-header'); i++) {
+      this.grid.resizeColumn('row-header', i, column_base_size)
+    }
+  }
+
+  public updateColumnWidths() {
+    let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
+
+    // Do not want this callback to be executed when user resizes using the mouse
+    if (!mouseHandler.getOnMouseDown()) {
+      let column_widths_dict = this.model.get('column_widths');
+
+      this.resetAllColumnWidths();
+
+      for (let key in column_widths_dict) {
+        let index: number = this.columnNameToIndex(key);
+        let region: DataModel.ColumnRegion = <DataModel.ColumnRegion>this.columnNameToRegion(key);
+        this.grid.resizeColumn(region, index, column_widths_dict[key]);
+      }
+    }
+  }
+
   protected updateGridStyle() {
     this.updateHeaderRenderer();
     const rowHeaderRenderer = new TextRenderer({
@@ -525,10 +691,16 @@ export
 
   private updateHeaderRenderer() {
     const headerRenderer = new HeaderRenderer({
-      textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
-      horizontalAlignment: 'center'
-    });
+      textOptions: {
+        textColor: Theme.getFontColor(1),
+        backgroundColor: Theme.getBackgroundColor(2),
+        horizontalAlignment: 'center'
+      },
+      isLightTheme: this.isLightTheme,
+      model: this.model.data_model
+    }
+    );
+
     headerRenderer.model = this.model.data_model;
 
     this.grid.cellRenderers.update({ 'column-header': headerRenderer });
@@ -538,27 +710,35 @@ export
   private _createCommandRegistry(): CommandRegistry {
     const commands = new CommandRegistry();
     commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
-      label: 'Sort ASC',
+      label: 'Sort Ascending',
       mnemonic: 1,
       iconClass: 'fa fa-arrow-up',
       execute: (args): void => {
         const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
+        const colIndex = this.model.data_model.getSchemaIndex(
+          cellClick.region,
+          cellClick.columnIndex
+        );
         this.model.data_model.addTransform({
           type: 'sort',
-          columnIndex: cellClick.columnIndex + 1,
+          columnIndex: colIndex,
           desc: false
         })
       }
     });
     commands.addCommand(IPyDataGridContextMenu.CommandID.SortDescending, {
-      label: 'Sort DESC',
+      label: 'Sort Descending',
       mnemonic: 1,
       iconClass: 'fa fa-arrow-down',
       execute: (args) => {
         const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
+        const colIndex = this.model.data_model.getSchemaIndex(
+          cellClick.region,
+          cellClick.columnIndex
+        );
         this.model.data_model.addTransform({
           type: 'sort',
-          columnIndex: cellClick.columnIndex + 1,
+          columnIndex: colIndex,
           desc: true
         })
       }
@@ -619,6 +799,188 @@ export
 
   }
 
+  copyToClipboard(): void {
+    const grid = <DataGrid><unknown>this;
+    // Fetch the data model.
+    let dataModel = grid.dataModel;
+
+    // Bail early if there is no data model.
+    if (!dataModel) {
+      return;
+    }
+
+    // Fetch the selection model.
+    let selectionModel = grid.selectionModel;
+
+    // Bail early if there is no selection model.
+    if (!selectionModel) {
+      return;
+    }
+
+    // Coerce the selections to an array.
+    let selections = toArray(selectionModel.selections());
+
+    // Bail early if there are no selections.
+    if (selections.length === 0) {
+      return;
+    }
+
+    // Alert that multiple selections cannot be copied.
+    if (selections.length > 1) {
+      alert('Cannot copy multiple grid selections.');
+      return;
+    }
+
+    // Fetch the model counts.
+    let br = dataModel.rowCount('body');
+    let bc = dataModel.columnCount('body');
+
+    // Bail early if there is nothing to copy.
+    if (br === 0 || bc === 0) {
+      return;
+    }
+
+    // Unpack the selection.
+    let { r1, c1, r2, c2 } = selections[0];
+
+    // Clamp the selection to the model bounds.
+    r1 = Math.max(0, Math.min(r1, br - 1));
+    c1 = Math.max(0, Math.min(c1, bc - 1));
+    r2 = Math.max(0, Math.min(r2, br - 1));
+    c2 = Math.max(0, Math.min(c2, bc - 1));
+
+    // Ensure the limits are well-orderd.
+    if (r2 < r1) [r1, r2] = [r2, r1];
+    if (c2 < c1) [c1, c2] = [c2, c1];
+
+    // Fetch the header counts.
+    let rhc = dataModel.columnCount('row-header');
+    let chr = dataModel.rowCount('column-header');
+
+    // Unpack the copy config.
+    let separator = grid.copyConfig.separator;
+    let format = grid.copyConfig.format;
+    let headers = grid.copyConfig.headers;
+    let warningThreshold = grid.copyConfig.warningThreshold;
+
+    // Compute the number of cells to be copied.
+    let rowCount = r2 - r1 + 1;
+    let colCount = c2 - c1 + 1;
+    switch (headers) {
+      case 'none':
+        rhc = 0;
+        chr = 0;
+        break;
+      case 'row':
+        chr = 0;
+        colCount += rhc;
+        break;
+      case 'column':
+        rhc = 0;
+        rowCount += chr;
+        break;
+      case 'all':
+        rowCount += chr;
+        colCount += rhc;
+        break;
+      default:
+        throw 'unreachable';
+    }
+
+    // Compute the total cell count.
+    let cellCount = rowCount * colCount;
+
+    // Allow the user to cancel a large copy request.
+    if (cellCount > warningThreshold) {
+      let msg = `Copying ${cellCount} cells may take a while. Continue?`;
+      if (!window.confirm(msg)) {
+        return;
+      }
+    }
+
+    // Set up the format args.
+    let args = {
+      region: 'body' as DataModel.CellRegion,
+      row: 0,
+      column: 0,
+      value: null as any,
+      metadata: {} as DataModel.Metadata
+    };
+
+    // Allocate the array of rows.
+    let rows = new Array<string[]>(rowCount);
+
+    // Iterate over the rows.
+    for (let j = 0; j < rowCount; ++j) {
+      // Allocate the array of cells.
+      let cells = new Array<string>(colCount);
+
+      // Iterate over the columns.
+      for (let i = 0; i < colCount; ++i) {
+        // Set up the format variables.
+        let region: DataModel.CellRegion;
+        let row: number;
+        let column: number;
+
+        // Populate the format variables.
+        if (j < chr && i < rhc) {
+          region = 'corner-header';
+          row = j;
+          column = i;
+        } else if (j < chr) {
+          region = 'column-header';
+          row = j;
+          column = i - rhc + c1;
+        } else if (i < rhc) {
+          region = 'row-header';
+          row = j - chr + r1;
+          column = i;
+        } else {
+          region = 'body';
+          row = j - chr + r1;
+          column = i - rhc + c1;
+        }
+
+        // Populate the format args.
+        args.region = region;
+        args.row = row;
+        args.column = column;
+        args.value = dataModel.data(region, row, column);
+        args.metadata = dataModel.metadata(region, row, column);
+
+        // Format the cell.
+        cells[i] = format(args);
+      }
+
+      // Save the row of cells.
+      rows[j] = cells;
+    }
+
+    // Convert the cells into lines.
+    let lines = rows.map(cells => cells.join(separator));
+
+    // Convert the lines into text.
+    let text = lines.join('\n');
+
+    // Copy the text to the clipboard.
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+
+    // Text area has to be visible on page for copy without Clipboard API,
+    // So we create an "invisible" element, add it to the body, then remove
+    // when no longer needed.
+
+    textArea.style.height = '0px';
+    textArea.style.width = '0px';
+    textArea.style.overflow = 'hidden';
+    textArea.id = 'ipydatagrid-textarea'
+    textArea.style.position = 'absolute';
+    document.body.appendChild(textArea)
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+  }
+
   renderers: Dict<CellRendererView>;
   default_renderer: CellRendererView;
 
@@ -630,6 +992,8 @@ export
 
   contextMenu: IPyDataGridContextMenu;
   filterDialog: InteractiveFilterDialog;
+
+  isLightTheme: boolean = true;
 }
 
 export {
