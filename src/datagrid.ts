@@ -41,7 +41,7 @@ import {
 
 import {
   DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget,
-  ISerializers, resolvePromisesDict, unpack_models
+  ISerializers, resolvePromisesDict, unpack_models, WidgetModel
 } from '@jupyter-widgets/base';
 
 import {
@@ -328,6 +328,7 @@ export
     transforms: { deserialize: (unpack_models as any) },
     renderers: { deserialize: (unpack_models as any) },
     default_renderer: { deserialize: (unpack_models as any) },
+    _data: { deserialize: (unpack_data as any) },
   }
 
   static model_name = 'DataGridModel';
@@ -343,6 +344,35 @@ export
   synchingWithKernel: boolean = false;
 }
 
+// modified from ipywidgets original
+function unpack_data(
+  value: any | Dict<unknown> | string | (Dict<unknown> | string)[],
+  manager: any
+): Promise<WidgetModel | Dict<WidgetModel> | WidgetModel[] | any> {
+  if (Array.isArray(value)) {
+    const unpacked: any[] = [];
+    value.forEach((sub_value, key) => {
+      unpacked.push(unpack_data(sub_value, manager));
+    });
+    return Promise.all(unpacked);
+  } else if (value instanceof Object && typeof value !== 'string') {
+    const unpacked: { [key: string]: any } = {};
+    Object.keys(value).forEach(key => {
+      unpacked[key] = unpack_data(value[key], manager);
+    });
+    return resolvePromisesDict(unpacked);
+  } else if (value === '$NaN$') {
+    return Promise.resolve(Number.NaN);
+  } else if (value === '$Infinity$') {
+    return Promise.resolve(Number.POSITIVE_INFINITY);
+  } else if (value === '$NegInfinity$') {
+    return Promise.resolve(Number.NEGATIVE_INFINITY);
+  } else if (value === '$NaT$') {
+    return Promise.resolve(new Date("INVALID"));
+  } else {
+    return Promise.resolve(value);
+  }
+}
 
 export
   class DataGridView extends DOMWidgetView implements IMessageHandler {
