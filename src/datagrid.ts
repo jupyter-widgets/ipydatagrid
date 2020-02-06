@@ -8,7 +8,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  TextRenderer, DataModel
+  TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -89,7 +89,7 @@ import { IMessageHandler, Message, MessageLoop } from '@phosphor/messaging';
 type Dict<T> = { [keys: string]: T; };
 
 /*
- This type has some of the properties of the ResizeColumnRequest Message which 
+ This type has some of the properties of the ResizeColumnRequest Message which
  is what is being intercepted in the Message Hook. Because the original Message
  is in a Private namespace and we cannot access it, we are using this type.
  */
@@ -526,10 +526,10 @@ export
   }
 
   /**
-   * 
+   *
    * RendererMap.Resolver function to select a CellRenderer based on the
    * provided cell metadata.
-   * 
+   *
    * @param config - CellConfig for the cell to be rendered.
    */
   private _rendererResolver(config: CellRenderer.CellConfig): CellRenderer {
