@@ -140,7 +140,7 @@ export class HeaderRenderer extends TextRenderer {
       + config.width
       - HeaderRenderer.iconWidth
       - HeaderRenderer.buttonPadding;
-    
+
     // Draw filter icon 
     this.drawFilterIcon(gc, config);
     // Sets filter icon to gray fill
@@ -159,22 +159,22 @@ export class HeaderRenderer extends TextRenderer {
         this._model.transformMetadata(schemaIndex);
 
       // Fill filter icon if filter applied
-      if (colMetaData  
+      if (colMetaData
         && (colMetaData['filter'])) {
-          
+
         gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
         gc.fill();
       }
 
       // Fill sort icon if sort applied
-      if (colMetaData) {
+      if (colMetaData
+        && colMetaData['sort']) {
 
         // Display ascending or descending icon depending on order
-        if (!colMetaData!['sort']!.desc) {
-          this.drawSortArrow(gc, config, iconStart, true);
-
+        if (colMetaData['sort'].desc) {
+          this.drawSortArrow(gc, config, iconStart, false);
         } else {
-          this.drawSortArrow(gc, config, iconStart, false);   
+          this.drawSortArrow(gc, config, iconStart, true);
         }
         gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 7 : 5);
         gc.fill();
@@ -236,7 +236,7 @@ export class HeaderRenderer extends TextRenderer {
    * @param asc - Indicates whether to draw ascending or descending icon.
    */
   drawSortArrow(gc: GraphicsContext, config: CellRenderer.CellConfig, filterIconStart: number, asc: boolean): void {
-    
+
     let arrowWidth = HeaderRenderer.iconWidth - 2;
     const sortIconStart = filterIconStart
       - HeaderRenderer.iconSpacing;
@@ -287,12 +287,13 @@ export class HeaderRenderer extends TextRenderer {
       // Y is the tip of the descending arrow
       gc.moveTo(arrowMiddle, ascArrowBottomY);
       gc.lineTo(sortIconStart - arrowWidth,
-        config.height - arrowHeadSideY + 2);
+        arrowHeadSideY + 4.5);
       gc.lineTo(sortIconStart - arrowWidth,
-        config.height - arrowHeadSideY + 1);
+        arrowHeadSideY + 3.5);
+
       // Draw to middle of arrow
       gc.lineTo(descArrowRightStemWidth,
-        config.height - arrowHeadSideY + 1);
+        arrowHeadSideY + 3.5);
 
       // Y is the bottom of the arrow stem
       gc.lineTo(descArrowRightStemWidth, ascArrowTipY);
@@ -300,14 +301,14 @@ export class HeaderRenderer extends TextRenderer {
 
       // Draw left side of descending arrow
       gc.lineTo(arrowMiddle + 0.5,
-        config.height - arrowHeadSideY + 1);
+        arrowHeadSideY + 3.5);
       gc.lineTo(sortIconStart,
-        config.height - arrowHeadSideY + 1);
+        arrowHeadSideY + 3.5);
       gc.lineTo(sortIconStart,
-        config.height - arrowHeadSideY + 2);
+        arrowHeadSideY + 4.5);
     }
     gc.closePath();
-    
+
   }
 
   /**
@@ -328,7 +329,7 @@ export class HeaderRenderer extends TextRenderer {
   static iconSpacing: number = 1.5;
 
   private _model: ViewBasedJSONModel | undefined = undefined
-  private _isLightTheme:boolean;
+  private _isLightTheme: boolean;
 }
 
 /**
