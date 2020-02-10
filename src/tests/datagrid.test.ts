@@ -143,7 +143,69 @@ describe('Test trait: data', () => {
       grid.view.grid.cellRenderers.get(columnCellConfig)
     ).not.toBe(oldColHead);
   });
+
+
+  test('Correct index of the grid is determined from column name', async () => {
+    const testData = Private.createMultiIndexData();
+    const grid = await Private.createGridWidget({
+      data: testData.set1
+    });
+
+    // Testing primary keys
+    expect(grid.view.columnNameToIndex('index1')).toBe(0);
+    expect(grid.view.columnNameToIndex('index2')).toBe(1);
+
+    // Testing columns
+    expect(grid.view.columnNameToIndex('col1')).toBe(0);
+    expect(grid.view.columnNameToIndex('col2')).toBe(1);
+  })
+
+  test('Correct column name is determined from column index', async () => {
+    const testData = Private.createMultiIndexData();
+    const grid = await Private.createGridWidget({
+      data: testData.set1
+    });
+
+    // Testing primary keys
+    expect(grid.view.columnIndexToName(0, 'row-header')).toBe('index1');
+    expect(grid.view.columnIndexToName(1, 'row-header')).toBe('index2');
+
+    // Testing columns
+    expect(grid.view.columnIndexToName(0, 'body')).toBe('col1');
+    expect(grid.view.columnIndexToName(1, 'body')).toBe('col2');
+  })
+
+  test('Correct column region is determined from column name', async () => {
+    const testData = Private.createMultiIndexData();
+    const grid = await Private.createGridWidget({
+      data: testData.set1
+    });
+
+    // Testing primary keys
+    expect(grid.view.columnNameToRegion('index1')).toBe('row-header');
+    expect(grid.view.columnNameToRegion('index2')).toBe('row-header');
+
+    // Testing columns
+    expect(grid.view.columnNameToRegion('col1')).toBe('body');
+    expect(grid.view.columnNameToRegion('col2')).toBe('body');
+  })
 });
+
+
+test('Testing resizeColumns() is called upon model update', async () => {
+
+  const testData = Private.createMultiIndexData();
+  const grid = await Private.createGridWidget({
+    data: testData.set1
+  });
+  const mock = jest.spyOn(grid.view.grid, 'resizeColumn');
+
+  let mockDict = { 'col1': 200 };
+  grid.model.set('column_widths', mockDict);
+  grid.model.save_changes();
+
+  expect(mock).toHaveBeenCalledWith('body', 0, 200);
+})
 
 namespace Private {
   /**
@@ -208,6 +270,25 @@ namespace Private {
       data: [4, 5, 6], name: 'test2', type: 'number'
     });
     return { set1: data1, set2: data2 };
+  }
+
+  /**
+  * 
+  * Creates test data for multi index and multi column data
+  */
+  export function createMultiIndexData() {
+    const data1 = DataGenerator.multiIndexCol({
+      data: [
+        { data: [0, 0, 0], name: 'index1', type: 'number' },
+        { data: [0, 0, 0], name: 'index2', type: 'number' },
+        { data: [1, 2, 3], name: 'col1', type: 'number' },
+        { data: [1, 2, 3], name: 'col2', type: 'number' }
+      ],
+      length: 2,
+      primaryKeyData: ['index1', 'index2']
+    }
+    );
+    return { set1: data1 };
   }
 
   /**

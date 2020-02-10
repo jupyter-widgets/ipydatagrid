@@ -12,6 +12,7 @@
 }
 
 .datagrid-container {
+  width: 100%;
   height: 500px;
 }
 
@@ -86,4 +87,12 @@
 .ipydatagrid-filter-condition-select {
   min-height: 35px;
   min-width: var(--ipydatagrid-filter-dialog-width);
+}
+
+.ipydatagrid-context-menu {
+  border: 1px solid var(--jp-border-color0, #000000);
+  font-family: 'BB.Prop', Arial, Helvetica, sans-serif;
+  padding-top: 7px;
+  padding-bottom: 4px;
+  padding-left: 3px;
 }

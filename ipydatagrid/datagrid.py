@@ -18,6 +18,7 @@ from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
 from math import floor
 import pandas as pd
+import numpy as np
 
 
 class SelectionHelper():
@@ -145,6 +146,28 @@ class SelectionHelper():
         self._num_rows = 0 if 'data' not in data else len(data['data'])
         return self._num_rows
 
+# modified from ipywidgets original
+def _data_to_json(x, obj):
+    if isinstance(x, dict):
+        return {k: _data_to_json(v, obj) for k, v in x.items()}
+    elif isinstance(x, (list, tuple)):
+        return [_data_to_json(v, obj) for v in x]
+    else:
+        if isinstance(x, float):
+            if np.isnan(x):
+                return '$NaN$'
+            elif np.isposinf(x):
+                return '$Infinity$'
+            elif np.isneginf(x):
+                return '$NegInfinity$'
+        elif x is pd.NaT:
+            return '$NaT$'
+        return x
+
+_data_serialization = {
+    'from_json': widget_serialization['from_json'],
+    'to_json': _data_to_json
+}
 
 class DataGrid(DOMWidget):
 
@@ -185,6 +208,12 @@ class DataGrid(DOMWidget):
         regions. Rectangles are defined as dictionaries with keys:
         'r1': start row, 'c1': start column, 'r2': end row, 'c2': end column.
         Start of rectangle is top-left corner and end is bottom-right corner
+    editable : boolean (default: false)
+        Boolean indicating whether cell grid can be directly edited
+    column_widths : Dict of strings to int (default: {})
+        Dict to specify custom column sizes
+        The keys (strings) indicate the names of the columns
+        The values (integers) indicate the widths
 
     Accessors (not observable traitlets)
     ---------
@@ -213,13 +242,15 @@ class DataGrid(DOMWidget):
 
     _transforms = List(Dict).tag(sync=True, **widget_serialization)
     _visible_rows = List(Int).tag(sync=True)
-    _data = Dict().tag(sync=True)
+    _data = Dict().tag(sync=True, **_data_serialization)
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
     editable = Bool(False).tag(sync=True)
+    column_widths = Dict({}).tag(sync=True)
+
 
     _cell_change_handlers = CallbackDispatcher()
 

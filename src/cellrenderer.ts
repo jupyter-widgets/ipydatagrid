@@ -176,6 +176,11 @@ abstract class CellRendererView extends WidgetView {
     const processor = this.processors[name];
 
     if (Scalar.isScalar(processor)) {
+      if (name === 'font' && typeof processor === "string" &&
+          ((typeof config.value === 'number' && !Number.isFinite(config.value)) || 
+          (config.value instanceof Date && Number.isNaN(config.value.getTime())))) {
+        return `italic ${processor}`;
+      }
       return processor;
     }
 
@@ -192,7 +197,7 @@ abstract class CellRendererView extends WidgetView {
     return processor.scale(config.value);
   }
 
-  protected abstract createRenderer(options: any): CellRenderer;
+  protected abstract createRenderer(options: TextRenderer.IOptions): CellRenderer;
 
   model: CellRendererModel;
 
@@ -216,7 +221,7 @@ class TextRendererModel extends CellRendererModel {
       horizontal_alignment: 'left',
       format: null,
       format_type: 'number',
-      missing: 'None',
+      missing: '',
     };
   }
 

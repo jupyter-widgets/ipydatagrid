@@ -30,7 +30,7 @@ conda install ipydatagrid
 To enable `ipydatagrid` with JupyterLab:
 
 ```bash
-jupyter labextension install jupyter-datagrid
+jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-datagrid
 ```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
@@ -38,6 +38,8 @@ the nbextension:
 ```bash
 jupyter nbextension enable --py [--sys-prefix|--user|--system] ipydatagrid
 ```
+
+NOTE: For examples using Scales from bqplot to work as intended, the bqplot notebook and lab extensions must be installed as well. See the [bqplot repo](https://github.com/bloomberg/bqplot) for installation instructions:
 
 ## Development installation
 
