@@ -7,29 +7,45 @@ import {
 } from './viewbasedjsonmodel';
 
 import {
+  DataGrid
+} from './datagrid';
+
+import {
   DataModel
-} from '@phosphor/datagrid';
+} from './datamodel';
 
 import {
   ElementExt
 } from '@phosphor/domutils';
 
 import {
-  Message
+  Message, MessageLoop, ConflatableMessage
 } from '@phosphor/messaging';
 
 import {
-  Widget
+  BasicMouseHandler
+} from './basicmousehandler';
+
+import {
+  Widget, BoxPanel
 } from '@phosphor/widgets';
 
 import {
   VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom'
 
+import {
+  FilterValueRenderer
+} from './valueRenderer';
+
+import {
+  Theme
+} from '../utils';
+
 /**
  * An interactive widget to add filter transformations to the data model.
  */
-export class InteractiveFilterDialog extends Widget {
+export class InteractiveFilterDialog extends BoxPanel {
 
   /**
    * Construct a new InteractiveFilterDialog.
@@ -38,22 +54,47 @@ export class InteractiveFilterDialog extends Widget {
    */
   constructor(options: InteractiveFilterDialog.IOptions) {
     super();
+
+    // Set CSS
+    this.addClass('ipydatagrid-filterMenu');
+    this.node.style.position = 'absolute'
     this._model = options.model;
-    this.node.style.position = 'absolute';
-    this.node.className = 'p-Widget p-Menu';
 
-    // Note: UL tags are used here to so that this menu will have the same
-    // appearance as the phosphor menu widgets on the page.
+    // Widget to display condition operators
+    this._filterByConditionWidget = new Widget()
+    this._filterByConditionWidget.addClass('ipydatagrid-filter-condition-select')
 
-    // Main content element
-    this._mainElem = document.createElement('ul');
-    this._mainElem.className = 'p-Menu-content';
-    this._mainElem.style.cssText = `
-      padding-left: 4px;
-      padding-right: 4px;
-      max-width: 220px;
-      text-align: right;`;
-    this.node.appendChild(this._mainElem);
+    // Grid to display unique values
+    this._uniqueValueGrid = new DataGrid({
+      headerVisibility: 'none',
+      stretchLastColumn: true,
+    });
+    this._uniqueValueGrid.addClass('ipydatagrid-unique-value-grid');
+
+    // State management for unique value grid
+    this._uniqueValueStateManager = new UniqueValueStateManager({
+      grid: this._uniqueValueGrid
+    });
+
+    const mouseHandler = new UniqueValueGridMouseHandler({
+      stateManager: this._uniqueValueStateManager,
+      dialog: this
+    });
+    this._uniqueValueGrid.mouseHandler = mouseHandler;
+
+    // Widget to display the dialog title
+    this._titleWidget = new Widget();
+    this._titleWidget.addClass('ipydatagrid-filter-title')
+
+    // Widget to display "apply" button.
+    this._applyWidget = new Widget();
+    this._applyWidget.addClass('ipydatagrid-filter-apply')
+
+    // Add all widgets to the dock
+    this.addWidget(this._titleWidget);
+    this.addWidget(this._filterByConditionWidget);
+    this.addWidget(this._uniqueValueGrid);
+    this.addWidget(this._applyWidget);
   }
 
   /**
@@ -89,12 +130,18 @@ export class InteractiveFilterDialog extends Widget {
       return;
     }
 
+    const value = this._mode === 'condition'
+      ? <Transform.FilterValue>this._filterValue
+      : this._uniqueValueStateManager.getIndices(this.region, this._columnIndex).map(row => {
+        return this._uniqueValueGrid.dataModel?.data('body', row, 0)
+      })
+
     // Construct transform
     const transform: Transform.TransformSpec = {
       type: 'filter',
       columnIndex: this.model.getSchemaIndex(this._region, this._columnIndex),
       operator: this._filterOperator,
-      value: <Transform.FilterValue>this._filterValue
+      value: value
     };
 
     this._model.addTransform(transform);
@@ -133,22 +180,73 @@ export class InteractiveFilterDialog extends Widget {
    */
   private _render(): void {
     if (this._mode === 'condition') {
+      this._applyWidget.node.style.minHeight = '65px';
+      this._uniqueValueGrid.setHidden(true)
+      this._filterByConditionWidget.setHidden(false)
+
+      // selector
+      VirtualDOM.render([
+        this.createOperatorList(),
+      ], this._filterByConditionWidget.node);
+
+      // title
       VirtualDOM.render([
         this.createTitleNode(),
-        this.createOperatorList(),
+      ], this._titleWidget.node);
+
+      // apply buttons
+      VirtualDOM.render([
         this._filterOperator === 'between'
           ? this.createDualValueNode()
           : this.createSingleValueNode()
-      ], this._mainElem);
+      ], this._applyWidget.node);
+
     } else if (this._mode === 'value') {
+      this._applyWidget.node.style.minHeight = '30px';
+      this._uniqueValueGrid.setHidden(false);
+      this._filterByConditionWidget.setHidden(true);
+
+      // title
       VirtualDOM.render([
         this.createTitleNode(),
-        this.createUniqueValueNodes(),
-        this.createSingleValueNode()
-      ], this._mainElem);
+      ], this._titleWidget.node);
+
+      // apply buttons
+      VirtualDOM.render([
+        this.createApplyButtonNode()
+      ], this._applyWidget.node);
+
+      this._renderUniqueVals();
+
     } else {
       throw 'unreachable';
     }
+  }
+
+  /**
+   * Displays the unique values of a column.
+   */
+  async _renderUniqueVals() {
+    const uniqueVals = this._model.uniqueValues(
+      this._region,
+      this._columnIndex
+    );
+
+    uniqueVals.then(value => {
+      let items = value.map((val, i) => {
+        return { index: i, 'uniqueVals': val }
+      });
+
+      let data: ViewBasedJSONModel.IData = {
+        schema: {
+          fields: [{ name: 'index', type: 'integer' },
+          { name: 'uniqueVals', type: 'number' }],
+          primaryKey: ['index'],
+        },
+        data: items
+      }
+      this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
+    });
   }
 
   /**
@@ -167,6 +265,29 @@ export class InteractiveFilterDialog extends Widget {
     )['type'];
     this._region = options.region;
     this._mode = options.mode;
+
+    // Update styling on unique value grid
+    this._uniqueValueGrid.style = {
+      voidColor: Theme.getBackgroundColor(),
+      backgroundColor: Theme.getBackgroundColor(),
+      gridLineColor: Theme.getBackgroundColor(),
+      headerGridLineColor: Theme.getBorderColor(1),
+      selectionFillColor: Theme.getBrandColor(2, 0.4),
+      selectionBorderColor: Theme.getBrandColor(1),
+      headerSelectionFillColor: Theme.getBackgroundColor(3, 0.4),
+      headerSelectionBorderColor: Theme.getBorderColor(1),
+      cursorFillColor: Theme.getBrandColor(3, 0.4),
+      cursorBorderColor: Theme.getBrandColor(1),
+    };
+
+    this._uniqueValueGrid.cellRenderers.update({
+      'body': new FilterValueRenderer({
+        stateManager: this._uniqueValueStateManager,
+        dialog: this,
+        textColor: Theme.getFontColor(),
+        backgroundColor: Theme.getBackgroundColor()
+      })
+    });
 
     // Update DOM elements and render virtual DOM
     this.updateDialog();
@@ -249,7 +370,7 @@ export class InteractiveFilterDialog extends Widget {
    */
   protected _evtMouseDown(event: MouseEvent) {
     // Close the menu if a click is detected anywhere else
-    if (!ElementExt.hitTest(this._mainElem, event.clientX, event.clientY)) {
+    if (!ElementExt.hitTest(this.node, event.clientX, event.clientY)) {
       this.close();
     }
   }
@@ -294,13 +415,16 @@ export class InteractiveFilterDialog extends Widget {
    * Creates a `VirtualElement` to display the menu title.
    */
   createTitleNode(): VirtualElement {
-    return h.li(
-      { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel', style: { paddingLeft: '5px' } },
-        (this._mode === 'condition')
-          ? 'Filter by condition:'
-          : 'Filter by value:')
-    );
+    return h.div(
+      {
+        className: '', style: {
+          paddingLeft: '5px',
+          color: 'var(--jp-ui-font-color0,black)'
+        }
+      },
+      (this._mode === 'condition')
+        ? 'Filter by condition:'
+        : 'Filter by value:')
   }
 
   /**
@@ -311,40 +435,54 @@ export class InteractiveFilterDialog extends Widget {
    * can cause attribute changes that are not recognized by VirtualDOM.
    */
   createSingleValueNode(): VirtualElement {
-    return h.li(
-      { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
-        h.input({
-          type: 'text',
-          style: {
-            marginRight: '5px',
-            width: '135px',
-            visibility: (
-              this._filterOperator === 'empty'
-              || this._filterOperator === 'notempty'
-              || this._mode === 'value'
-            ) ? 'hidden' : 'visible'
-          },
-          // Assigning a random key ensures that this element is always
-          // rerendered
-          key: String(Math.random()),
-          oninput: (evt) => {
-            const elem = <HTMLInputElement>evt.srcElement
-            this._filterValue = (this._columnDType === 'number'
-              || this._columnDType === 'integer')
-              ? Number(elem.value)
-              : elem.value;
-          },
-          value: (this._filterValue !== undefined && !Array.isArray(this._filterValue))
-            ? String(this._filterValue)
-            : ''
-        }),
+    return h.div(
+      { className: 'widget-text', style: { paddingLeft: '5px', minHeight: '60px' } },
+      h.input({
+        type: 'text',
+        style: {
+          marginRight: '5px',
+          width: '200px',
+          background: 'var(--jp-layout-color0,black)',
+          visibility: (
+            this._filterOperator === 'empty'
+            || this._filterOperator === 'notempty'
+            || this._mode === 'value'
+          ) ? 'hidden' : 'visible'
+        },
+        // Assigning a random key ensures that this element is always
+        // rerendered
+        key: String(Math.random()),
+        oninput: (evt) => {
+          const elem = <HTMLInputElement>evt.srcElement
+          this._filterValue = (this._columnDType === 'number'
+            || this._columnDType === 'integer')
+            ? Number(elem.value)
+            : elem.value;
+        },
+        value: (this._filterValue !== undefined && !Array.isArray(this._filterValue))
+          ? String(this._filterValue)
+          : ''
+      }),
+
+
+      h.div({
+        className: '', style: {
+          width: '202px',
+          textAlign: 'right',
+          paddingTop: '5px'
+        }
+      },
         h.button({
           className: 'jupyter-widgets jupyter-button widget-button',
-          style: { width: '60px', padding: '1px' },
+          style: {
+            width: '60px',
+            padding: '1px',
+            border: '1px solid var(--jp-border-color0, #bdbdbd)'
+          },
           onclick: this.applyFilter.bind(this)
-        }, 'Apply'))
-    );
+        }, 'Apply')
+      )
+    )
   }
 
   /**
@@ -356,61 +494,91 @@ export class InteractiveFilterDialog extends Widget {
    */
   createDualValueNode(): VirtualElement {
     const value = <any[]>this._filterValue;
-    return h.li(
-      { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel widget-text', style: { padding: '5px' } },
-        h.input({
-          style: { marginRight: '5px', width: '75px' },
-          // Assigning a random key ensures that this element is always
-          // rerendered
-          key: String(Math.random()),
-          type: 'text',
-          oninput: (evt) => {
-            const elem = <HTMLInputElement>evt.srcElement;
-            this._filterValue = [
-              this._columnDType === 'number' || this._columnDType === 'integer'
-                ? Number(elem.value)
-                : elem.value,
-              (<any[]>this._filterValue)[1]
-            ];
-          },
-          // this._filterValue is converted to an array in
-          // this.createOperatorList
-          value: value[0] !== undefined ? String(value[0]) : ''
-        }),
-        'and ',
-        h.input({
-          style: { marginRight: '5px', width: '75px' },
-          // Assigning a random key ensures that this element is always
-          // rerendered
-          key: String(Math.random()),
-          type: 'text',
-          oninput: (evt) => {
-            const elem = <HTMLInputElement>evt.srcElement;
-            this._filterValue = [
-              (<any[]>this._filterValue)[0],
-              this._columnDType === 'number' || this._columnDType === 'integer'
-                ? Number(elem.value)
-                : elem.value
-            ];
-          },
-          // this._filterValue is converted to an array in
-          // this.createOperatorList
-          value: value[1] !== undefined ? String(value[1]) : ''
-        }),
+    return h.div(
+      {
+        className: 'widget-text', style: {
+          paddingLeft: '5px',
+          color: 'var(--jp-ui-font-color0,black)',
+        }
+      },
+      h.input({
+        style: {
+          marginRight: '5px',
+          width: '75px',
+          background: 'var(--jp-layout-color0,black)'
+        },
+        // Assigning a random key ensures that this element is always
+        // rerendered
+        key: String(Math.random()),
+        type: 'text',
+        oninput: (evt) => {
+          const elem = <HTMLInputElement>evt.srcElement;
+          this._filterValue = [
+            this._columnDType === 'number' || this._columnDType === 'integer'
+              ? Number(elem.value)
+              : elem.value,
+            (<any[]>this._filterValue)[1]
+          ];
+        },
+        // this._filterValue is converted to an array in
+        // this.createOperatorList
+        value: value[0] !== undefined ? String(value[0]) : ''
+      }),
+      'and ',
+      h.input({
+        style: {
+          marginRight: '5px',
+          width: '75px',
+          background: 'var(--jp-layout-color0,black)'
+        },
+        // Assigning a random key ensures that this element is always
+        // rerendered
+        key: String(Math.random()),
+        type: 'text',
+        oninput: (evt) => {
+          const elem = <HTMLInputElement>evt.srcElement;
+          this._filterValue = [
+            (<any[]>this._filterValue)[0],
+            this._columnDType === 'number' || this._columnDType === 'integer'
+              ? Number(elem.value)
+              : elem.value
+          ];
+        },
+        // this._filterValue is converted to an array in
+        // this.createOperatorList
+        value: value[1] !== undefined ? String(value[1]) : ''
+      }),
+      h.div(
+        { className: '', style: { width: '202px', textAlign: 'right', paddingTop: '5px' } },
         h.button({
           className: "jupyter-widgets jupyter-button widget-button",
-          style: { width: '60px', padding: '1px' },
+          style: {
+            width: '60px',
+            padding: '1px',
+            border: '1px solid var(--jp-border-color0, #bdbdbd)'
+          },
           onclick: this.applyFilter.bind(this)
-        }, 'Apply'))
+        }, 'Apply')
+      )
+    )
+  }
+
+  /**
+   * Creates a `VirtualElement` to display a "loading" message.
+   */
+  protected createLoadingMessageNodes(): VirtualElement {
+    return h.div(
+      { className: 'p-Menu-itemLabel widget-text', style: { paddingLeft: '5px' } },
+      'Loading unique values...'
     );
   }
 
   /**
-   * Creates a `VirtualElement` to display the unique values of a column.
+   * Creates a Promise that resolves to a `VirtualElement` to display the unique
+   * values of a column.
    */
-  protected createUniqueValueNodes(): VirtualElement {
-    const uniqueVals = this._model.uniqueValues(
+  protected async createUniqueValueNodes(): Promise<VirtualElement> {
+    const uniqueVals = await this._model.uniqueValues(
       this._region,
       this._columnIndex
     );
@@ -427,7 +595,12 @@ export class InteractiveFilterDialog extends Widget {
         h.select({
           multiple: '',
           value: '',
-          style: { width: '200px', height: '200px', margin: '5px' },
+          style: {
+            width: '200px',
+            height: '200px',
+            margin: '5px',
+            background: 'var(--jp-layout-color0,white)'
+          },
           onchange: (evt) => {
             let selectElem = <HTMLSelectElement>evt.srcElement;
             const values = [];
@@ -470,27 +643,29 @@ export class InteractiveFilterDialog extends Widget {
       operators = this._createCategoricalOperators();
     }
 
-    return h.li(
-      { className: 'p-Menu-item' }, h.div(
-        { className: 'p-Menu-itemLabel widget-dropdown', style: { padding: '5px' } }, h.select({
-          style: { width: '200px', fontSize: '12px' },
-          // Assigning a random key ensures that this element is always
-          // rerendered
-          key: String(Math.random()),
-          onchange: (evt) => {
-            const elem = <HTMLSelectElement>evt.srcElement
-            this._filterOperator = <Transform.FilterOperator>elem.value;
-
-            if (elem.value === 'between') {
-              this._filterValue = new Array(2);
-            }
-            // Re-render virtual DOM, in case input elements need to change.
-            this._render();
-          },
-          value: this._filterOperator
+    return h.div(
+      { className: 'widget-dropdown', style: { paddingLeft: '5px' } }, h.select({
+        style: {
+          width: '200px',
+          fontSize: '12px',
+          background: 'var(--jp-layout-color0,black)'
         },
-          ...operators
-        )
+        // Assigning a random key ensures that this element is always
+        // rerendered
+        key: String(Math.random()),
+        onchange: (evt) => {
+          const elem = <HTMLSelectElement>evt.srcElement
+          this._filterOperator = <Transform.FilterOperator>elem.value;
+
+          if (elem.value === 'between') {
+            this._filterValue = new Array(2);
+          }
+          // Re-render virtual DOM, in case input elements need to change.
+          this._render();
+        },
+        value: this._filterOperator
+      },
+        ...operators
       )
     )
   }
@@ -499,18 +674,21 @@ export class InteractiveFilterDialog extends Widget {
    * Creates a `VirtualElement` to display an "apply" button.
    */
   protected createApplyButtonNode(): VirtualElement {
-    return h.li(
-      { className: 'p-Menu-item' },
-      h.div({
-        className: 'p-Menu-itemLabel',
-        style: { padding: '5px', textAlign: 'right' }
-      },
-        h.button({
-          className: 'jupyter-widgets jupyter-button widget-button',
-          style: { width: '60px' },
-          onclick: this.applyFilter.bind(this)
-        }, 'Apply'))
-    );
+    return h.div({
+      className: '',
+      style: { paddingLeft: '5px', textAlign: 'right', minHeight: '30px' }
+    },
+      h.button({
+        className: 'jupyter-widgets jupyter-button widget-button',
+        style: {
+          width: '60px',
+          border: '1px solid var(--jp-border-color0, #bdbdbd)'
+        },
+        onclick: this.applyFilter.bind(this)
+      }, 'Apply')
+
+    )
+
   }
 
   /**
@@ -692,6 +870,13 @@ export class InteractiveFilterDialog extends Widget {
   /**
    * Returns the active column index.
    */
+  get region(): DataModel.CellRegion {
+    return this._region;
+  }
+
+  /**
+   * Returns the active Cellregion.
+   */
   get columnIndex(): number {
     return this._columnIndex;
   }
@@ -705,9 +890,6 @@ export class InteractiveFilterDialog extends Widget {
 
   private _model: ViewBasedJSONModel;
 
-  // DOM elements
-  private _mainElem: HTMLUListElement;
-
   // Cell metadata
   private _columnDType: string = 'number';
   private _columnIndex: number = 0;
@@ -717,10 +899,21 @@ export class InteractiveFilterDialog extends Widget {
   private _mode: 'condition' | 'value' = 'value';
   private _filterOperator: Transform.FilterOperator = '<';
   private _filterValue: InteractiveFilterDialog.FilterValue
+
+  // Phosphor widgets
+  private _uniqueValueGrid: DataGrid
+  private _filterByConditionWidget: Widget
+  private _titleWidget: Widget
+  private _applyWidget: Widget
+
+  // Unique value state
+  private _uniqueValueStateManager: UniqueValueStateManager
 }
 
+/**
+ * The namespace for the `InteractiveFilterDialog` class statics.
+ */
 export namespace InteractiveFilterDialog {
-
   /**
    * An options object for creating an `InteractiveFilterDialog`.
    */
@@ -778,5 +971,220 @@ export namespace InteractiveFilterDialog {
      * Selects if widget will open in `condition` or `value` mode.
      */
     mode: FilterMode
+  }
+}
+
+/**
+ * Manages the selection state of the grid that displays the unique values
+ * of a column.
+ */
+export class UniqueValueStateManager {
+  constructor(options: UniqueValueStateManager.IOptions) {
+    this._grid = options.grid;
+  }
+
+  has(region: DataModel.CellRegion, columnIndex: number, value: any): boolean {
+    const key = this.getKeyName(region, columnIndex)
+    return this._state.hasOwnProperty(key) && this._state[key].has(value);
+  }
+
+  getKeyName(region: DataModel.CellRegion, columnIndex: number): string {
+    return `${region}:${columnIndex}`
+  }
+
+  add(region: DataModel.CellRegion, columnIndex: number, value: any): void {
+    const key = this.getKeyName(region, columnIndex);
+    if (this._state.hasOwnProperty(key)) {
+      this._state[key].add(value)
+    } else {
+      this._state[key] = new Set<number | string>();
+      this._state[key].add(value);
+    }
+    const msg = new PaintRequest('all', 0, 0, 0, 0);
+    MessageLoop.postMessage(this._grid.viewport, msg);
+  }
+
+  remove(region: DataModel.CellRegion, columnIndex: number, value: any): void {
+    const key = this.getKeyName(region, columnIndex)
+
+    if (this._state.hasOwnProperty(key)) {
+      this._state[key].delete(value)
+    }
+    const msg = new PaintRequest('all', 0, 0, 0, 0);
+    MessageLoop.postMessage(this._grid.viewport, msg);
+  }
+
+  getIndices(region: DataModel.CellRegion, columnIndex: number): any[] {
+    const key = this.getKeyName(region, columnIndex)
+    if (this._state.hasOwnProperty(key)) {
+      return Array.from(this._state[key])
+    } else {
+      return []
+    }
+  }
+
+  private _state: { [key: string]: Set<number | string> } = {}
+  private _grid: DataGrid
+}
+
+class UniqueValueGridMouseHandler extends BasicMouseHandler {
+  constructor(options: UniqueValueGridMouseHandler.IOptions) {
+    super()
+    this._uniqueValuesSelectionState = options.stateManager
+    this._filterDialog = options.dialog
+  }
+
+  /**
+   * Handle the mouse down event for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The mouse down event of interest.
+   */
+  onMouseDown(grid: DataGrid, event: MouseEvent): void {
+    const hit = grid.hitTest(event.clientX, event.clientY);
+
+    let value = hit.row
+    const colIndex = this._filterDialog.columnIndex;
+    const region = this._filterDialog.region
+
+    if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
+      this._uniqueValuesSelectionState.remove(region, colIndex, value)
+    } else {
+      this._uniqueValuesSelectionState.add(region, colIndex, value)
+    }
+  }
+
+  private _uniqueValuesSelectionState: UniqueValueStateManager
+  private _filterDialog: InteractiveFilterDialog
+};
+
+class PaintRequest extends ConflatableMessage {
+  /**
+   * Construct a new paint request messages.
+   *
+   * @param region - The cell region for the paint.
+   *
+   * @param r1 - The top-left row of the dirty region.
+   *
+   * @param c1 - The top-left column of the dirty region.
+   *
+   * @param r2 - The bottom-right row of the dirty region.
+   *
+   * @param c2 - The bottom-right column of the dirty region.
+   */
+  constructor(region: DataModel.CellRegion | 'all', r1: number, c1: number, r2: number, c2: number) {
+    super('paint-request');
+    this._region = region;
+    this._r1 = r1;
+    this._c1 = c1;
+    this._r2 = r2;
+    this._c2 = c2;
+  }
+
+  /**
+   * The cell region for the paint.
+   */
+  get region(): DataModel.CellRegion | 'all' {
+    return this._region;
+  }
+
+  /**
+   * The top-left row of the dirty region.
+   */
+  get r1(): number {
+    return this._r1;
+  }
+
+  /**
+   * The top-left column of the dirty region.
+   */
+  get c1(): number {
+    return this._c1;
+  }
+
+  /**
+   * The bottom-right row of the dirty region.
+   */
+  get r2(): number {
+    return this._r2;
+  }
+
+  /**
+   * The bottom-right column of the dirty region.
+   */
+  get c2(): number {
+    return this._c2;
+  }
+
+  /**
+   * Conflate this message with another paint request.
+   */
+  conflate(other: PaintRequest): boolean {
+    // Bail early if the request is already painting everything.
+    if (this._region === 'all') {
+      return true;
+    }
+
+    // Any region can conflate with the `'all'` region.
+    if (other._region === 'all') {
+      this._region = 'all';
+      return true;
+    }
+
+    // Otherwise, do not conflate with a different region.
+    if (this._region !== other._region) {
+      return false;
+    }
+
+    // Conflate the region to the total boundary.
+    this._r1 = Math.min(this._r1, other._r1);
+    this._c1 = Math.min(this._c1, other._c1);
+    this._r2 = Math.max(this._r2, other._r2);
+    this._c2 = Math.max(this._c2, other._c2);
+    return true;
+  }
+
+  private _region: DataModel.CellRegion | 'all';
+  private _r1: number;
+  private _c1: number;
+  private _r2: number;
+  private _c2: number;
+}
+
+/**
+ * The namespace for the `UniqueValueStateManager` class statics.
+ */
+export namespace UniqueValueStateManager {
+
+  /**
+   * An options object for initializing an UniqueValueStateManager.
+   */
+  export interface IOptions {
+
+    /**
+     * The DataGrid to manage selection state for
+     */
+    grid: DataGrid
+  }
+}
+
+/**
+ * The namespace for the `UniqueValueGridMouseHandler` class statics.
+ */
+export namespace UniqueValueGridMouseHandler {
+  /**
+   * An options object for initializing a UniqueValueGridMouseHandler.
+   */
+  export interface IOptions {
+    /**
+     * The state manager linked to the grid for this mouse handler.
+     */
+    stateManager: UniqueValueStateManager
+
+    /**
+     * The dialog linked to this mouse handler.
+     */
+    dialog: InteractiveFilterDialog
   }
 }

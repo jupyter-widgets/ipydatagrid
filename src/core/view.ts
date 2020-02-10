@@ -133,20 +133,6 @@ class View {
   }
 
   /**
-   * Returns an array of unique values contained in the provided column index.
-   *
-   * @param columnIndex - The index to retrieve unique values for.
-   */
-  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[]{
-    let columnName = this.metadata(region, 0, columnIndex)['name'];
-    let uniqueVals = new Set();
-    for (let row of this._data) {
-      uniqueVals.add(row[columnName]);
-    }
-    return Array.from(uniqueVals);
-  }
-
-  /**
    * Returns a reference to the dataset from this View.
    */
   get dataset(): View.DataSource {
