@@ -24,12 +24,6 @@ describe('Test interactions with View', () => {
     model.metadata('body', 0, 0);
     expect(mock).toHaveBeenCalledWith('body', 0, 0);
   })
-  test('.uniqueValues()', () => {
-    const model = Private.createSimpleModel();
-    const mock = jest.spyOn(View.prototype, 'uniqueValues');
-    model.uniqueValues('column-header', 0);
-    expect(mock).toHaveBeenCalledWith('column-header', 0);
-  })
   test('.getSchemaIndex()', () => {
     const model = Private.createSimpleModel();
     const mock = jest.spyOn(View.prototype, 'getSchemaIndex');
@@ -114,6 +108,25 @@ describe('Test mutable dataset', () => {
       });
       model.setData('body', row, column, 1.23);
     });
+  });
+});
+
+describe('Test .uniqueValues()', () => {
+  const testData = DataGenerator.multiCol({
+    length: 5, data: [
+      { name: 'string', type: 'string', data: ['A', 'C', 'B', 'A', 'C'] },
+      { name: 'boolean', type: 'boolean', data: [true, false, true, false, false] },
+    ]
+  });
+  const testModel = new ViewBasedJSONModel(testData)
+  test('cellregion-column-header-0', () => {
+    expect(testModel.uniqueValues('column-header', 0)).resolves.toEqual(['A', 'C', 'B'])
+  });
+  test('cellregion-column-header-1', () => {
+    expect(testModel.uniqueValues('column-header', 1)).resolves.toEqual([true, false])
+  });
+  test('cellregion-corner-header-0', () => {
+    expect(testModel.uniqueValues('corner-header', 0)).resolves.toEqual([0, 1, 2, 3, 4])
   });
 });
 
