@@ -126,6 +126,23 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
 
     this._onMouseDown = true;
 
+    // Send custom message to kernel
+    if (hit.region !== 'void' && grid.dataModel) {
+      const dataModel = <ViewBasedJSONModel>grid.dataModel;
+      this._dataGridView.model.comm.send({
+        method: 'custom',
+        content: {
+          event_type: 'cell-click',
+          region: hit.region,
+          column: dataModel.metadata(hit.region, hit.row, hit.column)['name'],
+          column_index: hit.column,
+          row: hit.row,
+          primary_key_row: dataModel.getDatasetRowFromView(hit.row),
+          cell_value: dataModel.data(hit.region, hit.row, hit.column)
+        }
+      }, null);
+    }
+
     if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
       const columnWidth = grid.columnSize(
         hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
@@ -520,7 +537,6 @@ export
         this.grid.editingEnabled = this.model.get('editable');
       });
 
-      //@ts-ignore
       this.pWidget.addWidget(this.grid);
     });
   }

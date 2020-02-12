@@ -253,6 +253,7 @@ class DataGrid(DOMWidget):
 
 
     _cell_change_handlers = CallbackDispatcher()
+    _cell_click_handlers = CallbackDispatcher()
 
     def __init__(self, dataframe, **kwargs):
         self.data = dataframe
@@ -272,6 +273,16 @@ class DataGrid(DOMWidget):
                 'column': column,
                 'column_index': content["column_index"],
                 'value':value
+            })
+        elif content["event_type"] == 'cell-click':
+            # notify python listeners
+            self._cell_click_handlers({
+                'region': content['region'],
+                'column': content['column'],
+                'column_index': content['column_index'],
+                'row': content['row'],
+                'primary_key_row': content['primary_key_row'],
+                'cell_value': content['cell_value']
             })
 
     @property
@@ -460,6 +471,21 @@ class DataGrid(DOMWidget):
             Set to true to remove the callback from the list of callbacks.
         """
         self._cell_change_handlers.register_callback(callback, remove=remove)
+
+    def on_cell_click(self, callback, remove=False):
+        """Register a callback to execute when a cell is clicked.
+
+        The callback will be called with one argument, the dictionary
+        containing cell information with following keys:
+          "region", "column", "column_index", "row", "primary_key_row",
+          "cell_value"
+
+        Parameters
+        ----------
+        remove: bool (optional)
+            Set to true to remove the callback from the list of callbacks.
+        """
+        self._cell_click_handlers.register_callback(callback, remove=remove)
 
     def _column_index_to_name(self, column_index):
         if 'schema' not in self._data or 'fields' not in self._data['schema']:
