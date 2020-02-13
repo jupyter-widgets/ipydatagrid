@@ -347,12 +347,13 @@ class DataGrid(DOMWidget):
         })
 
     def get_visible_data(self):
-        """Returns the dataset of the current View."""
+        """Returns a dataframe of the current View."""
 
         data = deepcopy(self._data)
         if self._visible_rows:
             data['data'] = [data['data'][i] for i in self._visible_rows]
-        return data
+
+        return pd.DataFrame(data['data']).set_index(self._data['schema']['primaryKey'])
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
