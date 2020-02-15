@@ -10,7 +10,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  IJupyterWidgetRegistry
+  IJupyterWidgetRegistry, WidgetView
 } from '@jupyter-widgets/base';
 
 import {
@@ -46,10 +46,11 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
   // Exporting a patched DataGridView widget which handles dynamic theme changes
   class DataGridView extends widgetExports.DataGridView {
 
-    initialize() {
+    initialize(parameters:WidgetView.InitializeParameters) {
       if (themeManager.theme != null) {
          this.isLightTheme = themeManager.isLight(themeManager.theme);
       }
+      super.initialize(parameters)
     }
 
     render() {
