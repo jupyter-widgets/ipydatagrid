@@ -239,8 +239,10 @@ export class InteractiveFilterDialog extends BoxPanel {
 
       let data: ViewBasedJSONModel.IData = {
         schema: {
-          fields: [{ name: 'index', type: 'integer' },
-          { name: 'uniqueVals', type: 'number' }],
+          fields: [
+            { name: 'index', type: 'integer', rows: [] },
+            { name: 'uniqueVals', type: 'number', rows: [] }
+          ],
           primaryKey: ['index'],
         },
         data: items

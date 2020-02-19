@@ -290,19 +290,54 @@ class DataGrid(DOMWidget):
         return pd.DataFrame(self._data['data']).set_index(self._data['schema']['primaryKey'])
 
     @data.setter
-    def data(self, data):
-        self._data = {'data': data.reset_index().to_dict(orient='records'),
-                      'schema': pd.io.json.build_table_schema(data)}
+    def data(self, dataframe):
+        schema = pd.io.json.build_table_schema(dataframe)
+        data = dataframe.reset_index().to_dict(orient='records')
+
+        # Check for multiple primary keys
+        key = schema['primaryKey']
+        num_index_levels = len(key) if isinstance(key, list) else 1
+
+        # Check for nested columns in schema, if so, we need to update the
+        # schema to represent the actual column name values
+        if isinstance(schema['fields'][-1]['name'], tuple):
+            num_column_levels = len(dataframe.columns.levels)
+            primary_key = list(key)
+
+            for i in range(num_index_levels):
+                new_name = [''] * num_column_levels
+                new_name[0] = schema['fields'][i]['name']
+                schema['fields'][i]['name'] = tuple(new_name)
+                primary_key[i] = tuple(new_name)
+            schema['primaryKey'] = primary_key
+
+        self._data = {'data': data,
+                      'schema': schema,
+                      'fields': [{field['name']:None} for field in schema['fields']]}
 
     def get_cell_value(self, column, row_index):
-        """Gets the value for a single cell by column name and row index."""
+        """Gets the value for a single cell by column name and row index.
+
+        Tuples should be used to index into multi-index columns.
+
+        Note: The provided row_index should correspond to the row index in the
+        untransformed dataset."""
 
         return self._data['data'][row_index][column]
 
     def set_cell_value(self, column, primary_key, value):
-        """Sets the value for a single cell by column name and primary key."""
+        """Sets the value for a single cell by column name and primary key.
+
+        Note: This method returns a boolean to indicate if the operation
+        was successful.
+        """
 
         row_index = self._get_row_index_of_primary_key(primary_key)
+
+        # Bail early if key could not be found
+        if row_index is None:
+            return False
+
         if column in self._data['data'][row_index] and row_index is not None:
             self._data['data'][row_index][column] = value
             self._notify_cell_change(row_index, column, value)
@@ -320,7 +355,11 @@ class DataGrid(DOMWidget):
         return None
 
     def set_cell_value_by_index(self, column_index, row_index, value):
-        """Sets the value for a single cell by column index and row index."""
+        """Sets the value for a single cell by column index and row index.
+
+        Note: This method returns a boolean to indicate if the operation
+        was successful.
+        """
 
         column = self._column_index_to_name(column_index)
         if column is not None and row_index >= 0 and row_index < len(self._data['data']):

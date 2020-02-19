@@ -13,6 +13,7 @@ import {
 import {
   DataModel
 } from '@phosphor/datagrid';
+import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
 /**
  * A View implementation for immutable in-memory JSON data.
@@ -45,8 +46,9 @@ class View {
   rowCount(region: DataModel.RowRegion): number {
     if (region === 'body') {
       return this._data.length;
+    } else {
+      return this._bodyFields[0].rows.length
     }
-    return 1;
   }
 
   /**
@@ -96,7 +98,7 @@ class View {
   data(region: DataModel.CellRegion, row: number, column: number): any {
     // Set up the field and value variables.
 
-    let field: View.IField;
+    let field: ViewBasedJSONModel.IField;
     let value: any;
 
     // Look up the field and value for the region.
@@ -107,15 +109,17 @@ class View {
         break;
       case 'column-header':
         field = this._bodyFields[column];
-        value = field.name;
+        value = field.rows[row];
         break;
       case 'row-header':
         field = this._headerFields[column];
         value = this._data[row][field.name];
+        // value = field.rows[row];
         break;
       case 'corner-header':
         field = this._headerFields[column];
-        value = field.name;
+        // value = field.name;
+        value = field.rows[row]
         break;
       default:
         throw 'unreachable';
@@ -155,8 +159,8 @@ class View {
   }
 
   private readonly _data: View.DataSource;
-  private readonly _bodyFields: View.IField[];
-  private readonly _headerFields: View.IField[];
+  private readonly _bodyFields: ViewBasedJSONModel.IField[];
+  private readonly _headerFields: ViewBasedJSONModel.IField[];
   private readonly _missingValues: Private.MissingValuesMap | null;
 }
 
@@ -172,21 +176,6 @@ namespace View {
    * This is based on the JSON Table Schema specification:
    * https://specs.frictionlessdata.io/table-schema/
    */
-  export
-  interface IField {
-    /**
-     * The name of the column.
-     *
-     * This is used as the key to extract a value from a data record.
-     * It is also used as the column header label.
-     */
-    readonly name: string;
-
-    /**
-     * The type of data held in the column.
-     */
-    readonly type: string;
-  }
 
   /**
    * An object when specifies the schema for a view.
@@ -202,7 +191,7 @@ namespace View {
      *
      * Primary key fields are rendered as row header columns.
      */
-    readonly fields: IField[];
+    readonly fields: ViewBasedJSONModel.IField[];
 
     /**
      * The values to treat as "missing" data.
@@ -262,12 +251,12 @@ namespace Private {
     /**
      * The non-primary key fields to use for the grid body.
      */
-    bodyFields: View.IField[];
+    bodyFields: ViewBasedJSONModel.IField[];
 
     /**
      * The primary key fields to use for the grid headers.
      */
-    headerFields: View.IField[];
+    headerFields: ViewBasedJSONModel.IField[];
   }
 
   /**
@@ -286,8 +275,8 @@ namespace Private {
     }
 
     // Separate the fields for the body and header.
-    let bodyFields: View.IField[] = [];
-    let headerFields: View.IField[] = [];
+    let bodyFields: ViewBasedJSONModel.IField[] = [];
+    let headerFields: ViewBasedJSONModel.IField[] = [];
     for (let field of schema.fields) {
       if (primaryKeys.indexOf(field.name) === -1) {
         bodyFields.push(field);

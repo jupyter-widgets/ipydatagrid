@@ -147,17 +147,21 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
       const columnWidth = grid.columnSize(
         hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
       const rowHeight = grid.rowSize('column-header', hit.row);
+
+      const isMenuRow = (hit.region === 'column-header' && hit.row == this._dataGridView.grid.dataModel!.rowCount('column-header') - 1)
+        || (hit.region === 'corner-header' && hit.row === 0);
+
       const isMenuClick =
         hit.x > (columnWidth - buttonSize - buttonPadding) &&
         hit.x < (columnWidth - buttonPadding) &&
         hit.y > (rowHeight - buttonSize - buttonPadding) &&
-        hit.y < (rowHeight - buttonPadding);
+        hit.y < (rowHeight - buttonPadding) &&
+        isMenuRow;
 
       if (isMenuClick) {
         this._dataGridView.contextMenu.open(grid, {
           ...hit, x: event.clientX, y: event.clientY
         });
-
         return;
       }
     }
@@ -224,7 +228,13 @@ export
   }
 
   updateData() {
-    this.data_model = new ViewBasedJSONModel(this.get('_data'));
+    const data = this.data;
+    const schema = Private.createSchema(data)
+
+    this.data_model = new ViewBasedJSONModel({
+      data: data.data,
+      schema: schema
+    });
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
       this.save_changes();
@@ -338,6 +348,10 @@ export
     }
 
     this.synchingWithKernel = false;
+  }
+
+  get data(): DataGridModel.IData {
+    return this.get('_data');
   }
 
   static serializers: ISerializers = {
@@ -1020,3 +1034,68 @@ export {
 export {
   VegaExprModel, VegaExprView
 } from './vegaexpr';
+
+export namespace DataGridModel {
+
+  /**
+   * An options object for initializing the data model.
+   */
+  export interface IData {
+
+    data: ViewBasedJSONModel.DataSource
+    schema: ISchema
+    fields: { [key: string]: null }[]
+  }
+  export interface IField {
+    readonly name: string | any[]
+    readonly type: string
+    readonly rows: any[]
+  }
+  export interface ISchema {
+    readonly fields: IField[];
+    readonly primaryKey: string | string[];
+  }
+}
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+
+  /**
+   * Creates a valid JSON Table Schema from the schema provided by pandas.
+   * 
+   * @param data - The data that has been synced from the kernel.
+   */
+  export function createSchema(data: DataGridModel.IData): ViewBasedJSONModel.ISchema {
+    
+    // Construct a new array of schema fields based on the keys in data.fields
+    // Note: this accounts for how tuples/lists may be serialized into strings
+    // in the case of multiIndex columns.
+    const fields: ViewBasedJSONModel.IField[] = [];
+    data.fields.forEach((val: { [key: string]: null }, i: number) => {
+      let rows = Array.isArray(data.schema.fields[i].name)
+        ? <any[]>data.schema.fields[i].name
+        : <string[]>[data.schema.fields[i].name]
+      let field = {
+        name: Object.keys(val)[0],
+        type: data.schema.fields[i].type,
+        rows: rows
+      }
+      fields.push(field);
+    })
+
+    // Updating the primary key to account for a multiIndex primary key.
+    let primaryKey = data.schema.primaryKey;
+    if (Array.isArray(data.schema.primaryKey)) {
+      primaryKey = data.schema.primaryKey.map((key: any, i: number) => {
+        return Object.keys(data.fields[i])[0];
+      })
+    }
+
+    return {
+      primaryKey: primaryKey,
+      fields: fields
+    }
+  }
+}

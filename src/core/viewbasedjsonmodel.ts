@@ -383,7 +383,6 @@ namespace ViewBasedJSONModel {
      * The name of the column.
      *
      * This is used as the key to extract a value from a data record.
-     * It is also used as the column header label.
      */
     readonly name: string;
 
@@ -391,6 +390,11 @@ namespace ViewBasedJSONModel {
      * The type of data held in the column.
      */
     readonly type: string;
+
+    /**
+     * An array of the column labels per header row.
+     */
+    readonly rows: any[]
   }
 
   /**

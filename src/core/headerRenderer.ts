@@ -17,7 +17,7 @@ import { TransformStateManager } from './transformStateManager';
  */
 export class HeaderRenderer extends TextRenderer {
 
-  constructor(options:HeaderRenderer.IOptions) {
+  constructor(options: HeaderRenderer.IOptions) {
     super(options.textOptions);
     this._isLightTheme = options.isLightTheme;
   }
@@ -120,6 +120,11 @@ export class HeaderRenderer extends TextRenderer {
     // Draw the text
     gc.fillText(text, textX, textY);
 
+    // Check if not bottom row of 'column-header' CellRegion
+    if (config.region === 'column-header' && config.row !== this._model!.rowCount('column-header') - 1) {
+      return
+    }
+
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
     const backgroundSize = HeaderRenderer.iconWidth
@@ -134,7 +139,6 @@ export class HeaderRenderer extends TextRenderer {
       backgroundSize,
       backgroundSize
     );
-
 
     const iconStart = config.x
       + config.width
@@ -196,10 +200,9 @@ export class HeaderRenderer extends TextRenderer {
       - HeaderRenderer.iconWidth
       - HeaderRenderer.buttonPadding;
 
-
     let filterRightStemWidthX: number = HeaderRenderer.iconWidth / 2 + 1;
     let filterLeftStemWidthX: number = HeaderRenderer.iconWidth / 2 - 1;
-    let filterTop: number = config.height - HeaderRenderer.iconHeight - 1;
+    let filterTop: number = config.height - HeaderRenderer.iconHeight - 1 + config.y;
 
     gc.beginPath();
     // Start drawing in top left of filter icon
@@ -212,14 +215,14 @@ export class HeaderRenderer extends TextRenderer {
       filterTop);
     // Y is the y value of the top of the stem
     gc.lineTo(filterIconStart + filterRightStemWidthX,
-      config.height - HeaderRenderer.iconHeight + 2);
+      config.y + config.height - HeaderRenderer.iconHeight + 2);
     // Y is the y value of the bottom of the stem
     gc.lineTo(filterIconStart + filterRightStemWidthX,
-      config.height - 1.5 * HeaderRenderer.buttonPadding);
+      config.y + config.height - 1.5 * HeaderRenderer.buttonPadding);
     gc.lineTo(filterIconStart + filterLeftStemWidthX,
-      config.height - 2 * HeaderRenderer.buttonPadding);
+      config.y + config.height - 2 * HeaderRenderer.buttonPadding);
     gc.lineTo(filterIconStart + filterLeftStemWidthX,
-      config.height - HeaderRenderer.iconHeight + 2);
+      config.y + config.height - HeaderRenderer.iconHeight + 2);
     gc.closePath();
 
   }
@@ -247,16 +250,20 @@ export class HeaderRenderer extends TextRenderer {
       - arrowWidth / 2
       - 0.5;
     let arrowHeadSideY: number = config.height
+    + config.y
       - HeaderRenderer.buttonPadding
       - HeaderRenderer.iconHeight
       + 4;
     let arrowMiddle: number = sortIconStart
       - arrowWidth / 2;
     let ascArrowTipY: number = config.height
+      + config.y
       - HeaderRenderer.iconHeight
       - 1;
     let ascArrowBottomY: number = config.height
-      - 1.5 * HeaderRenderer.buttonPadding;
+      - 8
+      + config.y
+      + HeaderRenderer.buttonPadding;
 
     gc.beginPath();
 
