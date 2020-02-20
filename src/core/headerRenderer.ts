@@ -6,11 +6,15 @@ import {
   ViewBasedJSONModel
 } from './viewbasedjsonmodel';
 
+//@ts-ignore
 import {
   Theme
 } from '../utils';
 
+//@ts-ignore
 import { TransformStateManager } from './transformStateManager';
+
+import { DataGrid } from './datagrid';
 
 /**
  * A custom cell renderer for headers that provides a menu icon.
@@ -20,6 +24,75 @@ export class HeaderRenderer extends TextRenderer {
   constructor(options: HeaderRenderer.IOptions) {
     super(options.textOptions);
     this._isLightTheme = options.isLightTheme;
+    this._grid = options.grid;
+  }
+
+  /**
+   * Model getter.
+   */
+  get model(): ViewBasedJSONModel {
+    return this._grid.dataModel as ViewBasedJSONModel;
+  }
+
+   /**
+   * Draw the background for the cell.
+   *
+   * @param gc - The graphics context to use for drawing.
+   *
+   * @param config - The configuration data for the cell.
+   */
+  drawBackground(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
+    let merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+
+    // Resolve the background color for the cell.
+    let color = CellRenderer.resolveOption(this.backgroundColor, config);
+
+    // Bail if there is no background color to draw.
+    if (!color) {
+      return;
+    }
+
+    if (merges.length > 1) {
+      let xStart = Number.MAX_SAFE_INTEGER;
+      let yStart = Number.MAX_SAFE_INTEGER;
+      let xEnd = Number.MIN_SAFE_INTEGER;
+      let yEnd = Number.MIN_SAFE_INTEGER
+
+      for (let merge of merges) {
+        const [row, column] = merge;
+
+        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth;
+        let x1 = this._grid!.columnOffset("body", column) + headerOffset;
+        let y1 = this._grid!.rowOffset("column-header", row);
+        let x2 = x1 + this._grid!.columnSize("body", column)
+        let y2 = y1 + this._grid!.rowSize("column-header", row);
+        xStart = Math.min(xStart, x1);
+        yStart = Math.min(yStart, y1);    
+        xEnd = Math.max(xEnd, x2);  
+        yEnd = Math.max(yEnd, y2);
+      }
+
+      const width = xEnd - xStart;
+      const height = yEnd - yStart;
+
+      console.log(`Width: ${width}, Height: ${height}`);
+
+      // Fill the cell with the background color.
+      switch(config.value) {
+        case "People": gc.fillStyle = "red"; break;
+        case "Bob": gc.fillStyle = "green"; break;
+        case "Guido": gc.fillStyle = "pink"; break;
+        case "Sue": gc.fillStyle = "yellow"; break;
+        default: gc.fillStyle = color;
+      }
+
+      gc.fillRect(xStart, yStart, width, height);
+    }
+    else {
+      // Fill the cell with the background color.
+      gc.fillStyle = color;
+      gc.fillRect(config.x, config.y, config.width, config.height);
+    }
   }
 
   /**
@@ -55,12 +128,46 @@ export class HeaderRenderer extends TextRenderer {
       return;
     }
 
+    let merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+
+    let multIndex = (merges.length > 1);
+    let width = config.width;
+    let height = config.height;
+    let x = config.x;
+    let y = config.y;
+
+    if (multIndex) {
+      let xStart = Number.MAX_SAFE_INTEGER;
+      let yStart = Number.MAX_SAFE_INTEGER;
+      let xEnd = Number.MIN_SAFE_INTEGER;
+      let yEnd = Number.MIN_SAFE_INTEGER
+
+      for (let merge of merges) {
+        const [row, column] = merge;
+
+        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth;
+        let x1 = this._grid!.columnOffset("body", column) + headerOffset;
+        let y1 = this._grid!.rowOffset("column-header", row);
+        let x2 = x1 + this._grid!.columnSize("body", column)
+        let y2 = y1 + this._grid!.rowSize("column-header", row);
+        xStart = Math.min(xStart, x1);
+        yStart = Math.min(yStart, y1);    
+        xEnd = Math.max(xEnd, x2);  
+        yEnd = Math.max(yEnd, y2);
+
+        width = xEnd - xStart;
+        height = yEnd - yStart;
+        x = xStart;
+        y = yStart;
+      }
+    }
+
     // Resolve the vertical and horizontal alignment.
     let vAlign = CellRenderer.resolveOption(this.verticalAlignment, config);
     let hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
-    let boxHeight = config.height - (vAlign === 'center' ? 1 : 2);
+    let boxHeight = height - (vAlign === 'center' ? 1 : 2);
 
     // Bail if the text box has no effective size.
     if (boxHeight <= 0) {
@@ -77,13 +184,13 @@ export class HeaderRenderer extends TextRenderer {
     // Compute the Y position for the text.
     switch (vAlign) {
       case 'top':
-        textY = config.y + 2 + textHeight;
+        textY = y + 2 + textHeight;
         break;
       case 'center':
-        textY = config.y + config.height / 2 + textHeight / 2;
+        textY = y + height / 2 + textHeight / 2;
         break;
       case 'bottom':
-        textY = config.y + config.height - 2;
+        textY = y + height - 2;
         break;
       default:
         throw 'unreachable';
@@ -92,13 +199,13 @@ export class HeaderRenderer extends TextRenderer {
     // Compute the X position for the text.
     switch (hAlign) {
       case 'left':
-        textX = config.x + 2;
+        textX = x + 2;
         break;
       case 'center':
-        textX = config.x + config.width / 2;
+        textX = x + width / 2;
         break;
       case 'right':
-        textX = config.x + config.width - 3;
+        textX = x + width - 3;
         break;
       default:
         throw 'unreachable';
@@ -107,7 +214,7 @@ export class HeaderRenderer extends TextRenderer {
     // Clip the cell if the text is taller than the text box height.
     if (textHeight > boxHeight) {
       gc.beginPath();
-      gc.rect(config.x, config.y, config.width, config.height - 1);
+      gc.rect(x, y, width, height - 1);
       gc.clip();
     }
 
@@ -120,70 +227,71 @@ export class HeaderRenderer extends TextRenderer {
     // Draw the text
     gc.fillText(text, textX, textY);
 
+
     // Check if not bottom row of 'column-header' CellRegion
-    if (config.region === 'column-header' && config.row !== this._model!.rowCount('column-header') - 1) {
+    if (config.region === 'column-header' && config.row !== this._grid.dataModel!.rowCount('column-header') - 1) {
       return
     }
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
-    const backgroundSize = HeaderRenderer.iconWidth
-      + HeaderRenderer.iconWidth
-      + HeaderRenderer.iconSpacing
-      + 2 * HeaderRenderer.buttonPadding;
+    // const backgroundSize = HeaderRenderer.iconWidth
+    //   + HeaderRenderer.iconWidth
+    //   + HeaderRenderer.iconSpacing
+    //   + 2 * HeaderRenderer.buttonPadding;
 
-    gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
-    gc.fillRect(
-      (config.x + config.width - backgroundSize),
-      (config.y + config.height - backgroundSize),
-      backgroundSize,
-      backgroundSize
-    );
+    // gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
+    // gc.fillRect(
+    //   (config.x + config.width - backgroundSize),
+    //   (config.y + config.height - backgroundSize),
+    //   backgroundSize,
+    //   backgroundSize
+    // );
 
-    const iconStart = config.x
-      + config.width
-      - HeaderRenderer.iconWidth
-      - HeaderRenderer.buttonPadding;
+    // const iconStart = config.x
+    //   + config.width
+    //   - HeaderRenderer.iconWidth
+    //   - HeaderRenderer.buttonPadding;
 
     // Draw filter icon 
-    this.drawFilterIcon(gc, config);
+    // this.drawFilterIcon(gc, config);
     // Sets filter icon to gray fill
-    gc.fillStyle = Theme.getBorderColor(1);
-    gc.fill();
+    // gc.fillStyle = Theme.getBorderColor(1);
+    // gc.fill();
 
     // Check for transform metadata
-    if (this._model) {
-      // Get cell metadata
-      const schemaIndex = this._model.getSchemaIndex(
-        config.region,
-        config.column
-      );
+    // if (this._model) {
+    //   // Get cell metadata
+    //   const schemaIndex = this._model.getSchemaIndex(
+    //     config.region,
+    //     config.column
+    //   );
 
-      const colMetaData: TransformStateManager.IColumn | undefined =
-        this._model.transformMetadata(schemaIndex);
+    //   const colMetaData: TransformStateManager.IColumn | undefined =
+    //     this._model.transformMetadata(schemaIndex);
 
-      // Fill filter icon if filter applied
-      if (colMetaData
-        && (colMetaData['filter'])) {
+    //   // Fill filter icon if filter applied
+    //   if (colMetaData
+    //     && (colMetaData['filter'])) {
 
-        gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
-        gc.fill();
-      }
+    //     gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
+    //     gc.fill();
+    //   }
 
-      // Fill sort icon if sort applied
-      if (colMetaData
-        && colMetaData['sort']) {
+    //   // Fill sort icon if sort applied
+    //   if (colMetaData
+    //     && colMetaData['sort']) {
 
-        // Display ascending or descending icon depending on order
-        if (colMetaData['sort'].desc) {
-          this.drawSortArrow(gc, config, iconStart, false);
-        } else {
-          this.drawSortArrow(gc, config, iconStart, true);
-        }
-        gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 7 : 5);
-        gc.fill();
-      }
-    }
+    //     // Display ascending or descending icon depending on order
+    //     if (colMetaData['sort'].desc) {
+    //       this.drawSortArrow(gc, config, iconStart, false);
+    //     } else {
+    //       this.drawSortArrow(gc, config, iconStart, true);
+    //     }
+    //     gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 7 : 5);
+    //     gc.fill();
+    //   }
+    // }
   }
 
   /**
@@ -321,9 +429,9 @@ export class HeaderRenderer extends TextRenderer {
   /**
    * Sets the data model that should provide metadata for this renderer.
    */
-  set model(model: ViewBasedJSONModel | undefined) {
-    this._model = model
-  }
+  // set model(model: ViewBasedJSONModel | undefined) {
+  //   this._model = model
+  // }
 
   /**
    * Indicates the size of the menu icon, to support the current implementation
@@ -335,14 +443,17 @@ export class HeaderRenderer extends TextRenderer {
   static buttonPadding: number = 3;
   static iconSpacing: number = 1.5;
 
-  private _model: ViewBasedJSONModel | undefined = undefined
+  //@ts-ignore
   private _isLightTheme: boolean;
+  //@ts-ignore
+  private _grid: DataGrid
 }
 
 /**
  * The namespace for the `HeaderRenderer` class statics.
  */
 export namespace HeaderRenderer {
+
   /**
    * An options object for initializing a renderer.
    */
@@ -351,9 +462,9 @@ export namespace HeaderRenderer {
     /**
      * The data model this renderer should get metadata from.
      */
-    model: ViewBasedJSONModel
-
+    // model: ViewBasedJSONModel
     textOptions: TextRenderer.IOptions
     isLightTheme: boolean
+    grid: DataGrid
   }
 }

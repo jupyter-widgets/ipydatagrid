@@ -487,13 +487,13 @@ export
       // a ClipboardEvent to reach document.body
       this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid)
 
-      this.updateGridStyle();
-
       this.grid.dataModel = this.model.data_model;
       this.grid.keyHandler = new BasicKeyHandler();
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editingEnabled = this.model.get('editable');
+      this.updateGridStyle();
+      
       this.updateGridRenderers();
       this.updateColumnWidths();
 
@@ -727,11 +727,9 @@ export
         horizontalAlignment: 'center'
       },
       isLightTheme: this.isLightTheme,
-      model: this.model.data_model
+      grid: this.grid
     }
     );
-
-    headerRenderer.model = this.model.data_model;
 
     this.grid.cellRenderers.update({ 'column-header': headerRenderer });
     this.grid.cellRenderers.update({ 'corner-header': headerRenderer });
