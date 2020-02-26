@@ -76,14 +76,8 @@ export class HeaderRenderer extends TextRenderer {
       const height = yEnd - yStart;
 
       // Fill the cell with the background color.
-      switch(config.value) {
-        case "People": gc.fillStyle = "red"; break;
-        case "Bob": gc.fillStyle = "green"; break;
-        case "Guido": gc.fillStyle = "pink"; break;
-        case "Sue": gc.fillStyle = "yellow"; break;
-        default: gc.fillStyle = color;
-      }
-
+      gc.fillStyle = color;
+      
       gc.fillRect(xStart, yStart, width, height);
     }
     else {
@@ -246,50 +240,50 @@ export class HeaderRenderer extends TextRenderer {
       backgroundSize
     );
 
-    // const iconStart = config.x
-    //   + config.width
-    //   - HeaderRenderer.iconWidth
-    //   - HeaderRenderer.buttonPadding;
+    const iconStart = config.x
+      + config.width
+      - HeaderRenderer.iconWidth
+      - HeaderRenderer.buttonPadding;
 
     // Draw filter icon 
-    // this.drawFilterIcon(gc, config);
+    this.drawFilterIcon(gc, config);
     // Sets filter icon to gray fill
-    // gc.fillStyle = Theme.getBorderColor(1);
-    // gc.fill();
+    gc.fillStyle = Theme.getBorderColor(1);
+    gc.fill();
 
     // Check for transform metadata
-    // if (this._model) {
-    //   // Get cell metadata
-    //   const schemaIndex = this._model.getSchemaIndex(
-    //     config.region,
-    //     config.column
-    //   );
+    if (this.model) {
+      // Get cell metadata
+      const schemaIndex = this.model.getSchemaIndex(
+        config.region,
+        config.column
+      );
 
-    //   const colMetaData: TransformStateManager.IColumn | undefined =
-    //     this._model.transformMetadata(schemaIndex);
+      const colMetaData: TransformStateManager.IColumn | undefined =
+        this.model.transformMetadata(schemaIndex);
 
-    //   // Fill filter icon if filter applied
-    //   if (colMetaData
-    //     && (colMetaData['filter'])) {
+      // Fill filter icon if filter applied
+      if (colMetaData
+        && (colMetaData['filter'])) {
 
-    //     gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
-    //     gc.fill();
-    //   }
+        gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
+        gc.fill();
+      }
 
-    //   // Fill sort icon if sort applied
-    //   if (colMetaData
-    //     && colMetaData['sort']) {
+      // Fill sort icon if sort applied
+      if (colMetaData
+        && colMetaData['sort']) {
 
-    //     // Display ascending or descending icon depending on order
-    //     if (colMetaData['sort'].desc) {
-    //       this.drawSortArrow(gc, config, iconStart, false);
-    //     } else {
-    //       this.drawSortArrow(gc, config, iconStart, true);
-    //     }
-    //     gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 7 : 5);
-    //     gc.fill();
-    //   }
-    // }
+        // Display ascending or descending icon depending on order
+        if (colMetaData['sort'].desc) {
+          this.drawSortArrow(gc, config, iconStart, false);
+        } else {
+          this.drawSortArrow(gc, config, iconStart, true);
+        }
+        gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 7 : 5);
+        gc.fill();
+      }
+    }
   }
 
   /**
