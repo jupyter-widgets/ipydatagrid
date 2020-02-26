@@ -61,7 +61,7 @@ export class HeaderRenderer extends TextRenderer {
       for (let merge of merges) {
         const [row, column] = merge;
 
-        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth;
+        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth -this._grid.scrollX;
         let x1 = this._grid!.columnOffset("body", column) + headerOffset;
         let y1 = this._grid!.rowOffset("column-header", row);
         let x2 = x1 + this._grid!.columnSize("body", column)
@@ -74,8 +74,6 @@ export class HeaderRenderer extends TextRenderer {
 
       const width = xEnd - xStart;
       const height = yEnd - yStart;
-
-      console.log(`Width: ${width}, Height: ${height}`);
 
       // Fill the cell with the background color.
       switch(config.value) {
@@ -145,8 +143,8 @@ export class HeaderRenderer extends TextRenderer {
       for (let merge of merges) {
         const [row, column] = merge;
 
-        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth;
-        let x1 = this._grid!.columnOffset("body", column) + headerOffset;
+        const offsetX = config.region === 'corner-header' ? 0 : this._grid!.headerWidth - this._grid.scrollX;
+        let x1 = this._grid!.columnOffset("body", column) + offsetX;
         let y1 = this._grid!.rowOffset("column-header", row);
         let x2 = x1 + this._grid!.columnSize("body", column)
         let y2 = y1 + this._grid!.rowSize("column-header", row);
@@ -235,18 +233,18 @@ export class HeaderRenderer extends TextRenderer {
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
-    // const backgroundSize = HeaderRenderer.iconWidth
-    //   + HeaderRenderer.iconWidth
-    //   + HeaderRenderer.iconSpacing
-    //   + 2 * HeaderRenderer.buttonPadding;
+    const backgroundSize = HeaderRenderer.iconWidth
+      + HeaderRenderer.iconWidth
+      + HeaderRenderer.iconSpacing
+      + 2 * HeaderRenderer.buttonPadding;
 
-    // gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
-    // gc.fillRect(
-    //   (config.x + config.width - backgroundSize),
-    //   (config.y + config.height - backgroundSize),
-    //   backgroundSize,
-    //   backgroundSize
-    // );
+    gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
+    gc.fillRect(
+      (config.x + config.width - backgroundSize),
+      (config.y + config.height - backgroundSize),
+      backgroundSize,
+      backgroundSize
+    );
 
     // const iconStart = config.x
     //   + config.width

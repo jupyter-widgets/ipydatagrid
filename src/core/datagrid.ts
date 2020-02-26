@@ -3132,6 +3132,7 @@ class DataGrid extends Widget {
     if (offset + oldSize <= hw) {
       this._scrollX += delta;
       this._syncScrollState();
+      this._drawColumnHeaderRegion(-this.scrollX, -this.scrollY, this.totalWidth, this.headerHeight);
       return;
     }
 
@@ -3140,7 +3141,8 @@ class DataGrid extends Widget {
 
     // Paint from the section onward if it spans the viewport.
     if (offset + oldSize >= vw || offset + newSize >= vw) {
-      this._paintContent(pos, 0, vw - pos, vh);
+      this._paintContent(pos, 0, vw - pos, vh, false);
+      this._drawColumnHeaderRegion(-this.scrollX, -this.scrollY, this.totalWidth, this.headerHeight);
       this._paintOverlay();
       this._syncScrollState();
       return;
@@ -3183,7 +3185,7 @@ class DataGrid extends Widget {
     }
 
     // Draw the column header region.
-    this._drawColumnHeaderRegion(0, 0, this.viewportWidth, this.headerHeight);
+    this._drawColumnHeaderRegion(-this.scrollX, 0, this.totalWidth, this.headerHeight);
 
     // Paint the overlay.
     this._paintOverlay();
@@ -3481,18 +3483,18 @@ class DataGrid extends Widget {
     // valid content and paint the dirty region.
     if (dx !== 0 && contentWidth > 0) {
       if (Math.abs(dx) >= contentWidth) {
-        this._paintContent(contentX, 0, contentWidth, height, true);
+        this._paintContent(contentX, 0, contentWidth, height, false);
       } else {
         let x = dx < 0 ? contentX : contentX + dx;
         let y = 0;
         let w = contentWidth - Math.abs(dx);
         let h = height;
         this._blitContent(this._canvas, x, y, w, h, x - dx, y);
-        this._paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height, true);
+        this._paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height, false);
       }
     }
 
-    this._drawColumnHeaderRegion(0, 0, this.viewportWidth, this.headerHeight);
+    this._drawColumnHeaderRegion(-this.scrollX, 0, this.totalWidth, this.headerHeight);
 
     // Paint the overlay.
     this._paintOverlay();

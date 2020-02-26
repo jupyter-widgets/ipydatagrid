@@ -59,20 +59,18 @@ export class ViewBasedJSONModel extends MutableDataModel {
       // the dataset so we have access to the multi index arrays
       // only.
       let retVal = ArrayUtils.generateDataGridMergedCellLocations(this, multiIndexArrayLocations);
-      console.log("retVal: ", retVal);
       // final run: we need to check that the merging hierarchy makes sense. i.e. we don't
       // want to render a merged range below a non-merged range. This function will check
       // that this requirement is met. If it is not, we simply render each cell individually
       // as if it wasn't grouped.
       let isValidMergingHierarchy = ArrayUtils.validateMergingHierarchy(retVal);
-      // console.log(isValidMergingHierarchy);
       if (!isValidMergingHierarchy) {
         retVal = [];
       }
 
       this._mergedCellLocations = retVal;
     }
-    console.log(this);
+    // console.log(this);
     
   }
 
@@ -115,7 +113,6 @@ export class ViewBasedJSONModel extends MutableDataModel {
     const [row2, col2] = cell2;
 
     const siblings = this.getMergedSiblingCells(cell1);
-    console.log("siblings: ", siblings);
 
     for (let sibling of siblings) {
       if (row2 === sibling[0] && col2 === sibling[1]) {
@@ -132,7 +129,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   getMergedSiblingCells(cell: number[]): any[] {
     const [row, column] = cell;
-    if (row >= this._mergedCellLocations.length) {
+    if (row < 0 || column < 0 || row >= this._mergedCellLocations.length) {
       return [];
     }
 
