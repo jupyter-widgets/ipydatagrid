@@ -137,7 +137,9 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
           column: dataModel.metadata(hit.region, hit.row, hit.column)['name'],
           column_index: hit.column,
           row: hit.row,
-          primary_key_row: dataModel.getDatasetRowFromView(hit.row),
+          primary_key_row: hit.region == 'body' || hit.region == 'row-header'
+            ? dataModel.getDatasetRowFromView(hit.row)
+            : hit.row,
           cell_value: dataModel.data(hit.region, hit.row, hit.column)
         }
       }, null);
@@ -493,7 +495,7 @@ export
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editingEnabled = this.model.get('editable');
       this.updateGridStyle();
-      
+
       this.updateGridRenderers();
       this.updateColumnWidths();
 
@@ -1066,7 +1068,7 @@ namespace Private {
    * @param data - The data that has been synced from the kernel.
    */
   export function createSchema(data: DataGridModel.IData): ViewBasedJSONModel.ISchema {
-    
+
     // Construct a new array of schema fields based on the keys in data.fields
     // Note: this accounts for how tuples/lists may be serialized into strings
     // in the case of multiIndex columns.
