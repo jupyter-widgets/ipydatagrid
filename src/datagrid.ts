@@ -137,7 +137,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
           column: dataModel.metadata(hit.region, hit.row, hit.column)['name'],
           column_index: hit.column,
           row: hit.row,
-          primary_key_row: dataModel.getDatasetRowFromView(hit.row),
+          primary_key_row: dataModel.getDatasetRowFromView(hit.region, hit.row),
           cell_value: dataModel.data(hit.region, hit.row, hit.column)
         }
       }, null);
@@ -247,7 +247,7 @@ export
     this.data_model.changed.connect((sender: ViewBasedJSONModel, args: any) => {
       if (args.type === 'cells-changed') {
         const value = this.data_model.data(args.region, args.row, args.column);
-        const datasetRow = this.data_model.getDatasetRowFromView(args.row)
+        const datasetRow = this.data_model.getDatasetRowFromView(args.region, args.row)
         this.comm.send({
           method: 'custom',
           content: {

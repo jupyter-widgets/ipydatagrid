@@ -147,7 +147,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    */
   setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
-    const datasetRow = this.getDatasetRowFromView(row)
+    const datasetRow = this.getDatasetRowFromView(region, row)
     this.updateCellValue({ region: region, row: datasetRow, column: column, value: value });
     this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1 });
 
@@ -285,7 +285,11 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @param options - The options for this method.
    */
-  getDatasetRowFromView(row: number): number {
+  getDatasetRowFromView(region: DataModel.CellRegion, row: number): number {
+
+    if (region == 'column-header' || region == 'corner-header') {
+      return row;
+    }
 
     // Get the index of the row in the full dataset to be updated
     const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
