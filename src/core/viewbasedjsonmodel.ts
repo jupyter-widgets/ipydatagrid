@@ -53,7 +53,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
     if(typeof this !== "undefined") {
       // first run: generate a list of indices corresponding
       // to the locations of multi-index arrays.
-      let multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(this);
+      const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(this);
 
       // second run: map the index locations generated above to
       // the dataset so we have access to the multi index arrays
@@ -63,15 +63,12 @@ export class ViewBasedJSONModel extends MutableDataModel {
       // want to render a merged range below a non-merged range. This function will check
       // that this requirement is met. If it is not, we simply render each cell individually
       // as if it wasn't grouped.
-      let isValidMergingHierarchy = ArrayUtils.validateMergingHierarchy(retVal);
-      if (!isValidMergingHierarchy) {
+      if (!ArrayUtils.validateMergingHierarchy(retVal)) {
         retVal = [];
       }
 
       this._mergedCellLocations = retVal;
     }
-    // console.log(this);
-    
   }
 
   /**
@@ -424,7 +421,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
   protected _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;
-  _mergedCellLocations: any[];
+  private _mergedCellLocations: any[];
 }
 
 /**
@@ -455,7 +452,7 @@ namespace ViewBasedJSONModel {
     /**
      * An array of the column labels per header row.
      */
-    readonly rows: any[]
+    readonly rows: any[];
   }
 
   /**
@@ -533,9 +530,9 @@ namespace ViewBasedJSONModel {
      *
      * The data model takes full ownership of the data source.
      */
-    data: DataSource
+    data: DataSource;
   }
-  export type IDataSyncEvent = ISyncCell | ISyncRowIndices
+  export type IDataSyncEvent = ISyncCell | ISyncRowIndices;
 
   /**
    * An event that indicates a needed change to the kernel-side dataset.
@@ -544,7 +541,7 @@ namespace ViewBasedJSONModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'cell-updated'
+    type: 'cell-updated';
   }
   export interface ISyncRowIndices {
     /**
@@ -556,6 +553,6 @@ namespace ViewBasedJSONModel {
      * An list of the rows in the untransformed dataset that are currently
      * represented in the `View`.
      */
-    indices: number[]
+    indices: number[];
   }
 }

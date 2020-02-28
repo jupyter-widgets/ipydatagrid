@@ -6,12 +6,10 @@ import {
   ViewBasedJSONModel
 } from './viewbasedjsonmodel';
 
-//@ts-ignore
 import {
   Theme
 } from '../utils';
 
-//@ts-ignore
 import { TransformStateManager } from './transformStateManager';
 
 import { DataGrid } from './datagrid';
@@ -42,7 +40,7 @@ export class HeaderRenderer extends TextRenderer {
    * @param config - The configuration data for the cell.
    */
   drawBackground(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
-    let merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+    const merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
 
     // Resolve the background color for the cell.
     let color = CellRenderer.resolveOption(this.backgroundColor, config);
@@ -60,12 +58,13 @@ export class HeaderRenderer extends TextRenderer {
 
       for (let merge of merges) {
         const [row, column] = merge;
+        const grid = this._grid!;
 
         const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth -this._grid.scrollX;
-        let x1 = this._grid!.columnOffset("body", column) + headerOffset;
-        let y1 = this._grid!.rowOffset("column-header", row);
-        let x2 = x1 + this._grid!.columnSize("body", column)
-        let y2 = y1 + this._grid!.rowSize("column-header", row);
+        let x1 = grid.columnOffset("body", column) + headerOffset;
+        let y1 = grid.rowOffset("column-header", row);
+        let x2 = x1 + grid.columnSize("body", column)
+        let y2 = y1 + grid.rowSize("column-header", row);
         xStart = Math.min(xStart, x1);
         yStart = Math.min(yStart, y1);    
         xEnd = Math.max(xEnd, x2);  
@@ -120,15 +119,14 @@ export class HeaderRenderer extends TextRenderer {
       return;
     }
 
-    let merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+    const merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
 
-    let multIndex = (merges.length > 1);
     let width = config.width;
     let height = config.height;
     let x = config.x;
     let y = config.y;
 
-    if (multIndex) {
+    if (merges.length > 1) {
       let xStart = Number.MAX_SAFE_INTEGER;
       let yStart = Number.MAX_SAFE_INTEGER;
       let xEnd = Number.MIN_SAFE_INTEGER;
@@ -136,12 +134,13 @@ export class HeaderRenderer extends TextRenderer {
 
       for (let merge of merges) {
         const [row, column] = merge;
+        const grid = this._grid!;
 
         const offsetX = config.region === 'corner-header' ? 0 : this._grid!.headerWidth - this._grid.scrollX;
-        let x1 = this._grid!.columnOffset("body", column) + offsetX;
-        let y1 = this._grid!.rowOffset("column-header", row);
-        let x2 = x1 + this._grid!.columnSize("body", column)
-        let y2 = y1 + this._grid!.rowSize("column-header", row);
+        let x1 = grid.columnOffset("body", column) + offsetX;
+        let y1 = grid.rowOffset("column-header", row);
+        let x2 = x1 + grid.columnSize("body", column)
+        let y2 = y1 + grid.rowSize("column-header", row);
         xStart = Math.min(xStart, x1);
         yStart = Math.min(yStart, y1);    
         xEnd = Math.max(xEnd, x2);  
@@ -222,7 +221,7 @@ export class HeaderRenderer extends TextRenderer {
 
     // Check if not bottom row of 'column-header' CellRegion
     if (config.region === 'column-header' && config.row !== this._grid.dataModel!.rowCount('column-header') - 1) {
-      return
+      return;
     }
 
     // Fill the area behind the menu icon
@@ -419,13 +418,6 @@ export class HeaderRenderer extends TextRenderer {
   }
 
   /**
-   * Sets the data model that should provide metadata for this renderer.
-   */
-  // set model(model: ViewBasedJSONModel | undefined) {
-  //   this._model = model
-  // }
-
-  /**
    * Indicates the size of the menu icon, to support the current implementation
    * of hit testing.
    */
@@ -435,10 +427,8 @@ export class HeaderRenderer extends TextRenderer {
   static buttonPadding: number = 3;
   static iconSpacing: number = 1.5;
 
-  //@ts-ignore
   private _isLightTheme: boolean;
-  //@ts-ignore
-  private _grid: DataGrid
+  private _grid: DataGrid;
 }
 
 /**
@@ -454,9 +444,8 @@ export namespace HeaderRenderer {
     /**
      * The data model this renderer should get metadata from.
      */
-    // model: ViewBasedJSONModel
-    textOptions: TextRenderer.IOptions
-    isLightTheme: boolean
-    grid: DataGrid
+    textOptions: TextRenderer.IOptions;
+    isLightTheme: boolean;
+    grid: DataGrid;
   }
 }

@@ -114,11 +114,9 @@ class View {
       case 'row-header':
         field = this._headerFields[column];
         value = this._data[row][field.name];
-        // value = field.rows[row];
         break;
       case 'corner-header':
         field = this._headerFields[column];
-        // value = field.name;
         value = field.rows[row]
         break;
       default:

@@ -54,7 +54,6 @@ import {
   CellEditorController
 } from './celleditorcontroller';
 
-//@ts-ignore
 import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
 /**
@@ -4399,10 +4398,8 @@ class DataGrid extends Widget {
     }
 
     // Merged cell range indieces
-    let model = this.dataModel as ViewBasedJSONModel;
-    //@ts-ignore
-    let mergedCellRangeIndices = model._mergedCellLocations;
-
+    const model = this.dataModel as ViewBasedJSONModel;
+ 
     // Compute the Y bounds for the vertical lines.
     const y1 = Math.max(rgn.yMin, rgn.y);
     const y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
@@ -4427,11 +4424,13 @@ class DataGrid extends Widget {
       }
     }
 
+    const isColumnHeader = rgn.region === 'column-header';
+
     // Draw the vertical grid lines.
     for (let x = rgn.x, i = 0; i < n; ++i) {
       let yStart = y1;
 
-      if (rgn.region === 'column-header') {
+      if (isColumnHeader) {
         for (let r = rgn.row; r < rgn.row + rgn.rowSizes.length; r++) {
           const cellLeft = [r, rgn.column + i];
           const cellRight = [r, rgn.column + i + 1];
