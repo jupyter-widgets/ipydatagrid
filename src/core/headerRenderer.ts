@@ -56,9 +56,9 @@ export class HeaderRenderer extends TextRenderer {
       let xEnd = Number.MIN_SAFE_INTEGER;
       let yEnd = Number.MIN_SAFE_INTEGER
 
+      const grid = this._grid!;
       for (let merge of merges) {
         const [row, column] = merge;
-        const grid = this._grid!;
 
         const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth -this._grid.scrollX;
         let x1 = grid.columnOffset("body", column) + headerOffset;
