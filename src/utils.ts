@@ -27,6 +27,11 @@ export namespace ArrayUtils {
    */
   export
   function generateDataGridMergedCellLocations(model: any, multiIndexArrayLocations: number[]): any[] {
+    // Terminating if no locations are passed.
+    if (multiIndexArrayLocations.length === 0) {
+      return [];
+    }
+    
     const dataFields = model._dataset.schema.fields;
     // The data grid doesn't count corner-headers when indexing column-headers, so if a given 
     // datagrid has 5 columns, 2 of which are corner-headers, the index of the first column 
@@ -58,22 +63,6 @@ export namespace ArrayUtils {
     }
     return retArr;
   }
-    /**
-   * Returns the level of nested columns for multi-index
-   * dataframes.
-   * @param data 
-   */
-  export
-  function calcNestedColDepth(bodyFields: any): number {
-    let maxLevel = 1;
-    for (let field of bodyFields) {
-      if (Array.isArray(field.rows)) {
-        maxLevel = Math.max(field.rows.length, maxLevel);
-      }
-    }
-    return maxLevel;
-  }
-
   /**
    * Checks whether the merged cell ranges conform to a valid hierarchy.
    * @param retVal boolean
@@ -81,7 +70,7 @@ export namespace ArrayUtils {
   export
   function validateMergingHierarchy(retVal: number[][]): boolean {
     let prevLevelLength;
-    for (let mergeRange of retVal) {
+    for (let mergeRange of retVal) { 
       // First element - setting up the value of prevLevelLength
       if (prevLevelLength === undefined) {
         prevLevelLength = mergeRange.length
@@ -94,51 +83,9 @@ export namespace ArrayUtils {
       if (mergeRange.length < prevLevelLength) {
         return false;
       }
+      prevLevelLength = mergeRange.length
     }
-
     return true;
-  }
-
-  /**
-   * Takes an array of strings and flattens it to a single string
-   * representing an object index.
-   * @param indexArray an array of strings, or a single string
-   */
-  export function indexArrayToString(indexArray: string[] | number[] | string): string {
-    // No flattening needed if the passed object is already a string.
-    if (typeof indexArray == 'string') {
-      return indexArray;
-    }
-    return "('" + indexArray.join("', '") + "')";
-  }
-
-  /**
-   * Checks whether the DataFrame passed through is multi-index
-   * and returns a boolean.
-   * @param bodyFields _bodyFields element, array
-   */
-  export function isMultiIndex(bodyFields: string | any[]): boolean {
-    for (let field of bodyFields) {
-      if (Array.isArray(field.rows)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Takes an index string and returns a list of strings representing an 
-   * index key. This is a helper function which is used in conjunction with
-   * indexToArrayString above.
-   * @param index a string representing the top level row index
-   * @param colNums a number representing the depth of column nesting
-   */
-  export function setupArrayToString(index: string, colNums: number): string[] {
-    let retArr = [index];
-    for (let i = 0; i < colNums - 1; i++) {
-      retArr.push('');
-    }
-    return retArr;
   }
 }
 

@@ -42,33 +42,27 @@ export class ViewBasedJSONModel extends MutableDataModel {
     super();
     this._updateDataset(data);
     this._transformState = new TransformStateManager();
-
     // Repaint grid on transform state update
     // Note: This will also result in the `model-reset` signal being sent.
     this._transformState.changed.connect((sender, value) => {
       this.currentView = this._transformState.createView(this._dataset);
       this._transformSignal.emit(value)
     })
-
-    if(typeof this !== "undefined") {
-      // first run: generate a list of indices corresponding
-      // to the locations of multi-index arrays.
-      const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(this);
-
-      // second run: map the index locations generated above to
-      // the dataset so we have access to the multi index arrays
-      // only.
-      let retVal = ArrayUtils.generateDataGridMergedCellLocations(this, multiIndexArrayLocations);
-      // final run: we need to check that the merging hierarchy makes sense. i.e. we don't
-      // want to render a merged range below a non-merged range. This function will check
-      // that this requirement is met. If it is not, we simply render each cell individually
-      // as if it wasn't grouped.
-      if (!ArrayUtils.validateMergingHierarchy(retVal)) {
-        retVal = [];
-      }
-
-      this._mergedCellLocations = retVal;
+    // first run: generate a list of indices corresponding
+    // to the locations of multi-index arrays.
+    const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(this);
+    // second run: map the index locations generated above to
+    // the dataset so we have access to the multi index arrays
+    // only.
+    let retVal = ArrayUtils.generateDataGridMergedCellLocations(this, multiIndexArrayLocations);
+    // final run: we need to check that the merging hierarchy makes sense. i.e. we don't
+    // want to render a merged range below a non-merged range. This function will check
+    // that this requirement is met. If it is not, we simply render each cell individually
+    // as if it wasn't grouped.
+    if (!ArrayUtils.validateMergingHierarchy(retVal)) {
+      retVal = [];
     }
+    this._mergedCellLocations = retVal;
   }
 
   /**
