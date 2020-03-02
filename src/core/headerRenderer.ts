@@ -12,14 +12,78 @@ import {
 
 import { TransformStateManager } from './transformStateManager';
 
+import { DataGrid } from './datagrid';
+
 /**
  * A custom cell renderer for headers that provides a menu icon.
  */
 export class HeaderRenderer extends TextRenderer {
 
-  constructor(options:HeaderRenderer.IOptions) {
+  constructor(options: HeaderRenderer.IOptions) {
     super(options.textOptions);
     this._isLightTheme = options.isLightTheme;
+    this._grid = options.grid;
+  }
+
+  /**
+   * Model getter.
+   */
+  get model(): ViewBasedJSONModel {
+    return this._grid.dataModel as ViewBasedJSONModel;
+  }
+
+   /**
+   * Draw the background for the cell.
+   *
+   * @param gc - The graphics context to use for drawing.
+   *
+   * @param config - The configuration data for the cell.
+   */
+  drawBackground(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
+    const merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+
+    // Resolve the background color for the cell.
+    let color = CellRenderer.resolveOption(this.backgroundColor, config);
+
+    // Bail if there is no background color to draw.
+    if (!color) {
+      return;
+    }
+
+    if (merges.length > 1) {
+      let xStart = Number.MAX_SAFE_INTEGER;
+      let yStart = Number.MAX_SAFE_INTEGER;
+      let xEnd = Number.MIN_SAFE_INTEGER;
+      let yEnd = Number.MIN_SAFE_INTEGER
+
+      const grid = this._grid!;
+      for (let merge of merges) {
+        const [row, column] = merge;
+
+        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth -this._grid.scrollX;
+        let x1 = grid.columnOffset("body", column) + headerOffset;
+        let y1 = grid.rowOffset("column-header", row);
+        let x2 = x1 + grid.columnSize("body", column)
+        let y2 = y1 + grid.rowSize("column-header", row);
+        xStart = Math.min(xStart, x1);
+        yStart = Math.min(yStart, y1);    
+        xEnd = Math.max(xEnd, x2);  
+        yEnd = Math.max(yEnd, y2);
+      }
+
+      const width = xEnd - xStart;
+      const height = yEnd - yStart;
+
+      // Fill the cell with the background color.
+      gc.fillStyle = color;
+      
+      gc.fillRect(xStart, yStart, width, height);
+    }
+    else {
+      // Fill the cell with the background color.
+      gc.fillStyle = color;
+      gc.fillRect(config.x, config.y, config.width, config.height);
+    }
   }
 
   /**
@@ -55,12 +119,46 @@ export class HeaderRenderer extends TextRenderer {
       return;
     }
 
+    const merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+
+    let width = config.width;
+    let height = config.height;
+    let x = config.x;
+    let y = config.y;
+
+    if (merges.length > 1) {
+      let xStart = Number.MAX_SAFE_INTEGER;
+      let yStart = Number.MAX_SAFE_INTEGER;
+      let xEnd = Number.MIN_SAFE_INTEGER;
+      let yEnd = Number.MIN_SAFE_INTEGER
+
+      for (let merge of merges) {
+        const [row, column] = merge;
+        const grid = this._grid!;
+
+        const offsetX = config.region === 'corner-header' ? 0 : this._grid!.headerWidth - this._grid.scrollX;
+        let x1 = grid.columnOffset("body", column) + offsetX;
+        let y1 = grid.rowOffset("column-header", row);
+        let x2 = x1 + grid.columnSize("body", column)
+        let y2 = y1 + grid.rowSize("column-header", row);
+        xStart = Math.min(xStart, x1);
+        yStart = Math.min(yStart, y1);    
+        xEnd = Math.max(xEnd, x2);  
+        yEnd = Math.max(yEnd, y2);
+
+        width = xEnd - xStart;
+        height = yEnd - yStart;
+        x = xStart;
+        y = yStart;
+      }
+    }
+
     // Resolve the vertical and horizontal alignment.
     let vAlign = CellRenderer.resolveOption(this.verticalAlignment, config);
     let hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
-    let boxHeight = config.height - (vAlign === 'center' ? 1 : 2);
+    let boxHeight = height - (vAlign === 'center' ? 1 : 2);
 
     // Bail if the text box has no effective size.
     if (boxHeight <= 0) {
@@ -77,13 +175,13 @@ export class HeaderRenderer extends TextRenderer {
     // Compute the Y position for the text.
     switch (vAlign) {
       case 'top':
-        textY = config.y + 2 + textHeight;
+        textY = y + 2 + textHeight;
         break;
       case 'center':
-        textY = config.y + config.height / 2 + textHeight / 2;
+        textY = y + height / 2 + textHeight / 2;
         break;
       case 'bottom':
-        textY = config.y + config.height - 2;
+        textY = y + height - 2;
         break;
       default:
         throw 'unreachable';
@@ -92,13 +190,13 @@ export class HeaderRenderer extends TextRenderer {
     // Compute the X position for the text.
     switch (hAlign) {
       case 'left':
-        textX = config.x + 2;
+        textX = x + 2;
         break;
       case 'center':
-        textX = config.x + config.width / 2;
+        textX = x + width / 2;
         break;
       case 'right':
-        textX = config.x + config.width - 3;
+        textX = x + width - 3;
         break;
       default:
         throw 'unreachable';
@@ -107,7 +205,7 @@ export class HeaderRenderer extends TextRenderer {
     // Clip the cell if the text is taller than the text box height.
     if (textHeight > boxHeight) {
       gc.beginPath();
-      gc.rect(config.x, config.y, config.width, config.height - 1);
+      gc.rect(x, y, width, height - 1);
       gc.clip();
     }
 
@@ -119,6 +217,12 @@ export class HeaderRenderer extends TextRenderer {
 
     // Draw the text
     gc.fillText(text, textX, textY);
+
+
+    // Check if not bottom row of 'column-header' CellRegion
+    if (config.region === 'column-header' && config.row !== this._grid.dataModel!.rowCount('column-header') - 1) {
+      return;
+    }
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
@@ -135,7 +239,6 @@ export class HeaderRenderer extends TextRenderer {
       backgroundSize
     );
 
-
     const iconStart = config.x
       + config.width
       - HeaderRenderer.iconWidth
@@ -148,15 +251,15 @@ export class HeaderRenderer extends TextRenderer {
     gc.fill();
 
     // Check for transform metadata
-    if (this._model) {
+    if (this.model) {
       // Get cell metadata
-      const schemaIndex = this._model.getSchemaIndex(
+      const schemaIndex = this.model.getSchemaIndex(
         config.region,
         config.column
       );
 
       const colMetaData: TransformStateManager.IColumn | undefined =
-        this._model.transformMetadata(schemaIndex);
+        this.model.transformMetadata(schemaIndex);
 
       // Fill filter icon if filter applied
       if (colMetaData
@@ -196,10 +299,9 @@ export class HeaderRenderer extends TextRenderer {
       - HeaderRenderer.iconWidth
       - HeaderRenderer.buttonPadding;
 
-
     let filterRightStemWidthX: number = HeaderRenderer.iconWidth / 2 + 1;
     let filterLeftStemWidthX: number = HeaderRenderer.iconWidth / 2 - 1;
-    let filterTop: number = config.height - HeaderRenderer.iconHeight - 1;
+    let filterTop: number = config.height - HeaderRenderer.iconHeight - 1 + config.y;
 
     gc.beginPath();
     // Start drawing in top left of filter icon
@@ -212,14 +314,14 @@ export class HeaderRenderer extends TextRenderer {
       filterTop);
     // Y is the y value of the top of the stem
     gc.lineTo(filterIconStart + filterRightStemWidthX,
-      config.height - HeaderRenderer.iconHeight + 2);
+      config.y + config.height - HeaderRenderer.iconHeight + 2);
     // Y is the y value of the bottom of the stem
     gc.lineTo(filterIconStart + filterRightStemWidthX,
-      config.height - 1.5 * HeaderRenderer.buttonPadding);
+      config.y + config.height - 1.5 * HeaderRenderer.buttonPadding);
     gc.lineTo(filterIconStart + filterLeftStemWidthX,
-      config.height - 2 * HeaderRenderer.buttonPadding);
+      config.y + config.height - 2 * HeaderRenderer.buttonPadding);
     gc.lineTo(filterIconStart + filterLeftStemWidthX,
-      config.height - HeaderRenderer.iconHeight + 2);
+      config.y + config.height - HeaderRenderer.iconHeight + 2);
     gc.closePath();
 
   }
@@ -247,16 +349,20 @@ export class HeaderRenderer extends TextRenderer {
       - arrowWidth / 2
       - 0.5;
     let arrowHeadSideY: number = config.height
+    + config.y
       - HeaderRenderer.buttonPadding
       - HeaderRenderer.iconHeight
       + 4;
     let arrowMiddle: number = sortIconStart
       - arrowWidth / 2;
     let ascArrowTipY: number = config.height
+      + config.y
       - HeaderRenderer.iconHeight
       - 1;
     let ascArrowBottomY: number = config.height
-      - 1.5 * HeaderRenderer.buttonPadding;
+      - 8
+      + config.y
+      + HeaderRenderer.buttonPadding;
 
     gc.beginPath();
 
@@ -312,13 +418,6 @@ export class HeaderRenderer extends TextRenderer {
   }
 
   /**
-   * Sets the data model that should provide metadata for this renderer.
-   */
-  set model(model: ViewBasedJSONModel | undefined) {
-    this._model = model
-  }
-
-  /**
    * Indicates the size of the menu icon, to support the current implementation
    * of hit testing.
    */
@@ -328,14 +427,15 @@ export class HeaderRenderer extends TextRenderer {
   static buttonPadding: number = 3;
   static iconSpacing: number = 1.5;
 
-  private _model: ViewBasedJSONModel | undefined = undefined
   private _isLightTheme: boolean;
+  private _grid: DataGrid;
 }
 
 /**
  * The namespace for the `HeaderRenderer` class statics.
  */
 export namespace HeaderRenderer {
+
   /**
    * An options object for initializing a renderer.
    */
@@ -344,9 +444,8 @@ export namespace HeaderRenderer {
     /**
      * The data model this renderer should get metadata from.
      */
-    model: ViewBasedJSONModel
-
-    textOptions: TextRenderer.IOptions
-    isLightTheme: boolean
+    textOptions: TextRenderer.IOptions;
+    isLightTheme: boolean;
+    grid: DataGrid;
   }
 }

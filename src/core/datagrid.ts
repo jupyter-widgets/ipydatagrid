@@ -54,6 +54,7 @@ import {
   CellEditorController
 } from './celleditorcontroller';
 
+import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
 /**
  * A widget which implements a high-performance tabular data grid.
@@ -3130,6 +3131,7 @@ class DataGrid extends Widget {
     if (offset + oldSize <= hw) {
       this._scrollX += delta;
       this._syncScrollState();
+      this._drawColumnHeaderRegion(-this.scrollX, -this.scrollY, this.totalWidth, this.headerHeight);
       return;
     }
 
@@ -3138,7 +3140,8 @@ class DataGrid extends Widget {
 
     // Paint from the section onward if it spans the viewport.
     if (offset + oldSize >= vw || offset + newSize >= vw) {
-      this._paintContent(pos, 0, vw - pos, vh);
+      this._paintContent(pos, 0, vw - pos, vh, false);
+      this._drawColumnHeaderRegion(-this.scrollX, -this.scrollY, this.totalWidth, this.headerHeight);
       this._paintOverlay();
       this._syncScrollState();
       return;
@@ -3168,17 +3171,20 @@ class DataGrid extends Widget {
 
     // Repaint the section if needed.
     if (newSize > 0 && offset + newSize > hw) {
-      this._paintContent(pos, 0, offset + newSize - pos, vh);
+      this._paintContent(pos, 0, offset + newSize - pos, vh, false);
     }
 
     // Paint the trailing space as needed.
     if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let c = this._columnSections.count - 1;
       let x = hw + this._columnSections.offsetOf(c);
-      this._paintContent(x, 0, vw - x, vh);
+      this._paintContent(x, 0, vw - x, vh, false);
     } else if (delta < 0) {
-      this._paintContent(vw + delta, 0, -delta, vh);
+      this._paintContent(vw + delta, 0, -delta, vh, false);
     }
+
+    // Draw the column header region.
+    this._drawColumnHeaderRegion(-this.scrollX, 0, this.totalWidth, this.headerHeight);
 
     // Paint the overlay.
     this._paintOverlay();
@@ -3476,16 +3482,18 @@ class DataGrid extends Widget {
     // valid content and paint the dirty region.
     if (dx !== 0 && contentWidth > 0) {
       if (Math.abs(dx) >= contentWidth) {
-        this._paintContent(contentX, 0, contentWidth, height);
+        this._paintContent(contentX, 0, contentWidth, height, false);
       } else {
         let x = dx < 0 ? contentX : contentX + dx;
         let y = 0;
         let w = contentWidth - Math.abs(dx);
         let h = height;
         this._blitContent(this._canvas, x, y, w, h, x - dx, y);
-        this._paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
+        this._paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height, false);
       }
     }
+
+    this._drawColumnHeaderRegion(-this.scrollX, 0, this.totalWidth, this.headerHeight);
 
     // Paint the overlay.
     this._paintOverlay();
@@ -3529,7 +3537,7 @@ class DataGrid extends Widget {
    * methods should not be invoked directly. This method dispatches
    * to the drawing methods in the correct order.
    */
-  private _paintContent(rx: number, ry: number, rw: number, rh: number): void {
+  private _paintContent(rx: number, ry: number, rw: number, rh: number, renderColumnHeaders: boolean = true): void {
     // Scale the canvas and buffer GC for the dpi ratio.
     this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
     this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
@@ -3547,7 +3555,9 @@ class DataGrid extends Widget {
     this._drawRowHeaderRegion(rx, ry, rw, rh);
 
     // Draw the column header region.
-    this._drawColumnHeaderRegion(rx, ry, rw, rh);
+    if (renderColumnHeaders) {
+      this._drawColumnHeaderRegion(rx, ry, rw, rh);
+    }
 
     // Draw the corner header region.
     this._drawCornerHeaderRegion(rx, ry, rw, rh);
@@ -4387,9 +4397,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Merged cell range indieces
+    const model = this.dataModel as ViewBasedJSONModel;
+ 
     // Compute the Y bounds for the vertical lines.
-    let y1 = Math.max(rgn.yMin, rgn.y);
-    let y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
+    const y1 = Math.max(rgn.yMin, rgn.y);
+    const y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
 
     // Begin the path for the grid lines
     this._canvasGC.beginPath();
@@ -4411,8 +4424,23 @@ class DataGrid extends Widget {
       }
     }
 
+    const isColumnHeader = rgn.region === 'column-header';
+
     // Draw the vertical grid lines.
     for (let x = rgn.x, i = 0; i < n; ++i) {
+      let yStart = y1;
+
+      if (isColumnHeader) {
+        for (let r = rgn.row; r < rgn.row + rgn.rowSizes.length; r++) {
+          const cellLeft = [r, rgn.column + i];
+          const cellRight = [r, rgn.column + i + 1];
+
+          if (model.areCellsMerged(cellLeft, cellRight)) {
+            yStart += rgn.rowSizes[r - rgn.row];
+          }
+        }
+      }
+
       // Fetch the size of the column.
       let size = rgn.columnSizes[i];
 
@@ -4426,7 +4454,7 @@ class DataGrid extends Widget {
 
       // Draw the line if it's in range of the dirty rect.
       if (pos >= rgn.xMin && pos <= rgn.xMax) {
-        this._canvasGC.moveTo(pos + 0.5, y1);
+        this._canvasGC.moveTo(pos + 0.5, yStart);
         this._canvasGC.lineTo(pos + 0.5, y2);
       }
 

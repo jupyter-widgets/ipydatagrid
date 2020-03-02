@@ -26,6 +26,8 @@ import {
   TransformStateManager
 } from './transformStateManager';
 
+import { ArrayUtils } from '../utils';
+
 /**
  * A view based data model implementation for in-memory JSON data.
  */
@@ -40,13 +42,27 @@ export class ViewBasedJSONModel extends MutableDataModel {
     super();
     this._updateDataset(data);
     this._transformState = new TransformStateManager();
-
     // Repaint grid on transform state update
     // Note: This will also result in the `model-reset` signal being sent.
     this._transformState.changed.connect((sender, value) => {
       this.currentView = this._transformState.createView(this._dataset);
       this._transformSignal.emit(value)
     })
+    // first run: generate a list of indices corresponding
+    // to the locations of multi-index arrays.
+    const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(this);
+    // second run: map the index locations generated above to
+    // the dataset so we have access to the multi index arrays
+    // only.
+    let retVal = ArrayUtils.generateDataGridMergedCellLocations(this, multiIndexArrayLocations);
+    // final run: we need to check that the merging hierarchy makes sense. i.e. we don't
+    // want to render a merged range below a non-merged range. This function will check
+    // that this requirement is met. If it is not, we simply render each cell individually
+    // as if it wasn't grouped.
+    if (!ArrayUtils.validateMergingHierarchy(retVal)) {
+      retVal = [];
+    }
+    this._mergedCellLocations = retVal;
   }
 
   /**
@@ -82,6 +98,41 @@ export class ViewBasedJSONModel extends MutableDataModel {
         this._primaryKeyMap.set(JSON.stringify([rowData[primaryKey]]), index);
       })
     }
+  }
+
+  areCellsMerged(cell1: number[], cell2: number[]): boolean {
+    const [row2, col2] = cell2;
+
+    const siblings = this.getMergedSiblingCells(cell1);
+
+    for (let sibling of siblings) {
+      if (row2 === sibling[0] && col2 === sibling[1]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+    /**
+   * Returns a list of [row, column] cells indices forming a merged cell group
+   * @param row row index
+   * @param column column index
+   */
+  getMergedSiblingCells(cell: number[]): any[] {
+    const [row, column] = cell;
+    if (row < 0 || column < 0 || row >= this._mergedCellLocations.length) {
+      return [];
+    }
+
+    for (let cellGroup of this._mergedCellLocations[row]) {
+      for (let rowCell of cellGroup) {
+        let [rowIndex, columnIndex] = rowCell;
+        if (row === rowIndex && column == columnIndex) {
+          return cellGroup;
+        }
+      }
+    }
+    return [];
   }
 
   /**
@@ -368,6 +419,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
   protected _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;
+  private _mergedCellLocations: any[];
 }
 
 /**
@@ -387,7 +439,6 @@ namespace ViewBasedJSONModel {
      * The name of the column.
      *
      * This is used as the key to extract a value from a data record.
-     * It is also used as the column header label.
      */
     readonly name: string;
 
@@ -395,6 +446,11 @@ namespace ViewBasedJSONModel {
      * The type of data held in the column.
      */
     readonly type: string;
+
+    /**
+     * An array of the column labels per header row.
+     */
+    readonly rows: any[];
   }
 
   /**
@@ -472,9 +528,9 @@ namespace ViewBasedJSONModel {
      *
      * The data model takes full ownership of the data source.
      */
-    data: DataSource
+    data: DataSource;
   }
-  export type IDataSyncEvent = ISyncCell | ISyncRowIndices
+  export type IDataSyncEvent = ISyncCell | ISyncRowIndices;
 
   /**
    * An event that indicates a needed change to the kernel-side dataset.
@@ -483,7 +539,7 @@ namespace ViewBasedJSONModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'cell-updated'
+    type: 'cell-updated';
   }
   export interface ISyncRowIndices {
     /**
@@ -495,6 +551,6 @@ namespace ViewBasedJSONModel {
      * An list of the rows in the untransformed dataset that are currently
      * represented in the `View`.
      */
-    indices: number[]
+    indices: number[];
   }
 }

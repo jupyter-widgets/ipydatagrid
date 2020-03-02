@@ -29,7 +29,10 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const oldDataModel = grid.model.data_model;
     grid.model.set('_data', testData.set2);
-    expect(grid.model.data_model.dataset).toEqual(testData.set2);
+    expect(grid.model.data_model.dataset).toEqual({
+      data: testData.set2.data,
+      schema: testData.set2.schema
+    });
     expect(grid.model.data_model).not.toBe(oldDataModel);
   });
 
@@ -240,7 +243,7 @@ namespace Private {
     /**
      * The grid data to instantiate the model with.
      */
-    data: ViewBasedJSONModel.IData
+    data: DataGridModel.IData
   }
 
   /**
@@ -262,21 +265,49 @@ namespace Private {
   /**
    * Creates 2 sets of data in the JSON Table Schema format for testing.
    */
-  export function createBasicTestData() {
+  export function createBasicTestData(): BasicModelTestData {
+
     const data1 = DataGenerator.singleCol({
       data: [1, 2, 3], name: 'test', type: 'number'
     });
+
     const data2 = DataGenerator.singleCol({
       data: [4, 5, 6], name: 'test2', type: 'number'
     });
-    return { set1: data1, set2: data2 };
+
+    const set1: DataGridModel.IData = {
+      data: data1.data,
+      schema: data1.schema,
+      fields: data1.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+        let tempObject: { [key: string]: null } = {};
+        tempObject[field.name] = null;
+        return tempObject;
+      })
+    };
+
+    const set2: DataGridModel.IData = {
+      data: data2.data,
+      schema: data2.schema,
+      fields: data2.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+        let tempObject: { [key: string]: null } = {};
+        tempObject[field.name] = null;
+        return tempObject;
+      })
+    };
+
+    return { set1: set1, set2: set2 };
+  }
+
+  export interface BasicModelTestData {
+    set1: DataGridModel.IData
+    set2: DataGridModel.IData
   }
 
   /**
   * 
   * Creates test data for multi index and multi column data
   */
-  export function createMultiIndexData() {
+  export function createMultiIndexData(): BasicModelTestData {
     const data1 = DataGenerator.multiIndexCol({
       data: [
         { data: [0, 0, 0], name: 'index1', type: 'number' },
@@ -288,7 +319,40 @@ namespace Private {
       primaryKeyData: ['index1', 'index2']
     }
     );
-    return { set1: data1 };
+
+    const set1: DataGridModel.IData = {
+      data: data1.data,
+      schema: data1.schema,
+      fields: data1.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+        let tempObject: { [key: string]: null } = {};
+        tempObject[field.name] = null;
+        return tempObject;
+      })
+    };
+
+    const data2 = DataGenerator.multiIndexCol({
+      data: [
+        { data: [7, 8, 9], name: 'index3', type: 'number' },
+        { data: [7, 8, 9], name: 'index4', type: 'number' },
+        { data: [4, 5, 6], name: 'col3', type: 'number' },
+        { data: [4, 5, 6], name: 'col4', type: 'number' }
+      ],
+      length: 2,
+      primaryKeyData: ['index1', 'index2']
+    }
+    );
+
+    const set2: DataGridModel.IData = {
+      data: data2.data,
+      schema: data2.schema,
+      fields: data2.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+        let tempObject: { [key: string]: null } = {};
+        tempObject[field.name] = null;
+        return tempObject;
+      })
+    };
+
+    return { set1: set1, set2:set2 };
   }
 
   /**

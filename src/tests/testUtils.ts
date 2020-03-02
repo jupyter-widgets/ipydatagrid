@@ -31,8 +31,8 @@ export namespace DataGenerator {
     return {
       'schema': {
         'fields': [
-          { name: 'index', type: 'integer' },
-          { name: options.name, type: options.type }
+          { name: 'index', type: 'integer', rows:['index'] },
+          { name: options.name, type: options.type, rows: [options.name] }
         ],
         'primaryKey': ['index']
       },
@@ -42,7 +42,7 @@ export namespace DataGenerator {
 
   export function multiCol(options: IMultiColOptions): ViewBasedJSONModel.IData {
     const fields = options.data.map(val => {
-      return { name: val.name, type: val.type }
+      return { name: val.name, type: val.type, rows:[val.name] }
     });
     const rows = [];
 
@@ -58,7 +58,7 @@ export namespace DataGenerator {
     return {
       'schema': {
         'fields': [
-          { name: 'index', type: 'integer' },
+          { name: 'index', type: 'integer', rows:['index'] },
           ...fields
         ],
         'primaryKey': ['index']
@@ -75,7 +75,7 @@ export namespace DataGenerator {
   export function multiIndexCol(options: IMultiIndexColOptions): ViewBasedJSONModel.IData {
 
     const fields = options.data.map(val => {
-      return { name: val.name, type: val.type }
+      return { name: val.name, type: val.type, rows:[val.name] }
     });
     const rows = [];
 
