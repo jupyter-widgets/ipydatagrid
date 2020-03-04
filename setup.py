@@ -45,7 +45,7 @@ package_data_spec = {
 
 data_files_spec = [
     ('share/jupyter/nbextensions/ipydatagrid',
-        nb_path, '*.js*'),
+        nb_path, '*'),
     ('share/jupyter/lab/extensions', lab_path, '*.tgz'),
     ('etc/jupyter/nbconfig/notebook.d' , HERE, 'ipydatagrid.json')
 ]
