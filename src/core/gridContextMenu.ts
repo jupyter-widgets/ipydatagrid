@@ -4,15 +4,15 @@ import {
 
 import {
   DataModel
-} from './datamodel';
+} from '@lumino/datagrid';
 
 import {
   CommandRegistry
-} from '@phosphor/commands'
+} from '@lumino/commands'
 
 import {
   Menu
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 /**
  * An object which provides context menus for the data grid.

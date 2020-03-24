@@ -1,7 +1,7 @@
 import { SortExecutor, FilterExecutor } from "../core/transformExecutors";
 import { DataGenerator } from './testUtils';
 import { ViewBasedJSONModel } from "../core/viewbasedjsonmodel";
-import { ReadonlyJSONValue } from '@phosphor/coreutils';
+import { ReadonlyJSONValue } from '@lumino/coreutils';
 import { Transform } from "../core/transform";
 
 const sortTestCases: Private.SortTestCase[] = [

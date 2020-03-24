@@ -1,18 +1,18 @@
 import {
   DataModel, MutableDataModel
-} from './datamodel';
+} from '@lumino/datagrid';
 
 import {
   each
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   ReadonlyJSONObject, ReadonlyJSONValue
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   ISignal, Signal
-} from '@phosphor/signaling';
+} from '@lumino/signaling';
 
 import {
   Transform

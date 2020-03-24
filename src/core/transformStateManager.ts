@@ -16,15 +16,15 @@ import {
 
 import {
   each
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   JSONExt
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   Signal, ISignal
-} from '@phosphor/signaling'
+} from '@lumino/signaling'
 
 /**
  * A state manager for tracking the active transformations of a model.

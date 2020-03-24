@@ -12,27 +12,27 @@ import {
 
 import {
   DataModel
-} from './datamodel';
+} from '@lumino/datagrid';
 
 import {
   ElementExt
-} from '@phosphor/domutils';
+} from '@lumino/domutils';
 
 import {
   Message, MessageLoop, ConflatableMessage
-} from '@phosphor/messaging';
+} from '@lumino/messaging';
 
 import {
   BasicMouseHandler
-} from './basicmousehandler';
+} from '@lumino/datagrid';
 
 import {
   Widget, BoxPanel
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   VirtualDOM, VirtualElement, h
-} from '@phosphor/virtualdom'
+} from '@lumino/virtualdom'
 
 import {
   FilterValueRenderer
@@ -80,6 +80,7 @@ export class InteractiveFilterDialog extends BoxPanel {
       stateManager: this._uniqueValueStateManager,
       dialog: this
     });
+    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     this._uniqueValueGrid.mouseHandler = mouseHandler;
 
     // Widget to display the dialog title
@@ -133,8 +134,8 @@ export class InteractiveFilterDialog extends BoxPanel {
     const value = this._mode === 'condition'
       ? <Transform.FilterValue>this._filterValue
       : this._uniqueValueStateManager.getIndices(this.region, this._columnIndex).map(row => {
-        return this._uniqueValueGrid.dataModel?.data('body', row, 0)
-      })
+        return this._uniqueValueGrid.dataModel!.data('body', row, 0);
+      });
 
     // Construct transform
     const transform: Transform.TransformSpec = {
@@ -1043,6 +1044,7 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
    *
    * @param event - The mouse down event of interest.
    */
+  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
 

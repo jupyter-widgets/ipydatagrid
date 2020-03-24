@@ -16,7 +16,7 @@ import {
 
 import {
   CellRenderer, DataModel
-} from '@phosphor/datagrid'
+} from '@lumino/datagrid'
 
 /**
  * Tests that assigning new data to the `data` attribute of the widget behaves

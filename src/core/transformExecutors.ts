@@ -4,7 +4,7 @@ import {
 
 import {
   toArray, filter
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   Transform

@@ -6,7 +6,7 @@ import {
   IClassicComm, ICallbacks, WidgetView, WidgetModel
 } from '@jupyter-widgets/base';
 
-import { JSONObject } from '@phosphor/coreutils';
+import { JSONObject } from '@lumino/coreutils';
 
 /**
  * A namespace for functions that generate tables for testing.

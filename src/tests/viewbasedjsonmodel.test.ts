@@ -1,4 +1,4 @@
-import { Signal } from '@phosphor/signaling';
+import { Signal } from '@lumino/signaling';
 import { View } from '../core/view'
 import { ViewBasedJSONModel } from '../core/viewbasedjsonmodel'
 import { TransformStateManager } from '../core/transformStateManager';

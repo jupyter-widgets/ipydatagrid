@@ -1,6 +1,6 @@
 import {
   CellRenderer, TextRenderer, GraphicsContext
-} from '@phosphor/datagrid';
+} from '@lumino/datagrid';
 
 /**
  * A cell renderer which renders data values as bars.
