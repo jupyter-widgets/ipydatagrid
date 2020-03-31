@@ -132,7 +132,7 @@ class SelectionHelper():
         if self._num_columns != -1:
             return self._num_columns
 
-        data = self._grid.data
+        data = self._grid._data
         primary_keys = [] if 'primaryKey' not in data['schema'] else data['schema']['primaryKey']
         col_headers = [field['name'] for field in data['schema']['fields'] if field['name'] not in primary_keys]
         self._num_columns = len(col_headers)
@@ -142,7 +142,7 @@ class SelectionHelper():
         if self._num_rows != -1:
             return self._num_rows
         
-        data = self._grid.data
+        data = self._grid._data
         self._num_rows = 0 if 'data' not in data else len(data['data'])
         return self._num_rows
 
