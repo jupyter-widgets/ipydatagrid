@@ -1,6 +1,6 @@
 import {
   TextRenderer, CellRenderer, GraphicsContext
-} from '@phosphor/datagrid'
+} from '@lumino/datagrid'
 
 import {
   Theme

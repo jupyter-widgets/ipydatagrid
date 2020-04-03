@@ -1,6 +1,6 @@
 import { DataGenerator } from './testUtils';
 import { View } from '../core/view';
-import { DataModel } from '@phosphor/datagrid';
+import { DataModel } from '@lumino/datagrid';
 
 describe('Test .metadata()', () => {
   const testData = DataGenerator.multiCol({

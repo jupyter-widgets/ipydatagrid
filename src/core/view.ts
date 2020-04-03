@@ -8,11 +8,11 @@
 
 import {
   ReadonlyJSONObject
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   DataModel
-} from '@phosphor/datagrid';
+} from '@lumino/datagrid';
 import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
 /**

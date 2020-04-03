@@ -2,7 +2,7 @@ import { InteractiveFilterDialog } from '../core/filterMenu';
 import { ViewBasedJSONModel } from '../core/viewbasedjsonmodel';
 import { DataGenerator } from './testUtils';
 import { Transform } from '../core/transform';
-import { DataModel } from '@phosphor/datagrid';
+import { DataModel } from '@lumino/datagrid';
 
 describe('Test .hasValidFilterValue()', () => {
   const testCases: Private.ValidFilterValueTestCase[] = [

@@ -1,3 +1,5 @@
+// Copyright (c) Jupyter Development Team.
+// Distributed under the terms of the Modified BSD License.
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2019, PhosphorJS Contributors
 |
@@ -7,52 +9,52 @@
 |----------------------------------------------------------------------------*/
 import {
   toArray
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   IDisposable
-} from '@phosphor/disposable';
+} from '@lumino/disposable';
 
 import {
   ClipboardExt, ElementExt, Platform
-} from '@phosphor/domutils';
+} from '@lumino/domutils';
 
 import {
   ConflatableMessage, IMessageHandler, Message, MessageLoop
-} from '@phosphor/messaging';
+} from '@lumino/messaging';
 
 import {
   GridLayout, ScrollBar, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   CellRenderer
-} from './cellrenderer';
+} from '@lumino/datagrid';
 
 import {
   DataModel, MutableDataModel
-} from './datamodel';
+} from '@lumino/datagrid';
 
 import {
   GraphicsContext
-} from '@phosphor/datagrid/lib/graphicscontext';
+} from '@lumino/datagrid/lib/graphicscontext';
 
 import {
   RendererMap
-} from '@phosphor/datagrid/lib/renderermap';
+} from '@lumino/datagrid/lib/renderermap';
 
 import {
   SectionList
-} from '@phosphor/datagrid/lib/sectionlist';
+} from '@lumino/datagrid/lib/sectionlist';
 
 import {
   SelectionModel
-} from './selectionmodel';
+} from '@lumino/datagrid';
 
 import {
   ICellEditorController,
   CellEditorController
-} from './celleditorcontroller';
+} from '@lumino/datagrid/lib/celleditorcontroller';
 
 import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
@@ -75,7 +77,10 @@ class DataGrid extends Widget {
    */
   constructor(options: DataGrid.IOptions = {}) {
     super();
+    this.addClass('lm-DataGrid');
+    /* <DEPRECATED> */
     this.addClass('p-DataGrid');
+    /* </DEPRECATED> */
 
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
@@ -136,10 +141,16 @@ class DataGrid extends Widget {
     this._editorController = new CellEditorController();
 
     // Add the extra class names to the child widgets.
+    this._viewport.addClass('lm-DataGrid-viewport');
+    this._vScrollBar.addClass('lm-DataGrid-scrollBar');
+    this._hScrollBar.addClass('lm-DataGrid-scrollBar');
+    this._scrollCorner.addClass('lm-DataGrid-scrollCorner');
+    /* <DEPRECATED> */
     this._viewport.addClass('p-DataGrid-viewport');
     this._vScrollBar.addClass('p-DataGrid-scrollBar');
     this._hScrollBar.addClass('p-DataGrid-scrollBar');
     this._scrollCorner.addClass('p-DataGrid-scrollCorner');
+    /* </DEPRECATED> */
 
     // Add the on-screen canvas to the viewport node.
     this._viewport.node.appendChild(this._canvas);
@@ -664,6 +675,41 @@ class DataGrid extends Widget {
   }
 
   /**
+   * The cell editor controller object for the data grid.
+   */
+  get editorController(): ICellEditorController | null {
+    return this._editorController;
+  }
+
+  set editorController(controller: ICellEditorController | null) {
+    this._editorController = controller;
+  }
+
+  /**
+   * Whether the cell editing is enabled for the data grid.
+   */
+  get editingEnabled(): boolean {
+    return this._editingEnabled;
+  }
+
+  set editingEnabled(enabled: boolean) {
+    this._editingEnabled = enabled;
+  }
+
+  /**
+   * Whether the grid cells are editable.
+   * 
+   * `editingEnabled` flag must be on and grid must have required
+   * selection model, editor controller and data model properties.
+   */
+  get editable(): boolean {
+    return this._editingEnabled &&
+      this._selectionModel !== null &&
+      this._editorController !== null &&
+      this.dataModel instanceof MutableDataModel;
+  }
+
+  /**
    * Scroll the grid to the specified row.
    *
    * @param row - The row index of the cell.
@@ -833,6 +879,8 @@ class DataGrid extends Widget {
   /**
    * Move cursor down/up/left/right while making sure it remains
    * within the bounds of selected rectangles
+   * 
+   * @param direction - The direction of the movement.
    */
   moveCursor(direction: SelectionModel.CursorMoveDirection): void {
     // Bail early if there is no selection
@@ -4627,8 +4675,8 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there are no selections.
-    if (!model || model.isEmpty) {
+    // Bail early if there are no selections or if the selectionMode is the entire column.
+    if (!model || model.isEmpty || model.selectionMode == 'column') {
       return;
     }
 
@@ -4728,8 +4776,8 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there are no selections.
-    if (!model || model.isEmpty) {
+    // Bail early if there are no selections or if the selectionMode is the entire row
+    if (!model || model.isEmpty || model.selectionMode == 'row') {
       return;
     }
 
@@ -5094,29 +5142,6 @@ class DataGrid extends Widget {
 
     // Restore the gc state.
     gc.restore();
-  }
-
-  get editorController(): ICellEditorController | null {
-    return this._editorController;
-  }
-
-  set editorController(controller: ICellEditorController | null) {
-    this._editorController = controller;
-  }
-
-  get editingEnabled(): boolean {
-    return this._editingEnabled;
-  }
-
-  set editingEnabled(enabled: boolean) {
-    this._editingEnabled = enabled;
-  }
-
-  get editable(): boolean {
-    return this._editingEnabled &&
-      this._selectionModel !== null &&
-      this._editorController !== null &&
-      this.dataModel instanceof MutableDataModel;
   }
 
   private _viewport: Widget;
@@ -5662,9 +5687,9 @@ namespace DataGrid {
     headerSelectionBorderColor: 'rgba(0, 107, 247, 1.0)',
     scrollShadow: {
       size: 10,
-      color1: 'rgba(0, 0, 0, 0.20',
-      color2: 'rgba(0, 0, 0, 0.05',
-      color3: 'rgba(0, 0, 0, 0.00' }
+      color1: 'rgba(0, 0, 0, 0.20)',
+      color2: 'rgba(0, 0, 0, 0.05)',
+      color3: 'rgba(0, 0, 0, 0.00)' }
   };
 
   /**

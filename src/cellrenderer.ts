@@ -8,7 +8,7 @@ const d3TimeFormat: any = require('d3-time-format');
 
 import {
   CellRenderer, TextRenderer
-} from '@phosphor/datagrid';
+} from '@lumino/datagrid';
 
 import {
   Dict, WidgetModel, WidgetView, ISerializers, resolvePromisesDict, unpack_models

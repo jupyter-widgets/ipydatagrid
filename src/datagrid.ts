@@ -5,39 +5,39 @@ import * as _ from 'underscore';
 
 import {
   toArray
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   TextRenderer
-} from '@phosphor/datagrid';
+} from '@lumino/datagrid';
 
 import {
   CommandRegistry
-} from '@phosphor/commands';
+} from '@lumino/commands';
 
 import {
   BasicKeyHandler
-} from './core/basickeyhandler';
+} from '@lumino/datagrid';
 
 import {
   DataModel
-} from './core/datamodel';
+} from '@lumino/datagrid';
 
 import {
   BasicMouseHandler
-} from './core/basicmousehandler';
+} from '@lumino/datagrid';
 
 import {
   BasicSelectionModel
-} from './core/basicselectionmodel';
+} from '@lumino/datagrid';
 
 import {
   CellRenderer
-} from './core/cellrenderer';
+} from '@lumino/datagrid';
 
 import {
   JSONExt
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget,
@@ -83,7 +83,7 @@ import {
   Theme
 } from './utils'
 
-import { IMessageHandler, Message, MessageLoop } from '@phosphor/messaging';
+import { IMessageHandler, Message, MessageLoop } from '@lumino/messaging';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -118,6 +118,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
    *
    * @param event - The mouse down event of interest.
    */
+  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
     const hitRegion = hit.region;
@@ -165,11 +166,14 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
         return;
       }
     }
+    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     super.onMouseDown(grid, event);
   }
 
+  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseUp(grid: DataGrid, event: MouseEvent): void {
     this._onMouseDown = false;
+    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     super.onMouseUp(grid, event);
   }
 
@@ -441,6 +445,7 @@ export
   messageHook(handler: IMessageHandler, msg: Message): boolean {
 
     if (handler === this.grid.viewport) {
+      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
       let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
 
       if (msg.type === 'column-resize-request' && mouseHandler.getOnMouseDown()) {
@@ -488,7 +493,9 @@ export
       this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid)
 
       this.grid.dataModel = this.model.data_model;
+      //@ts-ignore **added so we can remove basickeyhandler.ts from fork
       this.grid.keyHandler = new BasicKeyHandler();
+      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
       this.grid.mouseHandler = new IIPyDataGridMouseHandler(this);
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editingEnabled = this.model.get('editable');
@@ -671,6 +678,7 @@ export
   }
 
   public updateColumnWidths() {
+    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
 
     // Do not want this callback to be executed when user resizes using the mouse

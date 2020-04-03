@@ -10,7 +10,7 @@ import {
 
 import {
   CellRenderer
-} from '@phosphor/datagrid';
+} from '@lumino/datagrid';
 
 import {
   MODULE_NAME, MODULE_VERSION
