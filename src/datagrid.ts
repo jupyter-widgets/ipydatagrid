@@ -508,6 +508,7 @@ export
         this.grid.dataModel = this.model.data_model;
         this.updateHeaderRenderer();
         this.filterDialog.model = this.model.data_model;
+        this.updateColumnWidths();
       });
 
       this.model.on('change:base_row_size', () => {
