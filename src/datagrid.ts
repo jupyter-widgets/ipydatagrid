@@ -128,7 +128,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
     this._onMouseDown = true;
 
     // Send custom message to kernel
-    if (hit.region !== 'void' && grid.dataModel) {
+    if (hit.region !== 'void' && grid.dataModel && this._dataGridView.model.comm) {
       const dataModel = <ViewBasedJSONModel>grid.dataModel;
       this._dataGridView.model.comm.send({
         method: 'custom',
