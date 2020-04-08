@@ -29,7 +29,6 @@ class View {
    * @param options - The options for initializing the view.
    */
   constructor(options: View.IOptions) {
-    this._primaryKeyUuid = options.schema.primaryKeyUuid;
     let split = Private.splitFields(options.schema);
     this._data = options.data;
     this._bodyFields = split.bodyFields;
@@ -162,7 +161,6 @@ class View {
   private readonly _bodyFields: ViewBasedJSONModel.IField[];
   private readonly _headerFields: ViewBasedJSONModel.IField[];
   private readonly _missingValues: Private.MissingValuesMap | null;
-  private readonly _primaryKeyUuid: string;
 }
 
 /**
