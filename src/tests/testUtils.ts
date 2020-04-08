@@ -34,7 +34,8 @@ export namespace DataGenerator {
           { name: 'index', type: 'integer', rows:['index'] },
           { name: options.name, type: options.type, rows: [options.name] }
         ],
-        'primaryKey': ['index']
+        'primaryKey': ['index'],
+        'primaryKeyUuid': ''
       },
       'data': data
     }
@@ -61,7 +62,8 @@ export namespace DataGenerator {
           { name: 'index', type: 'integer', rows:['index'] },
           ...fields
         ],
-        'primaryKey': ['index']
+        'primaryKey': ['index'],
+        'primaryKeyUuid': ''
       },
       'data': rows
     }
@@ -91,7 +93,8 @@ export namespace DataGenerator {
     return {
       'schema': {
         'fields': fields,
-        'primaryKey': options.primaryKeyData
+        'primaryKey': options.primaryKeyData,
+        'primaryKeyUuid': ''
       },
       'data': rows
     }
