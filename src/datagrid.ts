@@ -1060,6 +1060,7 @@ export namespace DataGridModel {
   export interface ISchema {
     readonly fields: IField[];
     readonly primaryKey: string | string[];
+    readonly primaryKeyUuid: string;
   }
 }
 
@@ -1098,9 +1099,13 @@ namespace Private {
         return Object.keys(data.fields[i])[0];
       })
     }
+    else {
+      primaryKey = [<string>primaryKey];
+    }
 
     return {
       primaryKey: primaryKey,
+      primaryKeyUuid: data.schema.primaryKeyUuid,
       fields: fields
     }
   }

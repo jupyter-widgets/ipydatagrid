@@ -29,6 +29,11 @@ class View {
    * @param options - The options for initializing the view.
    */
   constructor(options: View.IOptions) {
+    console.log("Schema pre-processing: ", options);    
+    this._primaryKeyUuid = options.schema.primaryKeyUuid;
+    
+    console.log("uuid: ", this._primaryKeyUuid);
+    
     let split = Private.splitFields(options.schema);
     this._data = options.data;
     this._bodyFields = split.bodyFields;
@@ -160,6 +165,7 @@ class View {
   private readonly _bodyFields: ViewBasedJSONModel.IField[];
   private readonly _headerFields: ViewBasedJSONModel.IField[];
   private readonly _missingValues: Private.MissingValuesMap | null;
+  private readonly _primaryKeyUuid: string;
 }
 
 /**
@@ -204,6 +210,11 @@ namespace View {
      * Primary key fields are rendered as row header columns.
      */
     readonly primaryKey?: string | string[];
+
+    /**
+     * The name of the unique identifier in the primary key array
+     */
+    readonly primaryKeyUuid: string;
   }
 
   /**
@@ -271,11 +282,14 @@ namespace Private {
     } else {
       primaryKeys = schema.primaryKey;
     }
-
     // Separate the fields for the body and header.
     let bodyFields: ViewBasedJSONModel.IField[] = [];
     let headerFields: ViewBasedJSONModel.IField[] = [];
     for (let field of schema.fields) {
+      console.log("Field: ", field);
+      if (field.rows[0] == schema.primaryKeyUuid) {
+        continue;
+      }
       if (primaryKeys.indexOf(field.name) === -1) {
         bodyFields.push(field);
       } else {

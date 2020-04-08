@@ -291,18 +291,24 @@ class DataGrid(DOMWidget):
 
     @data.setter
     def data(self, dataframe):
+        IPYDG_UUID = 'ipydguuid'
+        dataframe[IPYDG_UUID] = pd.RangeIndex(0, dataframe.shape[0])
+        dataframe = dataframe[[dataframe.columns[-1]] + dataframe.columns.tolist()[:-1]]
         schema = pd.io.json.build_table_schema(dataframe)
-        data = dataframe.reset_index().to_dict(orient='records')
+        reset_index_dataframe = dataframe.reset_index()
+        data = reset_index_dataframe.to_dict(orient='records')
 
         # Check for multiple primary keys
-        key = schema['primaryKey']
+        key = reset_index_dataframe.columns[:dataframe.index.nlevels].tolist()
+        uuid_pk = list(key[-1])
+        
         num_index_levels = len(key) if isinstance(key, list) else 1
 
         # Check for nested columns in schema, if so, we need to update the
         # schema to represent the actual column name values
         if isinstance(schema['fields'][-1]['name'], tuple):
             num_column_levels = len(dataframe.columns.levels)
-            primary_key = list(key)
+            primary_key = key
 
             for i in range(num_index_levels):
                 new_name = [''] * num_column_levels
@@ -310,6 +316,14 @@ class DataGrid(DOMWidget):
                 schema['fields'][i]['name'] = tuple(new_name)
                 primary_key[i] = tuple(new_name)
             schema['primaryKey'] = primary_key
+            uuid_pk[0] = IPYDG_UUID
+            schema['primaryKey'].append(tuple(uuid_pk))
+            
+        else:
+            schema['primaryKey'] = key
+            schema['primaryKey'].append(IPYDG_UUID)
+
+        schema['primaryKeyUuid'] = IPYDG_UUID
 
         self._data = {'data': data,
                       'schema': schema,
