@@ -287,7 +287,10 @@ class DataGrid(DOMWidget):
 
     @property
     def data(self):
-        return pd.DataFrame(self._data['data']).set_index(self._data['schema']['primaryKey'])
+        trimmed_primarykey = self._data['schema']['primaryKey'][:-1]
+        final_df = pd.DataFrame(self._data['data']).set_index(trimmed_primarykey)
+        final_df = final_df[final_df.columns[1:]]
+        return final_df
 
     @data.setter
     def data(self, dataframe):
