@@ -334,29 +334,17 @@ export class ViewBasedJSONModel extends MutableDataModel {
     if (region == 'column-header' || region == 'corner-header') {
       return row;
     }
-
-    console.log("Row updated: ", row);
-    
-    
     // Get the index of the row in the full dataset to be updated
     const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
     ? this._dataset.schema.primaryKey
     : [this._dataset.schema.primaryKey];
 
-    console.log("primaryKey: ", primaryKey);
-    console.log("_dataSet: ", this._currentView.dataset);
-
     let keyValues = primaryKey.map(key =>
       this._currentView.dataset[row][key]
     );
 
-    console.log("keyValues: ", keyValues);
-    console.log("primaryKeyMap: ", this._primaryKeyMap);
-    
     const lookupIndex: number = this._primaryKeyMap.get(JSON.stringify(keyValues))!;
     
-    console.log("lookupIndex: ", lookupIndex);
-     
     return lookupIndex;
   }
 

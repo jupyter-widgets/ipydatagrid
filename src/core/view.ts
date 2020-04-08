@@ -29,11 +29,7 @@ class View {
    * @param options - The options for initializing the view.
    */
   constructor(options: View.IOptions) {
-    console.log("Schema pre-processing: ", options);    
     this._primaryKeyUuid = options.schema.primaryKeyUuid;
-    
-    console.log("uuid: ", this._primaryKeyUuid);
-    
     let split = Private.splitFields(options.schema);
     this._data = options.data;
     this._bodyFields = split.bodyFields;
@@ -157,7 +153,8 @@ class View {
     if (region === 'corner-header') {
       return index;
     } else {
-      return this._headerFields.length + index;
+      // Incrementing by one to account for the invisible uuid column
+      return this._headerFields.length + index + 1;
     }
   }
 
@@ -286,7 +283,8 @@ namespace Private {
     let bodyFields: ViewBasedJSONModel.IField[] = [];
     let headerFields: ViewBasedJSONModel.IField[] = [];
     for (let field of schema.fields) {
-      console.log("Field: ", field);
+      // Skipping the primary key unique identifier so 
+      // it is not rendered.
       if (field.rows[0] == schema.primaryKeyUuid) {
         continue;
       }
