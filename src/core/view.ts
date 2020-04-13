@@ -152,8 +152,7 @@ class View {
     if (region === 'corner-header') {
       return index;
     } else {
-      // Incrementing by one to account for the invisible uuid column
-      return this._headerFields.length + index + 1;
+      return this._headerFields.length + index;
     }
   }
 

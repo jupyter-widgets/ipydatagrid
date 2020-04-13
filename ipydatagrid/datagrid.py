@@ -296,7 +296,7 @@ class DataGrid(DOMWidget):
     def data(self, dataframe):
         IPYDG_UUID = 'ipydguuid'
         dataframe[IPYDG_UUID] = pd.RangeIndex(0, dataframe.shape[0])
-        dataframe = dataframe[[dataframe.columns[-1]] + dataframe.columns.tolist()[:-1]]
+        # dataframe = dataframe[[dataframe.columns[-1]] + dataframe.columns.tolist()[:-1]]
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
         data = reset_index_dataframe.to_dict(orient='records')
