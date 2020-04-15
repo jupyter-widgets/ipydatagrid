@@ -289,12 +289,13 @@ class DataGrid(DOMWidget):
     def data(self):
         trimmed_primarykey = self._data['schema']['primaryKey'][:-1]
         final_df = pd.DataFrame(self._data['data']).set_index(trimmed_primarykey)
-        final_df = final_df[final_df.columns[1:]]
+        final_df = final_df[final_df.columns[:-1]]
         return final_df
 
     @data.setter
     def data(self, dataframe):
         IPYDG_UUID = 'ipydguuid'
+        dataframe = dataframe.copy();
         dataframe[IPYDG_UUID] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
@@ -513,6 +514,25 @@ class DataGrid(DOMWidget):
             self.selection_mode = 'cell'
 
         return value
+
+    @validate('_transforms')
+    def _validate_transforms(self, proposal):
+        transforms = proposal['value']
+
+        for transform in transforms:
+            if (transform['columnIndex'] > len(self._data['schema']['fields']) - 2):
+                raise ValueError("Column index is out of bounds.")
+
+        return transforms
+
+    @validate('_data')
+    def _validate_data(self, proposal):
+        table_schema = proposal['value']
+        column_list = [field['name'] for field in table_schema['schema']['fields']]
+        if len(column_list) != len(set(column_list)):
+            raise ValueError("The dataframe must not contain duplicate column names.")
+
+        return table_schema
 
     def on_cell_change(self, callback, remove=False):
         """Register a callback to execute when a cell value changed.
