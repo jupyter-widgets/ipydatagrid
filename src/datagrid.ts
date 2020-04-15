@@ -619,9 +619,6 @@ export
     const schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
     const primaryKeysLength: number = schema.primaryKey.length - 1;
 
-    console.log("columnNameToIndex (name): ", name);
-    
-
     let index = -1;
 
     if (schema.primaryKey.includes(name)) {
@@ -641,9 +638,6 @@ export
   public columnIndexToName(index: number, region: DataModel.CellRegion) {
 
     let schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
-    console.log("columnNameToIndex (index, region): ", index, region);
-    
-
     if (region == 'row-header') {
       return schema.primaryKey[index];
     } else {
@@ -1098,13 +1092,18 @@ namespace Private {
     })
 
     // Updating the primary key to account for a multiIndex primary key.
-    const primaryKey = data.schema.primaryKey.filter((key: string) => {
-      for (let field of data.fields) {
-        if (field.hasOwnProperty(key)) {
-          return true;
+    const primaryKey = data.schema.primaryKey.map((key: string) => {
+      for (let i = 0; i < data.schema.fields.length; i++) {
+        const curFieldKey = Array.isArray(key) 
+        ? data.schema.fields[i].name[0]
+        : data.schema.fields[i].name;
+        const newKey = Array.isArray(key) ? key[0] : key;
+
+        if (curFieldKey == newKey) {
+          return Object.keys(data.fields[i])[0];
         }
       }
-      return false;
+      return "unreachable";
     });
 
     return {

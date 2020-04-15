@@ -51,19 +51,19 @@ export namespace DataGenerator {
       const row: { [key: string]: any } = {};
       options.data.forEach(col => {
         row[col.name] = col.data[i];
-        row['index'] = i;
       });
-      rows.push(row)
+      row['ipydguuid'] = i;
+      rows.push(row);
     }
 
     return {
       'schema': {
         'fields': [
-          { name: 'index', type: 'integer', rows:['index'] },
-          ...fields
+          ...fields,
+          { name: 'ipydguuid', type: 'integer', rows:['ipydguuid'] }
         ],
-        'primaryKey': ['index'],
-        'primaryKeyUuid': ''
+        'primaryKey': ['index', 'ipydguuid'],
+        'primaryKeyUuid': 'ipydguuid'
       },
       'data': rows
     }
@@ -85,16 +85,16 @@ export namespace DataGenerator {
       const row: { [key: string]: any } = {};
       options.data.forEach(col => {
         row[col.name] = col.data[i];
-        row['index'] = i;
       });
-      rows.push(row)
+      row['ipydguuid'] = i;
+      rows.push(row);
     }
 
     return {
       'schema': {
         'fields': fields,
         'primaryKey': options.primaryKeyData,
-        'primaryKeyUuid': ''
+        'primaryKeyUuid': 'ipydguuid'
       },
       'data': rows
     }
