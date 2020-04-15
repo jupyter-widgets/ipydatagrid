@@ -349,16 +349,24 @@ class DataGrid(DOMWidget):
         was successful.
         """
 
-        row_index = self._get_row_index_of_primary_key(primary_key)
+        row_indices = self._get_row_index_of_primary_key(primary_key)
 
         # Bail early if key could not be found
-        if row_index is None:
+        if not row_indices:
             return False
 
-        if column in self._data['data'][row_index] and row_index is not None:
-            self._data['data'][row_index][column] = value
-            self._notify_cell_change(row_index, column, value)
-            return True
+        # Iterate over all indices
+        else:
+            op_success = []
+            for row_index in row_indices:
+                if column in self._data['data'][row_index] and row_index is not None:
+                    self._data['data'][row_index][column] = value
+                    self._notify_cell_change(row_index, column, value)
+                    op_success.append(True)
+                else:
+                    op_success.append(False)
+
+            return all(op_success)
 
         return False
 
@@ -586,14 +594,13 @@ class DataGrid(DOMWidget):
 
     def _get_row_index_of_primary_key(self, value):
         value = value if isinstance(value, list) else [value]
-        primary_key = self._data['schema']['primaryKey']
+        primary_key = self._data['schema']['primaryKey'][:-1] # Omitting ipydguuid
         if len(value) != len(primary_key):
             raise ValueError('The provided primary key value must be the same length as the primary key.')
-        row_index = None
+        row_indices = []
 
         for i, row in enumerate(self._data['data']):
             if all([row[primary_key[j]] == value[j] for j in range(len(primary_key))]):
-                row_index = i
-                break
+                row_indices.append(i)
 
-        return row_index
+        return row_indices
