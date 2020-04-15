@@ -24,7 +24,7 @@ export namespace DataGenerator {
    */
   export function singleCol(options: ISingleColOptions): ViewBasedJSONModel.IData {
     const data = options.data.map((val: any, i: number) => {
-      const row: { [key: string]: any } = { 'index': i };
+      const row: { [key: string]: any } = { 'index': i, 'ipydguuid': i };
       row[options.name] = val;
       return row;
     });
@@ -32,10 +32,11 @@ export namespace DataGenerator {
       'schema': {
         'fields': [
           { name: 'index', type: 'integer', rows:['index'] },
-          { name: options.name, type: options.type, rows: [options.name] }
+          { name: options.name, type: options.type, rows: [options.name] },
+          { name: 'ipydguuid', type: 'integer', rows:['ipydguuid'] }
         ],
-        'primaryKey': ['index'],
-        'primaryKeyUuid': ''
+        'primaryKey': ['index', 'ipydguuid'],
+        'primaryKeyUuid': 'ipydguuid'
       },
       'data': data
     }
