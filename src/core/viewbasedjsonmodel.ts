@@ -84,21 +84,14 @@ export class ViewBasedJSONModel extends MutableDataModel {
   private _updatePrimaryKeyMap(): void {
     this._primaryKeyMap.clear();
 
-    const primaryKey = this._dataset.schema.primaryKey;
-
-    if (Array.isArray(primaryKey)) {
-      each(this._dataset.data, (rowData, index) => {
-        let keys = primaryKey.map(key => rowData[key])
-        this._primaryKeyMap.set(JSON.stringify(keys), index)
-      })
-    } else {
-      // If primaryKey is a string, we want to represent it in the map as
-      // an array, as it will be looked up that way.
-      each(this._dataset.data, (rowData, index) => {
-        this._primaryKeyMap.set(JSON.stringify([rowData[primaryKey]]), index);
-      })
-    }
+    const primaryKey = this._dataset.schema.primaryKey
+    
+    each(this._dataset.data, (rowData, index) => {
+      let keys = primaryKey.map(key => rowData[key])
+      this._primaryKeyMap.set(JSON.stringify(keys), index)
+    })
   }
+
 
   areCellsMerged(cell1: number[], cell2: number[]): boolean {
     const [row2, col2] = cell2;
@@ -341,15 +334,17 @@ export class ViewBasedJSONModel extends MutableDataModel {
     if (region == 'column-header' || region == 'corner-header') {
       return row;
     }
-
     // Get the index of the row in the full dataset to be updated
     const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
-      ? this._dataset.schema.primaryKey
-      : [this._dataset.schema.primaryKey];
+    ? this._dataset.schema.primaryKey
+    : [this._dataset.schema.primaryKey];
+
     let keyValues = primaryKey.map(key =>
       this._currentView.dataset[row][key]
     );
+
     const lookupIndex: number = this._primaryKeyMap.get(JSON.stringify(keyValues))!;
+    
     return lookupIndex;
   }
 
@@ -473,7 +468,8 @@ namespace ViewBasedJSONModel {
      *
      * Primary key fields are rendered as row header columns.
      */
-    readonly primaryKey: string | string[];
+    readonly primaryKey: string[];
+    readonly primaryKeyUuid: string;
   }
 
   export interface IUpdateCellValuesOptions {

@@ -8,10 +8,16 @@ export namespace ArrayUtils {
    */
   export 
   function generateMultiIndexArrayLocations(model: any): number[] {
-    const primaryKey = model._dataset.schema.primaryKey;
+    // Removing the primary key uuid from the primary key array
+    // as it is not used in the multi index location generation
+    // process.
+    const primaryKey = model._dataset.schema.primaryKey.slice(0, 
+      model._dataset.schema.primaryKey.length - 1);
     const dataFields = model._dataset.schema.fields;
     let multiIndexLocationArr: number[] = [];
-    for (let i = 0; i < dataFields.length; i++) {
+    // Subtracting one from the length of dataFields to account for
+    // (remove) the invisible primary key uuid column.
+    for (let i = 0; i < dataFields.length - 1; i++) {
       if(!primaryKey.includes(dataFields[i].name)) {
         multiIndexLocationArr.push(i);
       }
@@ -36,8 +42,10 @@ export namespace ArrayUtils {
     // The data grid doesn't count corner-headers when indexing column-headers, so if a given 
     // datagrid has 5 columns, 2 of which are corner-headers, the index of the first column 
     // header will not be 2, but 0. columnStartIndexOffset calculaates that offset so we 
-    // can correctly identify indices corresponding to column-headers. 
-    const columnStartIndexOffset = model._dataset.schema.primaryKey.length
+    // can correctly identify indices corresponding to column-headers.
+    // Subtracting one from the start index offset to account for (remove) any
+    // references to the primary key uuid column.
+    const columnStartIndexOffset = model._dataset.schema.primaryKey.length - 1
     let retArr: any[] = [];
     let curRow: any[] = [];
     const firstIndex = multiIndexArrayLocations[0];

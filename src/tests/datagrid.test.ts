@@ -313,10 +313,10 @@ namespace Private {
         { data: [0, 0, 0], name: 'index1', type: 'number' },
         { data: [0, 0, 0], name: 'index2', type: 'number' },
         { data: [1, 2, 3], name: 'col1', type: 'number' },
-        { data: [1, 2, 3], name: 'col2', type: 'number' }
+        { data: [1, 2, 3], name: 'col2', type: 'number' },
       ],
       length: 2,
-      primaryKeyData: ['index1', 'index2']
+      primaryKeyData: ['index1', 'index2', 'ipydguuid']
     }
     );
 
@@ -338,7 +338,7 @@ namespace Private {
         { data: [4, 5, 6], name: 'col4', type: 'number' }
       ],
       length: 2,
-      primaryKeyData: ['index1', 'index2']
+      primaryKeyData: ['index1', 'index2', 'ipydguuid']
     }
     );
 

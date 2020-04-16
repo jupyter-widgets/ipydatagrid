@@ -287,29 +287,47 @@ class DataGrid(DOMWidget):
 
     @property
     def data(self):
-        return pd.DataFrame(self._data['data']).set_index(self._data['schema']['primaryKey'])
+        trimmed_primarykey = self._data['schema']['primaryKey'][:-1]
+        final_df = pd.DataFrame(self._data['data']).set_index(trimmed_primarykey)
+        final_df = final_df[final_df.columns[:-1]]
+        return final_df
 
     @data.setter
     def data(self, dataframe):
+        IPYDG_UUID = 'ipydguuid'
+        dataframe = dataframe.copy()
+        dataframe[IPYDG_UUID] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
-        data = dataframe.reset_index().to_dict(orient='records')
+        reset_index_dataframe = dataframe.reset_index()
+        data = reset_index_dataframe.to_dict(orient='records')
 
         # Check for multiple primary keys
-        key = schema['primaryKey']
+        key = reset_index_dataframe.columns[:dataframe.index.nlevels].tolist()
+        
         num_index_levels = len(key) if isinstance(key, list) else 1
 
         # Check for nested columns in schema, if so, we need to update the
         # schema to represent the actual column name values
         if isinstance(schema['fields'][-1]['name'], tuple):
             num_column_levels = len(dataframe.columns.levels)
-            primary_key = list(key)
+            primary_key = key.copy()
 
             for i in range(num_index_levels):
                 new_name = [''] * num_column_levels
                 new_name[0] = schema['fields'][i]['name']
                 schema['fields'][i]['name'] = tuple(new_name)
                 primary_key[i] = tuple(new_name)
+            
             schema['primaryKey'] = primary_key
+            uuid_pk = list(key[-1])
+            uuid_pk[0] = IPYDG_UUID
+            schema['primaryKey'].append(tuple(uuid_pk))
+            
+        else:
+            schema['primaryKey'] = key
+            schema['primaryKey'].append(IPYDG_UUID)
+            
+        schema['primaryKeyUuid'] = IPYDG_UUID
 
         self._data = {'data': data,
                       'schema': schema,
@@ -332,16 +350,24 @@ class DataGrid(DOMWidget):
         was successful.
         """
 
-        row_index = self._get_row_index_of_primary_key(primary_key)
+        row_indices = self._get_row_index_of_primary_key(primary_key)
 
         # Bail early if key could not be found
-        if row_index is None:
+        if not row_indices:
             return False
 
-        if column in self._data['data'][row_index] and row_index is not None:
-            self._data['data'][row_index][column] = value
-            self._notify_cell_change(row_index, column, value)
-            return True
+        # Iterate over all indices
+        else:
+            op_success = []
+            for row_index in row_indices:
+                if column in self._data['data'][row_index] and row_index is not None:
+                    self._data['data'][row_index][column] = value
+                    self._notify_cell_change(row_index, column, value)
+                    op_success.append(True)
+                else:
+                    op_success.append(False)
+
+            return all(op_success)
 
         return False
 
@@ -498,6 +524,25 @@ class DataGrid(DOMWidget):
 
         return value
 
+    @validate('_transforms')
+    def _validate_transforms(self, proposal):
+        transforms = proposal['value']
+
+        for transform in transforms:
+            if (transform['columnIndex'] > len(self._data['schema']['fields']) - 2):
+                raise ValueError("Column index is out of bounds.")
+
+        return transforms
+
+    @validate('_data')
+    def _validate_data(self, proposal):
+        table_schema = proposal['value']
+        column_list = [field['name'] for field in table_schema['schema']['fields']]
+        if len(column_list) != len(set(column_list)):
+            raise ValueError("The dataframe must not contain duplicate column names.")
+
+        return table_schema
+
     def on_cell_change(self, callback, remove=False):
         """Register a callback to execute when a cell value changed.
 
@@ -550,14 +595,13 @@ class DataGrid(DOMWidget):
 
     def _get_row_index_of_primary_key(self, value):
         value = value if isinstance(value, list) else [value]
-        primary_key = self._data['schema']['primaryKey']
+        primary_key = self._data['schema']['primaryKey'][:-1] # Omitting ipydguuid
         if len(value) != len(primary_key):
             raise ValueError('The provided primary key value must be the same length as the primary key.')
-        row_index = None
+        row_indices = []
 
         for i, row in enumerate(self._data['data']):
             if all([row[primary_key[j]] == value[j] for j in range(len(primary_key))]):
-                row_index = i
-                break
+                row_indices.append(i)
 
-        return row_index
+        return row_indices

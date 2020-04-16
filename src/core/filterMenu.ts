@@ -245,6 +245,7 @@ export class InteractiveFilterDialog extends BoxPanel {
             { name: 'uniqueVals', type: 'number', rows: [] }
           ],
           primaryKey: ['index'],
+          primaryKeyUuid: 'index'
         },
         data: items
       }

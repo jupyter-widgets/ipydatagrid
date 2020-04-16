@@ -204,6 +204,11 @@ namespace View {
      * Primary key fields are rendered as row header columns.
      */
     readonly primaryKey?: string | string[];
+
+    /**
+     * The name of the unique identifier in the primary key array
+     */
+    readonly primaryKeyUuid: string;
   }
 
   /**
@@ -271,11 +276,15 @@ namespace Private {
     } else {
       primaryKeys = schema.primaryKey;
     }
-
     // Separate the fields for the body and header.
     let bodyFields: ViewBasedJSONModel.IField[] = [];
     let headerFields: ViewBasedJSONModel.IField[] = [];
     for (let field of schema.fields) {
+      // Skipping the primary key unique identifier so 
+      // it is not rendered.
+      if (field.rows[0] == schema.primaryKeyUuid) {
+        continue;
+      }
       if (primaryKeys.indexOf(field.name) === -1) {
         bodyFields.push(field);
       } else {

@@ -618,7 +618,7 @@ export
 
   public columnNameToIndex(name: string) {
     const schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
-    const primaryKeysLength: number = schema.primaryKey.length;
+    const primaryKeysLength: number = schema.primaryKey.length - 1;
 
     let index = -1;
 
@@ -639,11 +639,10 @@ export
   public columnIndexToName(index: number, region: DataModel.CellRegion) {
 
     let schema: ViewBasedJSONModel.ISchema = this.model.data_model.dataset.schema;
-
     if (region == 'row-header') {
       return schema.primaryKey[index];
     } else {
-      return schema.fields[schema.primaryKey.length + index].name;
+      return schema.fields[schema.primaryKey.length + index - 1].name;
     }
   }
 
@@ -1060,7 +1059,8 @@ export namespace DataGridModel {
   }
   export interface ISchema {
     readonly fields: IField[];
-    readonly primaryKey: string | string[];
+    readonly primaryKey: string[];
+    readonly primaryKeyUuid: string;
   }
 }
 
@@ -1093,15 +1093,23 @@ namespace Private {
     })
 
     // Updating the primary key to account for a multiIndex primary key.
-    let primaryKey = data.schema.primaryKey;
-    if (Array.isArray(data.schema.primaryKey)) {
-      primaryKey = data.schema.primaryKey.map((key: any, i: number) => {
-        return Object.keys(data.fields[i])[0];
-      })
-    }
+    const primaryKey = data.schema.primaryKey.map((key: string) => {
+      for (let i = 0; i < data.schema.fields.length; i++) {
+        const curFieldKey = Array.isArray(key) 
+        ? data.schema.fields[i].name[0]
+        : data.schema.fields[i].name;
+        const newKey = Array.isArray(key) ? key[0] : key;
+
+        if (curFieldKey == newKey) {
+          return Object.keys(data.fields[i])[0];
+        }
+      }
+      return "unreachable";
+    });
 
     return {
       primaryKey: primaryKey,
+      primaryKeyUuid: data.schema.primaryKeyUuid,
       fields: fields
     }
   }
