@@ -17,6 +17,9 @@ import { JSONObject } from '@lumino/coreutils';
  */
 export namespace DataGenerator {
 
+  // Unique primary key identifier
+  export const IPYDG_UUID = 'ipydguuid';
+
   /**
    * A function that returns a table with a single column.
    *
@@ -24,7 +27,7 @@ export namespace DataGenerator {
    */
   export function singleCol(options: ISingleColOptions): ViewBasedJSONModel.IData {
     const data = options.data.map((val: any, i: number) => {
-      const row: { [key: string]: any } = { 'index': i, 'ipydguuid': i };
+      const row: { [key: string]: any } = { 'index': i, IPYDG_UUID: i };
       row[options.name] = val;
       return row;
     });
@@ -33,10 +36,10 @@ export namespace DataGenerator {
         'fields': [
           { name: 'index', type: 'integer', rows:['index'] },
           { name: options.name, type: options.type, rows: [options.name] },
-          { name: 'ipydguuid', type: 'integer', rows:['ipydguuid'] }
+          { name: IPYDG_UUID, type: 'integer', rows:[IPYDG_UUID] }
         ],
-        'primaryKey': ['index', 'ipydguuid'],
-        'primaryKeyUuid': 'ipydguuid'
+        'primaryKey': ['index', IPYDG_UUID],
+        'primaryKeyUuid': IPYDG_UUID
       },
       'data': data
     }
@@ -53,7 +56,7 @@ export namespace DataGenerator {
       options.data.forEach(col => {
         row[col.name] = col.data[i];
       });
-      row['ipydguuid'] = i;
+      row[IPYDG_UUID] = i;
       rows.push(row);
     }
 
@@ -61,10 +64,10 @@ export namespace DataGenerator {
       'schema': {
         'fields': [
           ...fields,
-          { name: 'ipydguuid', type: 'integer', rows:['ipydguuid'] }
+          { name: IPYDG_UUID, type: 'integer', rows:[IPYDG_UUID] }
         ],
-        'primaryKey': ['index', 'ipydguuid'],
-        'primaryKeyUuid': 'ipydguuid'
+        'primaryKey': ['index', IPYDG_UUID],
+        'primaryKeyUuid': IPYDG_UUID
       },
       'data': rows
     }
@@ -87,7 +90,7 @@ export namespace DataGenerator {
       options.data.forEach(col => {
         row[col.name] = col.data[i];
       });
-      row['ipydguuid'] = i;
+      row[IPYDG_UUID] = i;
       rows.push(row);
     }
 
@@ -95,7 +98,7 @@ export namespace DataGenerator {
       'schema': {
         'fields': fields,
         'primaryKey': options.primaryKeyData,
-        'primaryKeyUuid': 'ipydguuid'
+        'primaryKeyUuid': IPYDG_UUID
       },
       'data': rows
     }

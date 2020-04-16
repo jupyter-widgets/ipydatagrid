@@ -295,7 +295,7 @@ class DataGrid(DOMWidget):
     @data.setter
     def data(self, dataframe):
         IPYDG_UUID = 'ipydguuid'
-        dataframe = dataframe.copy();
+        dataframe = dataframe.copy()
         dataframe[IPYDG_UUID] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
@@ -303,7 +303,6 @@ class DataGrid(DOMWidget):
 
         # Check for multiple primary keys
         key = reset_index_dataframe.columns[:dataframe.index.nlevels].tolist()
-        uuid_pk = list(key[-1])
         
         num_index_levels = len(key) if isinstance(key, list) else 1
 
@@ -311,14 +310,16 @@ class DataGrid(DOMWidget):
         # schema to represent the actual column name values
         if isinstance(schema['fields'][-1]['name'], tuple):
             num_column_levels = len(dataframe.columns.levels)
-            primary_key = key
+            primary_key = key.copy()
 
             for i in range(num_index_levels):
                 new_name = [''] * num_column_levels
                 new_name[0] = schema['fields'][i]['name']
                 schema['fields'][i]['name'] = tuple(new_name)
                 primary_key[i] = tuple(new_name)
+            
             schema['primaryKey'] = primary_key
+            uuid_pk = list(key[-1])
             uuid_pk[0] = IPYDG_UUID
             schema['primaryKey'].append(tuple(uuid_pk))
             

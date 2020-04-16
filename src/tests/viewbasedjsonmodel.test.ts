@@ -117,6 +117,7 @@ describe('Test .uniqueValues()', () => {
       { name: 'index', type: 'string', data: ['A', 'C', 'B', 'A', 'C'] },
       { name: 'col1', type: 'number', data: [10, 20, 30, 40, 50] },
       { name: 'col2', type: 'boolean', data: [true, false, true, false, false] },
+      { name: 'col3', type: 'number', data: [100, 200, 100, 300, 200] },
     ]
   });
   const testModel = new ViewBasedJSONModel(testData)
@@ -125,6 +126,9 @@ describe('Test .uniqueValues()', () => {
   });
   test('cellregion-column-header-1', () => {
     expect(testModel.uniqueValues('column-header', 1)).resolves.toEqual([true, false])
+  });
+  test('cellregion-column-header-2', () => {
+    expect(testModel.uniqueValues('column-header', 2)).resolves.toEqual([100, 200, 300])
   });
   test('cellregion-corner-header-0', () => {
     expect(testModel.uniqueValues('corner-header', 0)).resolves.toEqual(['A', 'C', 'B'])
