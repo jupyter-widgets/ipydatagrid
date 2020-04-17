@@ -78,10 +78,14 @@ export namespace DataGenerator {
    *
    * @param options - The options for creating a table.
    */
-  export function multiIndexCol(options: IMultiIndexColOptions): ViewBasedJSONModel.IData {
+  export function multiIndexCol(options: IMultiIndexColOptions, primaryKeyUuid: string): ViewBasedJSONModel.IData {
 
     const fields = options.data.map(val => {
-      return { name: val.name, type: val.type, rows:[val.name] }
+      return { 
+        name: val.name,
+        type: val.type, 
+        rows: typeof val.name === 'number' ? [val.name] : val.name.replace(/[^\w\s]/gi, '').split(" ")
+      }
     });
     const rows = [];
 
@@ -90,7 +94,7 @@ export namespace DataGenerator {
       options.data.forEach(col => {
         row[col.name] = col.data[i];
       });
-      row[IPYDG_UUID] = i;
+      row[primaryKeyUuid] = i;
       rows.push(row);
     }
 
@@ -98,7 +102,7 @@ export namespace DataGenerator {
       'schema': {
         'fields': fields,
         'primaryKey': options.primaryKeyData,
-        'primaryKeyUuid': IPYDG_UUID
+        'primaryKeyUuid': primaryKeyUuid
       },
       'data': rows
     }

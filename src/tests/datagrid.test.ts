@@ -317,7 +317,8 @@ namespace Private {
       ],
       length: 2,
       primaryKeyData: ['index1', 'index2', 'ipydguuid']
-    }
+    },
+    'ipydguuid'
     );
 
     const set1: DataGridModel.IData = {
@@ -339,7 +340,8 @@ namespace Private {
       ],
       length: 2,
       primaryKeyData: ['index1', 'index2', 'ipydguuid']
-    }
+    },
+    'ipydguuid'
     );
 
     const set2: DataGridModel.IData = {
