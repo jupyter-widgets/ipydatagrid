@@ -40,6 +40,33 @@ describe('Test .rowCount()', () => {
   });
 })
 
+describe('Test .rowCount() nestedColumns', () => {
+  const testData = DataGenerator.multiIndexCol({
+      data: [
+          { name: "('year', '')", type: 'number', data: [2013, 2013, 2014, 2014] },
+          { name: "('visit', '')", type: 'number', data: [1, 2, 1, 2] },
+          { name: "('Bob', 'HR')", type: 'number', data: [41.0, 28.0, 42.0, 37.0] },
+          { name: "('Bob', 'Temp')", type: 'number', data: [37.1, 35.2, 37.3, 39.2] },
+          { name: "('Guido', 'HR')", type: 'number', data: [50.0, 35.0, 42.0, 31.0] },
+          { name: "('Guido', 'Temp')", type: 'number', data: [37.7, 37.1, 37.4, 35.1] },
+          { name: "('Sue', 'HR')", type: 'number', data: [23.0, 48.0, 44.0, 34.0] },
+          { name: "('Sue', 'Temp')", type: 'number', data: [37.5, 37.1, 37.5, 39.0] },
+          { name: "('ipydguuid', '')", type: 'number', data: [0, 1, 2, 3] },
+      ],
+      length: 4,
+      primaryKeyData: ["('year', '')", "('visit', '')", "('ipydguuid', '')"]
+    },
+    "('ipydguuid', '')"
+  )
+  const testView = new View(testData)
+  test('cellregion-body', () => {
+    expect(testView.rowCount('body')).toBe(4)
+  });
+  test('cellregion-column-header', () => {
+    expect(testView.rowCount('column-header')).toBe(2)
+  });
+})
+
 describe('Test .columnCount()', () => {
   const testData = DataGenerator.multiCol({
     length: 3, data: [
@@ -53,6 +80,33 @@ describe('Test .columnCount()', () => {
   });
   test('cellregion-row-header', () => {
     expect(testView.columnCount('row-header')).toBe(1)
+  });
+})
+
+describe('Test .columnCount() nestedColumns', () => {
+  const testData = DataGenerator.multiIndexCol({
+      data: [
+          { name: "('year', '')", type: 'number', data: [2013, 2013, 2014, 2014] },
+          { name: "('visit', '')", type: 'number', data: [1, 2, 1, 2] },
+          { name: "('Bob', 'HR')", type: 'number', data: [41.0, 28.0, 42.0, 37.0] },
+          { name: "('Bob', 'Temp')", type: 'number', data: [37.1, 35.2, 37.3, 39.2] },
+          { name: "('Guido', 'HR')", type: 'number', data: [50.0, 35.0, 42.0, 31.0] },
+          { name: "('Guido', 'Temp')", type: 'number', data: [37.7, 37.1, 37.4, 35.1] },
+          { name: "('Sue', 'HR')", type: 'number', data: [23.0, 48.0, 44.0, 34.0] },
+          { name: "('Sue', 'Temp')", type: 'number', data: [37.5, 37.1, 37.5, 39.0] },
+          { name: "('ipydguuid', '')", type: 'number', data: [0, 1, 2, 3] },
+      ],
+      length: 4,
+      primaryKeyData: ["('year', '')", "('visit', '')", "('ipydguuid', '')"]
+    },
+    "('ipydguuid', '')"
+  )
+  const testView = new View(testData)
+  test('cellregion-body', () => {
+    expect(testView.columnCount('body')).toBe(6)
+  });
+  test('cellregion-row-header', () => {
+    expect(testView.columnCount('row-header')).toBe(3) // Including primary key uuid
   });
 })
 
@@ -80,6 +134,48 @@ describe('Test .data()', () => {
     });
   })
 });
+
+describe('Test .data() nestedColumns', () => {
+  const testData = DataGenerator.multiIndexCol({
+      data: [
+          { name: "('year', '')", type: 'number', data: [2013, 2013, 2014, 2014] },
+          { name: "('visit', '')", type: 'number', data: [1, 2, 1, 2] },
+          { name: "('Bob', 'HR')", type: 'number', data: [41.0, 28.0, 42.0, 37.0] },
+          { name: "('Bob', 'Temp')", type: 'number', data: [37.1, 35.2, 37.3, 39.2] },
+          { name: "('Guido', 'HR')", type: 'number', data: [50.0, 35.0, 42.0, 31.0] },
+          { name: "('Guido', 'Temp')", type: 'number', data: [37.7, 37.1, 37.4, 35.1] },
+          { name: "('Sue', 'HR')", type: 'number', data: [23.0, 48.0, 44.0, 34.0] },
+          { name: "('Sue', 'Temp')", type: 'number', data: [37.5, 37.1, 37.5, 39.0] },
+          { name: "('ipydguuid', '')", type: 'number', data: [0, 1, 2, 3] },
+      ],
+      length: 4,
+      primaryKeyData: ["('year', '')", "('visit', '')", "('ipydguuid', '')"]
+    },
+    "('ipydguuid', '')"
+  )
+  const testView = new View(testData)
+  const testCases: Private.DataTestCase[] = [
+    { region: 'body', row: 0, column: 0, expected: 41.0 },
+    { region: 'body', row: 1, column: 3, expected: 37.1 },
+    { region: 'body', row: 2, column: 2, expected: 42.0 },
+    { region: 'body', row: 3, column: 5, expected: 39.0 },
+    { region: 'column-header', row: 0, column: 0, expected: "Bob" },
+    { region: 'column-header', row: 0, column: 1, expected: "Bob" },
+    { region: 'column-header', row: 1, column: 4, expected: "HR" },
+    { region: 'column-header', row: 1, column: 5, expected: "Temp" },
+    { region: 'row-header', row: 0, column: 0, expected: 2013 },
+    { region: 'row-header', row: 0, column: 1, expected: 1 },
+    { region: 'row-header', row: 1, column: 1, expected: 2 },
+    { region: 'row-header', row: 3, column: 0, expected: 2014 }
+  ];
+  testCases.forEach(val => {
+    test(`cellregion-${val.region}-${val.row},${val.column}`, () => {
+      expect(testView.data(val.region, val.row, val.column)).toBe(val.expected)
+    });
+  })
+});
+
+
 
 /**
  * The namespace for the module implementation details.
