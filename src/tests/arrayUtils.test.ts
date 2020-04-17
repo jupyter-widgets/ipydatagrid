@@ -29,12 +29,18 @@ describe('Test multi index array utilities', () => {
     test("Test .generateMultiIndexArrayLocations()", async () => {
         expect(mutltiIndexArrayLocations).toEqual([2, 3, 4, 5, 6, 7]);
     })
+
+    // Generating an array with location of nested level headers
+    const nestedColumnDataGridIndices = ArrayUtils.generateDataGridMergedCellLocations(testModel, 
+        mutltiIndexArrayLocations);
+
     test("Test .mergedCellLocations()", async () => {
-        // Generating an array with location of nested level headers
-        const nestedColumnDataGridIndices = ArrayUtils.generateDataGridMergedCellLocations(testModel, 
-            mutltiIndexArrayLocations);
-        
         expect(nestedColumnDataGridIndices)
         .toEqual([[[[0,0],[0,1]],[[0,2],[0,3]],[[0,4],[0,5]]],[[[1,0]],[[1,1]],[[1,2]],[[1,3]],[[1,4]],[[1,5]]]]);
+    })
+
+    test("Test .validateMergingHierarchy()", async () => {
+        expect(ArrayUtils.validateMergingHierarchy(nestedColumnDataGridIndices))
+        .toBe(true);
     })
   });
