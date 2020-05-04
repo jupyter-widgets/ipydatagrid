@@ -33,6 +33,7 @@
     "build:labextension": "npm run clean:labextension && mkdirp datagrid/labextension && cd datagrid/labextension && npm pack ../..",
     "build:lib": "tsc",
     "build:nbextension": "webpack -p",
+    "build:widget-examples": "cd widget-examples/basic && webpack -p",
     "build:all": "npm run build:labextension && npm run build:nbextension",
     "clean": "npm run clean:lib && npm run clean:nbextension",
     "clean:lib": "rimraf lib",
