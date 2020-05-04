@@ -297,6 +297,23 @@ export
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editable = this.model.get('editable');
 
+      this.grid.cellClicked.connect((sender: DataGridWidget, event: DataGridWidget.ICellClickedEvent) => {
+        if (this.model.comm) {
+          this.model.comm.send({
+            method: 'custom',
+            content: {
+              event_type: 'cell-click',
+              region: event.region,
+              column: event.column,
+              column_index: event.columnIndex,
+              row: event.row,
+              primary_key_row: event.primaryKeyRow,
+              cell_value: event.cellValue
+            }
+          }, null);
+        }
+      });
+
       this.updateGridStyle();
       this.updateGridRenderers();
       
