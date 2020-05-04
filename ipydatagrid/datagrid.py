@@ -189,7 +189,7 @@ class DataGrid(DOMWidget):
         'row': only row headers visible
         'column': only column headers visible
         'none': neither row and column headers visible
-    data : pandas dataframe
+    dataframe : pandas dataframe
         Data to display on Data Grid.
     renderers : dict
         Custom renderers to use for cell rendering. Keys of dictionary specify
