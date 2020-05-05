@@ -13,7 +13,7 @@ import { ViewBasedJSONModel } from "./core/viewbasedjsonmodel";
 import { Transform } from "./core/transform";
 import { Theme } from "./utils";
 
-import '../css/datagrid-widget.css';
+import '../style/feathergrid.css';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -471,7 +471,7 @@ class FeatherGrid extends Widget {
       commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
         label: 'Sort Ascending',
         mnemonic: 1,
-        iconClass: 'fa fa-arrow-up',
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortAsc',
         execute: (args): void => {
           const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
           const colIndex = this._dataModel.getSchemaIndex(
@@ -488,7 +488,7 @@ class FeatherGrid extends Widget {
       commands.addCommand(IPyDataGridContextMenu.CommandID.SortDescending, {
         label: 'Sort Descending',
         mnemonic: 1,
-        iconClass: 'fa fa-arrow-down',
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortDesc',
         execute: (args) => {
           const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
           const colIndex = this._dataModel.getSchemaIndex(
@@ -523,7 +523,7 @@ class FeatherGrid extends Widget {
       commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog, {
         label: 'Filter by condition...',
         mnemonic: 4,
-        iconClass: 'fa fa-filter',
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
         execute: (args) => {
           let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
           this.filterDialog.open({
@@ -540,7 +540,7 @@ class FeatherGrid extends Widget {
       commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog, {
         label: 'Filter by value...',
         mnemonic: 4,
-        iconClass: 'fa fa-filter',
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
         execute: (args) => {
           let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
           this.filterDialog.open({

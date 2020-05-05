@@ -29,7 +29,7 @@ import {
 } from './core/filterMenu';
 
 // Import CSS
-import '../css/jupyter-widget.css';
+import '../style/jupyter-widget.css';
 
 import {
   MODULE_NAME, MODULE_VERSION
