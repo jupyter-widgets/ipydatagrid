@@ -1,6 +1,6 @@
 import {
-    DataGridWidget
-} from '../../src/datagridwidget';
+    FeatherGrid
+} from '../../src/feathergrid';
 
 import {
     DockPanel, Widget, StackedPanel
@@ -208,7 +208,7 @@ function main() {
   luminoGrid.dataModel = luminoModel;
   luminoGrid.update();
 
-  const gw = new DataGridWidget();
+  const gw = new FeatherGrid();
   gw.dataModel = vbjm;
   gw.selectionModel = new BasicSelectionModel({
       dataModel: vbjm,
@@ -218,7 +218,7 @@ function main() {
   gw.baseRowSize = 30;
   gw.editable = true;
 
-  const nestedGW = new DataGridWidget();
+  const nestedGW = new FeatherGrid();
   nestedGW.dataModel = nestedModel;
   nestedGW.baseColumnSize = 80;
   nestedGW.baseRowSize = 30;
