@@ -3,17 +3,17 @@
   --ipydatagrid-filter-dialog-width: 220px;
 }
 
+.datagrid-widget {
+  width: 100%;
+  height: 100%;
+}
+
 .p-DataGrid {
   width: 100%;
   height: 100%;
   padding: var(--datagrid-padding);
   border: none;
   font-family: "Lato", Helvetica, sans-serif;
-}
-
-.datagrid-container {
-  width: 100%;
-  height: 500px;
 }
 
 .lm-DataGrid-cellEditorOccluder {

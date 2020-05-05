@@ -29,7 +29,7 @@ import {
 } from './core/filterMenu';
 
 // Import CSS
-import '../css/datagrid.css'
+import '../css/jupyter-widget.css';
 
 import {
   MODULE_NAME, MODULE_VERSION
@@ -359,7 +359,7 @@ export
       });
 
       // @ts-ignore
-      this.pWidget.addWidget(this.grid.grid);
+      this.pWidget.addWidget(this.grid);
     });
   }
 

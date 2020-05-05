@@ -1,4 +1,4 @@
-import { BoxPanel } from "@lumino/widgets";
+import { PanelLayout, Widget } from "@lumino/widgets";
 import { Message, IMessageHandler, MessageLoop } from "@lumino/messaging";
 import { BasicMouseHandler, BasicKeyHandler, TextRenderer, DataModel, BasicSelectionModel, CellRenderer } from "@lumino/datagrid";
 import { CommandRegistry } from "@lumino/commands";
@@ -13,6 +13,7 @@ import { ViewBasedJSONModel } from "./core/viewbasedjsonmodel";
 import { Transform } from "./core/transform";
 import { Theme } from "./utils";
 
+import '../css/datagrid-widget.css';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -111,18 +112,16 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
 };
 
 export
-class DataGridWidget extends BoxPanel implements IMessageHandler {
+class DataGridWidget extends Widget {
     constructor() {
         super();
-        this.createGrid();
-    }
+        this.addClass('datagrid-widget');
 
-    /**
-    * Process a message sent to the widget.
-    *
-    * @param msg - The message sent to the widget.
-    */
-    processMessage(msg: Message): void { }
+        this.createGrid();
+
+        let layout = (this.layout = new PanelLayout());
+        layout.addWidget(this.grid);
+    }
   
     /**
      * Intercepts the column-resize-request message sent to a message handler
@@ -321,8 +320,6 @@ class DataGridWidget extends BoxPanel implements IMessageHandler {
       this.updateGridStyle();
       this.updateGridRenderers();
       this.updateColumnWidths();
-
-      this.addWidget(this.grid);
     }
   
     /**
