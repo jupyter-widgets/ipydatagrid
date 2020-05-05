@@ -216,18 +216,16 @@ function main() {
   });
   gw.baseColumnSize = 80;
   gw.baseRowSize = 30;
-  gw.createGrid();
   gw.editable = true;
 
   const nestedGW = new DataGridWidget();
   nestedGW.dataModel = nestedModel;
   nestedGW.baseColumnSize = 80;
   nestedGW.baseRowSize = 30;
-  nestedGW.createGrid();
 
-  const panel1 = createPanel(gw.grid, 'ipydatagrid widget');
+  const panel1 = createPanel(gw, 'ipydatagrid widget');
   const panel2 = createPanel(luminoGrid, 'lumino datagrid');
-  const panel3 = createPanel(nestedGW.grid, 'ipydatagrid nested');
+  const panel3 = createPanel(nestedGW, 'ipydatagrid nested');
 
   const dock = new DockPanel();
   dock.id = 'dock';
