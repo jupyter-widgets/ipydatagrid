@@ -33,12 +33,12 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
     /**
      * Construct a new datagrid mouse handler.
      *
-     * @param dataGridWidget - The DataGridWidget object for which mouse events are handled.
+     * @param grid - The FeatherGrid object for which mouse events are handled.
      */
-    constructor(dataGridWidget: DataGridWidget) {
+    constructor(grid: FeatherGrid) {
       super();
   
-      this._dataGridWidget = dataGridWidget;
+      this._grid = grid;
     }
   
     /**
@@ -67,7 +67,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
           hitRegion === 'corner-header' ? 'row-header' : 'body', hit.column);
         const rowHeight = grid.rowSize('column-header', hit.row);
   
-        const isMenuRow = (hit.region === 'column-header' && hit.row == this._dataGridWidget.grid.dataModel!.rowCount('column-header') - 1)
+        const isMenuRow = (hit.region === 'column-header' && hit.row == this._grid.grid.dataModel!.rowCount('column-header') - 1)
           || (hit.region === 'corner-header' && hit.row === 0);
   
         const isMenuClick =
@@ -78,7 +78,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
           isMenuRow;
   
         if (isMenuClick) {
-          this._dataGridWidget.contextMenu.open(grid, {
+          this._grid.contextMenu.open(grid, {
             ...hit, x: event.clientX, y: event.clientY
           });
           return;
@@ -106,13 +106,13 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
       return this._cellClicked;
     }
   
-    private _dataGridWidget: DataGridWidget;
+    private _grid: FeatherGrid;
     private _onMouseDown: boolean = false;
     private _cellClicked = new Signal<this, DataGrid.HitTestResult>(this);
 };
 
 export
-class DataGridWidget extends Widget {
+class FeatherGrid extends Widget {
     constructor() {
         super();
         this.addClass('datagrid-widget');
@@ -743,7 +743,7 @@ class DataGridWidget extends Widget {
     /**
      * A signal emitted when a grid cell is clicked.
      */
-    get cellClicked(): ISignal<this, DataGridWidget.ICellClickedEvent> {
+    get cellClicked(): ISignal<this, FeatherGrid.ICellClickedEvent> {
       return this._cellClicked;
     }
   
@@ -763,13 +763,13 @@ class DataGridWidget extends Widget {
     private _editable: boolean;
     private _renderers: Dict<CellRenderer> = {};
     private _defaultRenderer: CellRenderer;
-    private _cellClicked = new Signal<this, DataGridWidget.ICellClickedEvent>(this);
+    private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
 }
 
 /**
- * The namespace for the `DataGridWidget` class statics.
+ * The namespace for the `FeatherGrid` class statics.
  */
-export namespace DataGridWidget {
+export namespace FeatherGrid {
   export interface ICellClickedEvent {
     readonly region:  DataModel.CellRegion;
     column: string;

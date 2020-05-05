@@ -39,7 +39,7 @@ import {
   CellRendererModel, CellRendererView
 } from './cellrenderer'
 
-import { DataGridWidget } from './datagridwidget';
+import { FeatherGrid } from './feathergrid';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };
@@ -287,7 +287,7 @@ export
     this.el.classList.add('datagrid-container');
 
     return this.updateRenderers().then(() => {
-      this.grid = new DataGridWidget();
+      this.grid = new FeatherGrid();
       this.grid.baseRowSize = this.model.get('base_row_size');
       this.grid.baseColumnSize = this.model.get('base_column_size');
       this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
@@ -297,7 +297,7 @@ export
       this.grid.selectionModel = this.model.selectionModel;
       this.grid.editable = this.model.get('editable');
 
-      this.grid.cellClicked.connect((sender: DataGridWidget, event: DataGridWidget.ICellClickedEvent) => {
+      this.grid.cellClicked.connect((sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
         if (this.model.comm) {
           this.model.comm.send({
             method: 'custom',
@@ -417,7 +417,7 @@ export
   renderers: Dict<CellRendererView>;
   default_renderer: CellRendererView;
 
-  grid: DataGridWidget;
+  grid: FeatherGrid;
 
   pWidget: JupyterPhosphorPanelWidget;
 
