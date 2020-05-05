@@ -29,6 +29,23 @@
   min-height: 143px;
 }
 
+.ipydatagrid-filterMenuIcon {
+  background-size: 21px;
+  background-repeat: no-repeat;
+}
+
+.ipydatagrid-filterMenuIcon-filter {
+  background-image: url('icons/filter.svg');
+}
+
+.ipydatagrid-filterMenuIcon-sortAsc {
+  background-image: url('icons/arrow-up-short.svg');
+}
+
+.ipydatagrid-filterMenuIcon-sortDesc {
+  background-image: url('icons/arrow-down-short.svg');
+}
+
 .ipydatagrid-unique-value-grid {
   min-height: 200px;
   min-width: var(--ipydatagrid-filter-dialog-width);
