@@ -29,6 +29,46 @@ type IPyDataGridColumnResizeMessage = {
     size: number;
 }
 
+type ThemeType = 'light' | 'dark';
+
+// var name: [light theme value, dark theme value]
+const themeVariables: Map<string, string[]> = new Map([
+  ['--ipydatagrid-filter-icon', ['var(--ipydatagrid-filter-icon-light)', 'var(--ipydatagrid-filter-icon-dark)']],
+  ['--ipydatagrid-sort-asc-icon', ['var(--ipydatagrid-sort-asc-icon-light)', 'var(--ipydatagrid-sort-asc-icon-dark)']],
+  ['--ipydatagrid-sort-desc-icon', ['var(--ipydatagrid-sort-desc-icon-light)', 'var(--ipydatagrid-sort-desc-icon-dark)']],
+
+  ['--ipydatagrid-layout-color0', ['white', '#111111']],
+  ['--ipydatagrid-layout-color1', ['white', '#212121']],
+  ['--ipydatagrid-layout-color2', ['#eeeeee', '#424242']],
+  ['--ipydatagrid-layout-color3', ['#bdbdbd', '#616161']],
+  ['--ipydatagrid-layout-color4', ['#757575', '#757575']],
+
+  ['--ipydatagrid-ui-font-color0', ['rgba(0, 0, 0, 1)', 'rgba(255, 255, 255, 1)']],
+  ['--ipydatagrid-ui-font-color1', ['rgba(0, 0, 0, 0.87)', 'rgba(255, 255, 255, 0.87)']],
+  ['--ipydatagrid-ui-font-color2', ['rgba(0, 0, 0, 0.54)', 'rgba(255, 255, 255, 0.54)']],
+  ['--ipydatagrid-ui-font-color3', ['rgba(0, 0, 0, 0.38)', 'rgba(255, 255, 255, 0.38)']],
+
+  ['--ipydatagrid-border-color0', ['#bdbdbd', '#616161']],
+  ['--ipydatagrid-border-color1', ['#bdbdbd', '#616161']],
+  ['--ipydatagrid-border-color2', ['#e0e0e0', '#424242']],
+  ['--ipydatagrid-border-color3', ['#eeeeee', '#212121']],
+
+  ['--ipydatagrid-brand-color0', ['#1976d2', '#1976d2']],
+  ['--ipydatagrid-brand-color1', ['#2196f3', '#2196f3']],
+  ['--ipydatagrid-brand-color2', ['#64b5f6', '#64b5f6']],
+  ['--ipydatagrid-brand-color3', ['#bbdefb', '#bbdefb']],
+  ['--ipydatagrid-brand-color4', ['#e3f2fd', '#e3f2fd']],
+  ['--ipydatagrid-brand-color5', ['#00e6ff', '#00e6ff']],
+  ['--ipydatagrid-brand-color6', ['#ffe100', '#ffe100']],
+  ['--ipydatagrid-brand-color7', ['#009eb0', '#009eb0']],
+  ['--ipydatagrid-brand-color8', ['#b09b00', '#b09b00']],
+
+  ['--ipydatagrid-menu-bgcolor', ['white', 'black']],
+  ['--ipydatagrid-menu-border-color', ['#bdbdbd', '#616161']],
+  ['--ipydatagrid-filter-dlg-textcolor', ['black', 'white']],
+  ['--ipydatagrid-filter-dlg-bgcolor', ['white', 'black']]
+]);
+
 class IIPyDataGridMouseHandler extends BasicMouseHandler {
     /**
      * Construct a new datagrid mouse handler.
@@ -115,9 +155,17 @@ export
 class FeatherGrid extends Widget {
     constructor() {
         super();
-        this.addClass('datagrid-widget');
+        this.addClass('ipydatagrid-widget');
 
         this.createGrid();
+
+        this._defaultRenderer = new TextRenderer({
+          font: '12px sans-serif',
+          textColor: Theme.getFontColor(),
+          backgroundColor: Theme.getBackgroundColor(),
+          horizontalAlignment: 'left',
+          verticalAlignment: 'center'
+        });
 
         let layout = (this.layout = new PanelLayout());
         layout.addWidget(this.grid);
@@ -228,6 +276,7 @@ class FeatherGrid extends Widget {
 
     set defaultRenderer(renderer: CellRenderer) {
       this._defaultRenderer = renderer;
+      this._defaultRendererSet = true;
 
       if (!this.grid) {
         return;
@@ -420,6 +469,17 @@ class FeatherGrid extends Widget {
   
     public updateGridStyle() {
       this.updateHeaderRenderer();
+      
+      if (!this._defaultRendererSet) {
+        this._defaultRenderer = new TextRenderer({
+          font: '12px sans-serif',
+          textColor: Theme.getFontColor(),
+          backgroundColor: Theme.getBackgroundColor(),
+          horizontalAlignment: 'left',
+          verticalAlignment: 'center'
+        });
+      }
+
       const rowHeaderRenderer = new TextRenderer({
         textColor: Theme.getFontColor(1),
         backgroundColor: Theme.getBackgroundColor(2),
@@ -746,6 +806,29 @@ class FeatherGrid extends Widget {
     get cellClicked(): ISignal<this, FeatherGrid.ICellClickedEvent> {
       return this._cellClicked;
     }
+
+    set theme(value: ThemeType) {
+      this._theme = value;
+
+      let themeIndex = 0;
+      if (value === 'dark') {
+        this.addClass('dark');
+        themeIndex = 1;
+      } else {
+        this.removeClass('dark');
+      }
+
+      const root = document.documentElement;
+      themeVariables.forEach((options: string[], name: string) => {
+        root.style.setProperty(name, options[themeIndex]);
+      });
+
+      this.updateGridStyle();
+    }
+
+    get theme(): ThemeType {
+      return this._theme;
+    }
   
     grid: DataGrid;
     contextMenu: IPyDataGridContextMenu;
@@ -763,7 +846,9 @@ class FeatherGrid extends Widget {
     private _editable: boolean;
     private _renderers: Dict<CellRenderer> = {};
     private _defaultRenderer: CellRenderer;
+    private _defaultRendererSet: boolean = false;
     private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
+    private _theme: ThemeType = 'light';
 }
 
 /**

@@ -1,32 +1,88 @@
 :root {
-  --datagrid-padding: 3px;
+  --ipydatagrid-ui-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica,
+    Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  --ipydatagrid-ui-font-size0: 0.83333em;
+  --ipydatagrid-ui-font-size1: 13px; /* Base font size */
+  --ipydatagrid-ui-font-size2: 1.2em;
+  --ipydatagrid-ui-font-size3: 1.44em;
+  --ipydatagrid-padding: 3px;
   --ipydatagrid-filter-dialog-width: 220px;
+  --ipydatagrid-filter-icon-light: url('icons/filter.svg');
+  --ipydatagrid-sort-asc-icon-light: url('icons/arrow-up-short.svg');
+  --ipydatagrid-sort-desc-icon-light: url('icons/arrow-down-short.svg');
+  --ipydatagrid-filter-icon-dark: url('icons/filter-dark.svg');
+  --ipydatagrid-sort-asc-icon-dark: url('icons/arrow-up-short-dark.svg');
+  --ipydatagrid-sort-desc-icon-dark: url('icons/arrow-down-short-dark.svg');
+  --ipydatagrid-filter-icon: var(--ipydatagrid-filter-icon-light);
+  --ipydatagrid-sort-asc-icon: var(--ipydatagrid-sort-asc-icon-light);
+  --ipydatagrid-sort-desc-icon: var(--ipydatagrid-sort-desc-icon-light);
+
+  --ipydatagrid-layout-color0: white;
+  --ipydatagrid-layout-color1: white;
+  --ipydatagrid-layout-color2: #eeeeee;
+  --ipydatagrid-layout-color3: #bdbdbd;
+  --ipydatagrid-layout-color4: #757575;
+
+  --ipydatagrid-ui-font-color0: rgba(0, 0, 0, 1);
+  --ipydatagrid-ui-font-color1: rgba(0, 0, 0, 0.87);
+  --ipydatagrid-ui-font-color2: rgba(0, 0, 0, 0.54);
+  --ipydatagrid-ui-font-color3: rgba(0, 0, 0, 0.38);
+
+  --ipydatagrid-border-color0: #bdbdbd;
+  --ipydatagrid-border-color1: #bdbdbd;
+  --ipydatagrid-border-color2: #e0e0e0;
+  --ipydatagrid-border-color3: #eeeeee;
+
+  --ipydatagrid-brand-color0: #1976d2;
+  --ipydatagrid-brand-color1: #2196f3;
+  --ipydatagrid-brand-color2: #64b5f6;
+  --ipydatagrid-brand-color3: #bbdefb;
+  --ipydatagrid-brand-color4: #e3f2fd;
+  --ipydatagrid-brand-color5: #00e6ff;
+  --ipydatagrid-brand-color6: #ffe100;
+  --ipydatagrid-brand-color7: #009eb0;
+  --ipydatagrid-brand-color8: #b09b00;
+
+  --ipydatagrid-menu-bgcolor: white;
+  --ipydatagrid-menu-border-color: #bdbdbd;
+  --ipydatagrid-filter-dlg-textcolor: black;
+  --ipydatagrid-filter-dlg-bgcolor: white;
 }
 
-.datagrid-widget {
+.ipydatagrid-widget {
   width: 100%;
   height: 100%;
+  font-family: var(--ipydatagrid-ui-font-family);
+  font-size: var(--ipydatagrid-ui-font-size1);
 }
 
 .p-DataGrid {
   width: 100%;
   height: 100%;
-  padding: var(--datagrid-padding);
+  padding: var(--ipydatagrid-padding);
   border: none;
   font-family: "Lato", Helvetica, sans-serif;
 }
 
 .lm-DataGrid-cellEditorOccluder {
-  margin: var(--datagrid-padding);
+  margin: var(--ipydatagrid-padding);
 }
 
 .ipydatagrid-filterMenu {
-  border: 1px solid var(--jp-border-color1, #BDBDBD);
+  font-family: var(--ipydatagrid-ui-font-family);
+  font-size: var(--ipydatagrid-ui-font-size1);
+  border: 1px solid var(--ipydatagrid-menu-border-color, #bdbdbd);
   box-shadow: 5px 5px 5px rgba(0, 0, 0, .2);
-  background: var(--jp-layout-color1, white);
+  background: var(--ipydatagrid-menu-bgcolor, white);
   z-index: 10;
   padding: 5px;
   min-height: 143px;
+}
+
+.ipydatagrid-filterMenu select, .ipydatagrid-filterMenu input, .ipydatagrid-filterMenu button {
+  color: var(--ipydatagrid-ui-font-color0, black) !important;
+  background: var(--ipydatagrid-menu-bgcolor, white);
+  font-size: var(--ipydatagrid-ui-font-size1);
 }
 
 .ipydatagrid-filterMenuIcon {
@@ -35,15 +91,15 @@
 }
 
 .ipydatagrid-filterMenuIcon-filter {
-  background-image: url('icons/filter.svg');
+  background-image: var(--ipydatagrid-filter-icon);
 }
 
 .ipydatagrid-filterMenuIcon-sortAsc {
-  background-image: url('icons/arrow-up-short.svg');
+  background-image: var(--ipydatagrid-sort-asc-icon);
 }
 
 .ipydatagrid-filterMenuIcon-sortDesc {
-  background-image: url('icons/arrow-down-short.svg');
+  background-image: var(--ipydatagrid-sort-desc-icon);
 }
 
 .ipydatagrid-unique-value-grid {
@@ -67,9 +123,16 @@
 }
 
 .ipydatagrid-context-menu {
-  border: 1px solid var(--jp-border-color0, #000000);
-  font-family: 'BB.Prop', Arial, Helvetica, sans-serif;
+  border: 1px solid var(--ipydatagrid-menu-border-color, #bdbdbd);
+  background-color: var(--ipydatagrid-menu-bgcolor, white) !important;
+  color: var(--ipydatagrid-ui-font-color0, black) !important;
+  font-family: var(--ipydatagrid-ui-font-family);
+  font-size: var(--ipydatagrid-ui-font-size1);
   padding-top: 7px;
   padding-bottom: 4px;
   padding-left: 3px;
+}
+
+.ipydatagrid-context-menu .lm-Menu-item.lm-mod-active, .ipydatagrid-context-menu .p-Menu-item.p-mod-active {
+  background-color: var(--ipydatagrid-layout-color2);
 }

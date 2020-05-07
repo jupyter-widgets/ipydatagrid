@@ -11,7 +11,7 @@
   "files": [
     "lib/**/*.js",
     "dist/*.js",
-    "css/*.css"
+    "style/**/*.*"
   ],
   "homepage": "https://github.com/QuantStack/ipydatagrid",
   "bugs": {
