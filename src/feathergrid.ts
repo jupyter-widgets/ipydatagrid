@@ -8,7 +8,7 @@ import { Signal, ISignal } from '@lumino/signaling';
 import { DataGrid } from "./core/datagrid";
 import { HeaderRenderer } from "./core/headerRenderer";
 import { InteractiveFilterDialog } from "./core/filterMenu";
-import { IPyDataGridContextMenu } from "./core/gridContextMenu";
+import { FeatherGridContextMenu } from "./core/gridContextMenu";
 import { ViewBasedJSONModel } from "./core/viewbasedjsonmodel";
 import { Transform } from "./core/transform";
 import { Theme } from "./utils";
@@ -23,13 +23,11 @@ type Dict<T> = { [keys: string]: T; };
  is what is being intercepted in the Message Hook. Because the original Message
  is in a Private namespace and we cannot access it, we are using this type.
  */
-type IPyDataGridColumnResizeMessage = {
+type FeatherGridColumnResizeMessage = {
     region: DataModel.ColumnRegion;
     index: number;
     size: number;
 }
-
-type ThemeType = 'light' | 'dark';
 
 // var name: [light theme value, dark theme value]
 const themeVariables: Map<string, string[]> = new Map([
@@ -69,7 +67,7 @@ const themeVariables: Map<string, string[]> = new Map([
   ['--ipydatagrid-filter-dlg-bgcolor', ['white', 'black']]
 ]);
 
-class IIPyDataGridMouseHandler extends BasicMouseHandler {
+class FeatherGridMouseHandler extends BasicMouseHandler {
     /**
      * Construct a new datagrid mouse handler.
      *
@@ -95,7 +93,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
       const buttonSize = HeaderRenderer.iconWidth * 1.5;
       const buttonPadding = HeaderRenderer.buttonPadding;
   
-      this._onMouseDown = true;
+      this._mouseIsDown = true;
   
       // Send cell clicked signal
       if (hit.region !== 'void') {
@@ -130,13 +128,13 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
   
     //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     onMouseUp(grid: DataGrid, event: MouseEvent): void {
-      this._onMouseDown = false;
+      this._mouseIsDown = false;
       //@ts-ignore added so we don't have to add basicmousehandler.ts fork
       super.onMouseUp(grid, event);
     }
   
-    getOnMouseDown(): boolean {
-      return this._onMouseDown;
+    get mouseIsDown(): boolean {
+      return this._mouseIsDown;
     }
 
     /**
@@ -147,7 +145,7 @@ class IIPyDataGridMouseHandler extends BasicMouseHandler {
     }
   
     private _grid: FeatherGrid;
-    private _onMouseDown: boolean = false;
+    private _mouseIsDown: boolean = false;
     private _cellClicked = new Signal<this, DataGrid.HitTestResult>(this);
 };
 
@@ -157,7 +155,7 @@ class FeatherGrid extends Widget {
         super();
         this.addClass('ipydatagrid-widget');
 
-        this.createGrid();
+        this._createGrid();
 
         this._defaultRenderer = new TextRenderer({
           font: '12px sans-serif',
@@ -185,10 +183,10 @@ class FeatherGrid extends Widget {
     messageHook(handler: IMessageHandler, msg: Message): boolean {
       if (handler === this.grid.viewport) {
         // //@ts-ignore added so we don't have to add basicmousehandler.ts fork
-        let mouseHandler = this.grid.mouseHandler as unknown as IIPyDataGridMouseHandler;
+        let mouseHandler = this.grid.mouseHandler as unknown as FeatherGridMouseHandler;
   
-        if (msg.type === 'column-resize-request' && mouseHandler.getOnMouseDown()) {
-          const resizeMsg = msg as unknown as IPyDataGridColumnResizeMessage;
+        if (msg.type === 'column-resize-request' && mouseHandler.mouseIsDown) {
+          const resizeMsg = msg as unknown as FeatherGridColumnResizeMessage;
           let columnName: string = this.columnIndexToName(resizeMsg.index, resizeMsg.region);
           const dict = JSONExt.deepCopy(this._columnWidths);
   
@@ -209,9 +207,13 @@ class FeatherGrid extends Widget {
       }
 
       this.grid.dataModel = this._dataModel;
-      this.updateHeaderRenderer();
-      this.filterDialog.model = this._dataModel;
-      this.updateColumnWidths();
+      this._updateHeaderRenderer();
+      this._filterDialog.model = this._dataModel;
+      this._updateColumnWidths();
+    }
+
+    get dataModel(): ViewBasedJSONModel {
+      return this._dataModel;
     }
 
     set baseRowSize(size: number) {
@@ -224,6 +226,10 @@ class FeatherGrid extends Widget {
       this.grid.defaultSizes = { ...this.grid.defaultSizes, rowHeight: size };
     }
 
+    get baseRowSize(): number {
+      return this._baseRowSize;
+    }
+
     set baseColumnSize(size: number) {
       this._baseColumnSize = size;
 
@@ -234,6 +240,10 @@ class FeatherGrid extends Widget {
       this.grid.defaultSizes = { ...this.grid.defaultSizes, columnWidth: size };
     }
 
+    get baseColumnSize(): number {
+      return this._baseColumnSize;
+    }
+
     set columnWidths(widths: Dict<number>) {
       this._columnWidths = widths;
 
@@ -241,7 +251,11 @@ class FeatherGrid extends Widget {
         return;
       }
 
-      this.updateColumnWidths();
+      this._updateColumnWidths();
+    }
+
+    get columnWidths(): Dict<number> {
+      return this._columnWidths;
     }
 
     set baseRowHeaderSize(size: number) {
@@ -254,6 +268,10 @@ class FeatherGrid extends Widget {
       this.grid.defaultSizes = { ...this.grid.defaultSizes, rowHeaderWidth: size };
     }
 
+    get baseRowHeaderSize(): number {
+      return this._baseRowHeaderSize;
+    }
+
     set baseColumnHeaderSize(size: number) {
       this._baseColumnHeaderSize = size;
 
@@ -264,7 +282,11 @@ class FeatherGrid extends Widget {
       this.grid.defaultSizes = { ...this.grid.defaultSizes, columnHeaderHeight: size };
     }
 
-    set headerVisibility(visibility: any) {
+    get baseColumnHeaderSize(): number {
+      return this._baseColumnHeaderSize;
+    }
+
+    set headerVisibility(visibility: DataGrid.HeaderVisibility) {
       this._headerVisibility = visibility;
 
       if (!this.grid) {
@@ -272,6 +294,10 @@ class FeatherGrid extends Widget {
       }
 
       this.grid.headerVisibility = visibility;
+    }
+
+    get headerVisibility(): DataGrid.HeaderVisibility {
+      return this._headerVisibility;
     }
 
     set defaultRenderer(renderer: CellRenderer) {
@@ -282,7 +308,11 @@ class FeatherGrid extends Widget {
         return;
       }
 
-      this.updateGridRenderers();
+      this._updateGridRenderers();
+    }
+
+    get defaultRenderer(): CellRenderer {
+      return this._defaultRenderer;
     }
 
     set renderers(renderers: Dict<CellRenderer>) {
@@ -292,7 +322,11 @@ class FeatherGrid extends Widget {
         return;
       }
 
-      this.updateGridRenderers();
+      this._updateGridRenderers();
+    }
+
+    get renderers(): Dict<CellRenderer> {
+      return this._renderers;
     }
 
     set selectionModel(model: BasicSelectionModel | null) {
@@ -314,81 +348,11 @@ class FeatherGrid extends Widget {
 
       this.grid.editingEnabled = value;
     }
-  
-    createGrid() {
-      this.grid = new DataGrid({
-        defaultSizes: {
-          rowHeight: this._baseRowSize,
-          columnWidth: this._baseColumnSize,
-          rowHeaderWidth: this._baseRowHeaderSize,
-          columnHeaderHeight: this._baseColumnHeaderSize
-        },
-        headerVisibility: this._headerVisibility
-      });
 
-      MessageLoop.installMessageHook(this.grid.viewport, this);
-
-      this.filterDialog = new InteractiveFilterDialog({
-        model: this._dataModel
-      });
-
-      this.contextMenu = new IPyDataGridContextMenu({
-        grid: this.grid,
-        commands: this._createCommandRegistry()
-      });
-
-      // Replace method of copying to clipboard with one that allows
-      // a ClipboardEvent to reach document.body
-      this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid)
-
-      this.grid.dataModel = this._dataModel;
-      //@ts-ignore **added so we can remove basickeyhandler.ts from fork
-      this.grid.keyHandler = new BasicKeyHandler();
-      const mouseHandler = new IIPyDataGridMouseHandler(this);
-      mouseHandler.cellClicked.connect((sender: IIPyDataGridMouseHandler, hit: DataGrid.HitTestResult) => {
-        if (!this.grid.dataModel) {
-          return;
-        }
-        const dataModel = this.grid.dataModel as ViewBasedJSONModel;
-        const region = hit.region as DataModel.CellRegion;
-        this._cellClicked.emit({
-            region: region as DataModel.CellRegion,
-            column: dataModel.metadata(region, hit.row, hit.column)['name'],
-            columnIndex: hit.column,
-            row: hit.row,
-            primaryKeyRow: dataModel.getDatasetRowFromView(region, hit.row),
-            cellValue: dataModel.data(region, hit.row, hit.column)
-          });
-      });
-      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
-      this.grid.mouseHandler = mouseHandler;
-      
-      this.grid.selectionModel = this._selectionModel;
-      this.grid.editingEnabled = this._editable;
-      
-      this.updateGridStyle();
-      this.updateGridRenderers();
-      this.updateColumnWidths();
+    get editable(): boolean {
+      return this._editable;
     }
-  
-    /**
-     *
-     * RendererMap.Resolver function to select a CellRenderer based on the
-     * provided cell metadata.
-     *
-     * @param config - CellConfig for the cell to be rendered.
-     */
-    private _rendererResolver(config: CellRenderer.CellConfig): CellRenderer {
-      const columnName: string = config.metadata['name'];
-      return this._renderers.hasOwnProperty(columnName)
-        ? this._renderers[columnName]
-        : this._defaultRenderer
-    }
-  
-    private updateGridRenderers() {
-      this.grid.cellRenderers.update({ 'body': this._rendererResolver.bind(this) });
-    }
-  
+
     public columnNameToIndex(name: string): number {
       const schema: ViewBasedJSONModel.ISchema = this._dataModel.dataset.schema;
       const primaryKeysLength: number = schema.primaryKey.length - 1;
@@ -410,7 +374,6 @@ class FeatherGrid extends Widget {
     }
   
     public columnIndexToName(index: number, region: DataModel.CellRegion) {
-  
       let schema: ViewBasedJSONModel.ISchema = this._dataModel.dataset.schema;
       if (region == 'row-header') {
         return schema.primaryKey[index];
@@ -420,7 +383,6 @@ class FeatherGrid extends Widget {
     }
   
     public columnNameToRegion(name: string): DataModel.ColumnRegion {
-  
       let schema: ViewBasedJSONModel.ISchema = this._dataModel.dataset.schema;
   
       if (schema.primaryKey.includes(name)) {
@@ -430,45 +392,63 @@ class FeatherGrid extends Widget {
        }
     }
   
-    /**
-     * This function resets the column sizes to the base column size and functions
-     * identically to phosphor's resetColumns() but does not call _repaintOverlay
-     * or _repaintContent in the process.
-     */
-    private resetAllColumnWidths() {
-      let column_base_size = this._baseColumnSize;
-  
-      // Resizing columns from body region
-      for (let i = 0; i < this.grid.columnCount('body'); i++) {
-        this.grid.resizeColumn('body', i, column_base_size)
-      }
-  
-      // Resizing columns from row header region
-      for (let i = 0; i < this.grid.columnCount('column-header'); i++) {
-        this.grid.resizeColumn('row-header', i, column_base_size)
-      }
-    }
-  
-    public updateColumnWidths() {
-      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
-      let mouseHandler = this.grid.mouseHandler as IIPyDataGridMouseHandler;
-  
-      // Do not want this callback to be executed when user resizes using the mouse
-      if (!mouseHandler.getOnMouseDown()) {
-        let column_widths_dict = this._columnWidths;
-  
-        this.resetAllColumnWidths();
-  
-        for (let key in column_widths_dict) {
-          let index = this.columnNameToIndex(key);
-          let region = this.columnNameToRegion(key);
-          this.grid.resizeColumn(region, index, column_widths_dict[key]);
+    private _createGrid() {
+      this.grid = new DataGrid({
+        defaultSizes: {
+          rowHeight: this._baseRowSize,
+          columnWidth: this._baseColumnSize,
+          rowHeaderWidth: this._baseRowHeaderSize,
+          columnHeaderHeight: this._baseColumnHeaderSize
+        },
+        headerVisibility: this._headerVisibility
+      });
+
+      MessageLoop.installMessageHook(this.grid.viewport, this);
+
+      this._filterDialog = new InteractiveFilterDialog({
+        model: this._dataModel
+      });
+
+      this.contextMenu = new FeatherGridContextMenu({
+        grid: this.grid,
+        commands: this._createCommandRegistry()
+      });
+
+      // Replace method of copying to clipboard with one that allows
+      // a ClipboardEvent to reach document.body
+      this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid)
+
+      this.grid.dataModel = this._dataModel;
+      //@ts-ignore **added so we can remove basickeyhandler.ts from fork
+      this.grid.keyHandler = new BasicKeyHandler();
+      const mouseHandler = new FeatherGridMouseHandler(this);
+      mouseHandler.cellClicked.connect((sender: FeatherGridMouseHandler, hit: DataGrid.HitTestResult) => {
+        if (!this.grid.dataModel) {
+          return;
         }
-      }
+        const dataModel = this.grid.dataModel as ViewBasedJSONModel;
+        const region = hit.region as DataModel.CellRegion;
+        this._cellClicked.emit({
+            region: region as DataModel.CellRegion,
+            column: dataModel.metadata(region, hit.row, hit.column)['name'],
+            columnIndex: hit.column,
+            row: hit.row,
+            primaryKeyRow: dataModel.getDatasetRowFromView(region, hit.row),
+            cellValue: dataModel.data(region, hit.row, hit.column)
+          });
+      });
+      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
+      this.grid.mouseHandler = mouseHandler;
+      this.grid.selectionModel = this._selectionModel;
+      this.grid.editingEnabled = this._editable;
+      
+      this.updateGridStyle();
+      this._updateGridRenderers();
+      this._updateColumnWidths();
     }
-  
+
     public updateGridStyle() {
-      this.updateHeaderRenderer();
+      this._updateHeaderRenderer();
       
       if (!this._defaultRendererSet) {
         this._defaultRenderer = new TextRenderer({
@@ -509,115 +489,7 @@ class FeatherGrid extends Widget {
         scrollShadow: scrollShadow,
       };
     }
-  
-    private updateHeaderRenderer() {
-      const headerRenderer = new HeaderRenderer({
-        textOptions: {
-          textColor: Theme.getFontColor(1),
-          backgroundColor: Theme.getBackgroundColor(2),
-          horizontalAlignment: 'center'
-        },
-        isLightTheme: this.isLightTheme,
-        grid: this.grid
-      }
-      );
-  
-      this.grid.cellRenderers.update({ 'column-header': headerRenderer });
-      this.grid.cellRenderers.update({ 'corner-header': headerRenderer });
-    }
-  
-    private _createCommandRegistry(): CommandRegistry {
-      const commands = new CommandRegistry();
-      commands.addCommand(IPyDataGridContextMenu.CommandID.SortAscending, {
-        label: 'Sort Ascending',
-        mnemonic: 1,
-        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortAsc',
-        execute: (args): void => {
-          const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
-          const colIndex = this._dataModel.getSchemaIndex(
-            cellClick.region,
-            cellClick.columnIndex
-          );
-          this._dataModel.addTransform({
-            type: 'sort',
-            columnIndex: colIndex,
-            desc: false
-          })
-        }
-      });
-      commands.addCommand(IPyDataGridContextMenu.CommandID.SortDescending, {
-        label: 'Sort Descending',
-        mnemonic: 1,
-        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortDesc',
-        execute: (args) => {
-          const cellClick: IPyDataGridContextMenu.CommandArgs = args as IPyDataGridContextMenu.CommandArgs;
-          const colIndex = this._dataModel.getSchemaIndex(
-            cellClick.region,
-            cellClick.columnIndex
-          );
-          this._dataModel.addTransform({
-            type: 'sort',
-            columnIndex: colIndex,
-            desc: true
-          })
-        }
-      });
-      commands.addCommand(IPyDataGridContextMenu.CommandID.ClearThisFilter, {
-        label: 'Clear This Filter',
-        mnemonic: -1,
-        execute: (args) => {
-          const commandArgs = <IPyDataGridContextMenu.CommandArgs>args;
-          const schemaIndex: number = this._dataModel.getSchemaIndex(commandArgs.region, commandArgs.columnIndex);
-          this._dataModel.removeTransform(schemaIndex, 'filter');
-        }
-      });
-      commands.addCommand(IPyDataGridContextMenu.CommandID.ClearFiltersInAllColumns, {
-        label: 'Clear Filters in All Columns',
-        mnemonic: -1,
-        execute: (args) => {
-          const activeTransforms: Transform.TransformSpec[] = this._dataModel.activeTransforms;
-          const newTransforms = activeTransforms.filter(val => val.type !== 'filter')
-          this._dataModel.replaceTransforms(newTransforms)
-        }
-      });
-      commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog, {
-        label: 'Filter by condition...',
-        mnemonic: 4,
-        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
-        execute: (args) => {
-          let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
-          this.filterDialog.open({
-            x: commandArgs.clientX,
-            y: commandArgs.clientY,
-            region: commandArgs.region,
-            columnIndex: commandArgs.columnIndex,
-            forceX: false,
-            forceY: false,
-            mode: 'condition'
-          });
-        }
-      });
-      commands.addCommand(IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog, {
-        label: 'Filter by value...',
-        mnemonic: 4,
-        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
-        execute: (args) => {
-          let commandArgs = <IPyDataGridContextMenu.CommandArgs>args
-          this.filterDialog.open({
-            x: commandArgs.clientX,
-            y: commandArgs.clientY,
-            region: commandArgs.region,
-            columnIndex: commandArgs.columnIndex,
-            forceX: false,
-            forceY: false,
-            mode: 'value'
-          });
-        }
-      });
-      return commands;
-  
-    }
-  
+
     copyToClipboard(): void {
       const grid = <DataGrid><unknown>this;
       // Fetch the data model.
@@ -807,15 +679,15 @@ class FeatherGrid extends Widget {
       return this._cellClicked;
     }
 
-    set theme(value: ThemeType) {
-      this._theme = value;
+    set isLightTheme(value: boolean) {
+      this._isLightTheme = value;
 
       let themeIndex = 0;
-      if (value === 'dark') {
+      if (value) {
+        this.removeClass('dark');
+      } else {
         this.addClass('dark');
         themeIndex = 1;
-      } else {
-        this.removeClass('dark');
       }
 
       const root = document.documentElement;
@@ -826,21 +698,182 @@ class FeatherGrid extends Widget {
       this.updateGridStyle();
     }
 
-    get theme(): ThemeType {
-      return this._theme;
+    get isLightTheme(): boolean {
+      return this._isLightTheme;
+    }
+  
+    /**
+     *
+     * RendererMap.Resolver function to select a CellRenderer based on the
+     * provided cell metadata.
+     *
+     * @param config - CellConfig for the cell to be rendered.
+     */
+    private _rendererResolver(config: CellRenderer.CellConfig): CellRenderer {
+      const columnName: string = config.metadata['name'];
+      return this._renderers.hasOwnProperty(columnName)
+        ? this._renderers[columnName]
+        : this._defaultRenderer
+    }
+  
+    private _updateGridRenderers() {
+      this.grid.cellRenderers.update({ 'body': this._rendererResolver.bind(this) });
+    }
+  
+    /**
+     * This function resets the column sizes to the base column size and functions
+     * identically to phosphor's resetColumns() but does not call _repaintOverlay
+     * or _repaintContent in the process.
+     */
+    private resetAllColumnWidths() {
+      let column_base_size = this._baseColumnSize;
+  
+      // Resizing columns from body region
+      for (let i = 0; i < this.grid.columnCount('body'); i++) {
+        this.grid.resizeColumn('body', i, column_base_size)
+      }
+  
+      // Resizing columns from row header region
+      for (let i = 0; i < this.grid.columnCount('column-header'); i++) {
+        this.grid.resizeColumn('row-header', i, column_base_size)
+      }
+    }
+  
+    private _updateColumnWidths() {
+      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
+      let mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler;
+  
+      // Do not want this callback to be executed when user resizes using the mouse
+      if (!mouseHandler.mouseIsDown) {
+        let column_widths_dict = this._columnWidths;
+  
+        this.resetAllColumnWidths();
+  
+        for (let key in column_widths_dict) {
+          let index = this.columnNameToIndex(key);
+          let region = this.columnNameToRegion(key);
+          this.grid.resizeColumn(region, index, column_widths_dict[key]);
+        }
+      }
+    }
+  
+    private _updateHeaderRenderer() {
+      const headerRenderer = new HeaderRenderer({
+        textOptions: {
+          textColor: Theme.getFontColor(1),
+          backgroundColor: Theme.getBackgroundColor(2),
+          horizontalAlignment: 'center'
+        },
+        isLightTheme: this._isLightTheme,
+        grid: this.grid
+      }
+      );
+  
+      this.grid.cellRenderers.update({ 'column-header': headerRenderer });
+      this.grid.cellRenderers.update({ 'corner-header': headerRenderer });
+    }
+  
+    private _createCommandRegistry(): CommandRegistry {
+      const commands = new CommandRegistry();
+      commands.addCommand(FeatherGridContextMenu.CommandID.SortAscending, {
+        label: 'Sort Ascending',
+        mnemonic: 1,
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortAsc',
+        execute: (args): void => {
+          const cellClick: FeatherGridContextMenu.CommandArgs = args as FeatherGridContextMenu.CommandArgs;
+          const colIndex = this._dataModel.getSchemaIndex(
+            cellClick.region,
+            cellClick.columnIndex
+          );
+          this._dataModel.addTransform({
+            type: 'sort',
+            columnIndex: colIndex,
+            desc: false
+          })
+        }
+      });
+      commands.addCommand(FeatherGridContextMenu.CommandID.SortDescending, {
+        label: 'Sort Descending',
+        mnemonic: 1,
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortDesc',
+        execute: (args) => {
+          const cellClick: FeatherGridContextMenu.CommandArgs = args as FeatherGridContextMenu.CommandArgs;
+          const colIndex = this._dataModel.getSchemaIndex(
+            cellClick.region,
+            cellClick.columnIndex
+          );
+          this._dataModel.addTransform({
+            type: 'sort',
+            columnIndex: colIndex,
+            desc: true
+          })
+        }
+      });
+      commands.addCommand(FeatherGridContextMenu.CommandID.ClearThisFilter, {
+        label: 'Clear This Filter',
+        mnemonic: -1,
+        execute: (args) => {
+          const commandArgs = <FeatherGridContextMenu.CommandArgs>args;
+          const schemaIndex: number = this._dataModel.getSchemaIndex(commandArgs.region, commandArgs.columnIndex);
+          this._dataModel.removeTransform(schemaIndex, 'filter');
+        }
+      });
+      commands.addCommand(FeatherGridContextMenu.CommandID.ClearFiltersInAllColumns, {
+        label: 'Clear Filters in All Columns',
+        mnemonic: -1,
+        execute: (args) => {
+          const activeTransforms: Transform.TransformSpec[] = this._dataModel.activeTransforms;
+          const newTransforms = activeTransforms.filter(val => val.type !== 'filter')
+          this._dataModel.replaceTransforms(newTransforms)
+        }
+      });
+      commands.addCommand(FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog, {
+        label: 'Filter by condition...',
+        mnemonic: 4,
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
+        execute: (args) => {
+          let commandArgs = <FeatherGridContextMenu.CommandArgs>args
+          this._filterDialog.open({
+            x: commandArgs.clientX,
+            y: commandArgs.clientY,
+            region: commandArgs.region,
+            columnIndex: commandArgs.columnIndex,
+            forceX: false,
+            forceY: false,
+            mode: 'condition'
+          });
+        }
+      });
+      commands.addCommand(FeatherGridContextMenu.CommandID.OpenFilterByValueDialog, {
+        label: 'Filter by value...',
+        mnemonic: 4,
+        iconClass: 'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
+        execute: (args) => {
+          let commandArgs = <FeatherGridContextMenu.CommandArgs>args
+          this._filterDialog.open({
+            x: commandArgs.clientX,
+            y: commandArgs.clientY,
+            region: commandArgs.region,
+            columnIndex: commandArgs.columnIndex,
+            forceX: false,
+            forceY: false,
+            mode: 'value'
+          });
+        }
+      });
+      return commands;
+  
     }
   
     grid: DataGrid;
-    contextMenu: IPyDataGridContextMenu;
-    filterDialog: InteractiveFilterDialog;
-    isLightTheme: boolean = true;
-
+    contextMenu: FeatherGridContextMenu;
+    private _filterDialog: InteractiveFilterDialog;
     private _baseRowSize: number = 20;
     private _baseColumnSize: number = 64;
     private _baseRowHeaderSize: number = 64;
     private _baseColumnHeaderSize: number = 20;
     private _columnWidths: Dict<number> = {};
-    private _headerVisibility: any = 'all';
+    private _headerVisibility: DataGrid.HeaderVisibility = 'all';
     private _dataModel: ViewBasedJSONModel;
     private _selectionModel: BasicSelectionModel | null;
     private _editable: boolean;
@@ -848,7 +881,7 @@ class FeatherGrid extends Widget {
     private _defaultRenderer: CellRenderer;
     private _defaultRendererSet: boolean = false;
     private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
-    private _theme: ThemeType = 'light';
+    private _isLightTheme: boolean = true;
 }
 
 /**

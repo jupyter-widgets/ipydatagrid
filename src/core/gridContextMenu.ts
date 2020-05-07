@@ -86,7 +86,7 @@ namespace GridContextMenu {
  * This is primarily here for demo purposes to demonstrate how we may want to 
  * manage context menus.
  */
-export class IPyDataGridContextMenu extends GridContextMenu {
+export class FeatherGridContextMenu extends GridContextMenu {
   /**
    * Opens the context menu in reponse to the `cellClick` signal of the
    * data grid.
@@ -100,7 +100,7 @@ export class IPyDataGridContextMenu extends GridContextMenu {
     this._menu.clearItems();
 
     // Create the args that will be provided to the commands' .execute() method
-    const args: IPyDataGridContextMenu.CommandArgs = {
+    const args: FeatherGridContextMenu.CommandArgs = {
       region: hit.region as DataModel.CellRegion,
       rowIndex: hit.row,
       columnIndex: hit.column,
@@ -112,59 +112,59 @@ export class IPyDataGridContextMenu extends GridContextMenu {
     switch (hit.region) {
       case 'column-header':
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.SortAscending,
+          command: FeatherGridContextMenu.CommandID.SortAscending,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.SortDescending,
+          command: FeatherGridContextMenu.CommandID.SortDescending,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog,
+          command: FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog,
+          command: FeatherGridContextMenu.CommandID.OpenFilterByValueDialog,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.ClearThisFilter,
+          command: FeatherGridContextMenu.CommandID.ClearThisFilter,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.ClearFiltersInAllColumns,
+          command: FeatherGridContextMenu.CommandID.ClearFiltersInAllColumns,
           args: args
         });
         break;
       case 'corner-header':
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.SortAscending,
+          command: FeatherGridContextMenu.CommandID.SortAscending,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.SortDescending,
+          command: FeatherGridContextMenu.CommandID.SortDescending,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.OpenFilterByConditionDialog,
+          command: FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.OpenFilterByValueDialog,
+          command: FeatherGridContextMenu.CommandID.OpenFilterByValueDialog,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.ClearThisFilter,
+          command: FeatherGridContextMenu.CommandID.ClearThisFilter,
           args: args
         });
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.ClearFiltersInAllColumns,
+          command: FeatherGridContextMenu.CommandID.ClearFiltersInAllColumns,
           args: args
         });
         break;
       case 'body':
         this._menu.addItem({
-          command: IPyDataGridContextMenu.CommandID.RevertGrid,
+          command: FeatherGridContextMenu.CommandID.RevertGrid,
           args: args
         });
         break;
@@ -180,7 +180,7 @@ export class IPyDataGridContextMenu extends GridContextMenu {
 /**
  * The namespace for the `IPyDataGridContextMenu` class statics.
  */
-export namespace IPyDataGridContextMenu {
+export namespace FeatherGridContextMenu {
 
   /**
    * An options object for initializing a context menu.

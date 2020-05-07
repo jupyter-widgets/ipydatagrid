@@ -21,14 +21,6 @@ import {
 } from './core/viewbasedjsonmodel'
 
 import {
-  IPyDataGridContextMenu
-} from './core/gridContextMenu';
-
-import {
-  InteractiveFilterDialog
-} from './core/filterMenu';
-
-import {
   MODULE_NAME, MODULE_VERSION
 } from './version';
 
@@ -319,7 +311,6 @@ export
       
       this.model.on('data-model-changed', () => {
         this.grid.dataModel = this.model.data_model;
-        this.filterDialog.model = this.model.data_model;
       });
 
       this.model.on('change:base_row_size', () => {
@@ -402,6 +393,15 @@ export
     this.grid.updateGridStyle();
   }
 
+  set isLightTheme(value: boolean) {
+    this._isLightTheme = value;
+    this.grid.isLightTheme = value;
+  }
+
+  get isLightTheme(): boolean {
+    return this._isLightTheme;
+  }
+
   private updateGridRenderers() {
     const defaultRenderer = this.default_renderer.renderer;
     const renderers: Dict<CellRenderer> = {};
@@ -413,20 +413,12 @@ export
     this.grid.renderers = renderers;
   }
 
-
   renderers: Dict<CellRendererView>;
   default_renderer: CellRendererView;
-
   grid: FeatherGrid;
-
   pWidget: JupyterPhosphorPanelWidget;
-
   model: DataGridModel;
-
-  contextMenu: IPyDataGridContextMenu;
-  filterDialog: InteractiveFilterDialog;
-
-  isLightTheme: boolean = true;
+  private _isLightTheme: boolean = true;
 }
 
 export {

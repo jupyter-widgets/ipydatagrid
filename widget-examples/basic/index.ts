@@ -224,7 +224,7 @@ function main() {
   const button = document.createElement('button');
   button.textContent = 'Toggle Theme';
   button.onclick = () => {
-    fg.theme = fg.theme === 'light' ? 'dark' : 'light';
+    fg.isLightTheme = !fg.isLightTheme;
   };
 
   const buttonBoxPanel = new BoxPanel();
