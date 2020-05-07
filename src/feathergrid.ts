@@ -1,6 +1,6 @@
 import { PanelLayout, Widget } from "@lumino/widgets";
 import { Message, IMessageHandler, MessageLoop } from "@lumino/messaging";
-import { BasicMouseHandler, BasicKeyHandler, TextRenderer, DataModel, BasicSelectionModel, CellRenderer } from "@lumino/datagrid";
+import { BasicMouseHandler, BasicKeyHandler, TextRenderer, DataModel, BasicSelectionModel, CellRenderer, RendererMap } from "@lumino/datagrid";
 import { CommandRegistry } from "@lumino/commands";
 import { toArray } from "@lumino/algorithm";
 import { JSONExt } from "@lumino/coreutils";
@@ -187,7 +187,7 @@ class FeatherGrid extends Widget {
   
         if (msg.type === 'column-resize-request' && mouseHandler.mouseIsDown) {
           const resizeMsg = msg as unknown as FeatherGridColumnResizeMessage;
-          let columnName: string = this.columnIndexToName(resizeMsg.index, resizeMsg.region);
+          let columnName: string = this.dataModel.columnIndexToName(resizeMsg.index, resizeMsg.region);
           const dict = JSONExt.deepCopy(this._columnWidths);
   
           dict[columnName] = resizeMsg.size;
@@ -353,43 +353,8 @@ class FeatherGrid extends Widget {
       return this._editable;
     }
 
-    public columnNameToIndex(name: string): number {
-      const schema: ViewBasedJSONModel.ISchema = this._dataModel.dataset.schema;
-      const primaryKeysLength: number = schema.primaryKey.length - 1;
-  
-      let index = -1;
-  
-      if (schema.primaryKey.includes(name)) {
-        index = schema.primaryKey.indexOf(name);
-      } else {
-        const fields: ViewBasedJSONModel.IField[] = schema.fields;
-  
-        fields.forEach((value, i) => {
-          if (value.name == name) {
-            index = i - primaryKeysLength;
-          }
-        })
-      }
-      return index;
-    }
-  
-    public columnIndexToName(index: number, region: DataModel.CellRegion) {
-      let schema: ViewBasedJSONModel.ISchema = this._dataModel.dataset.schema;
-      if (region == 'row-header') {
-        return schema.primaryKey[index];
-      } else {
-        return schema.fields[schema.primaryKey.length + index - 1].name;
-      }
-    }
-  
-    public columnNameToRegion(name: string): DataModel.ColumnRegion {
-      let schema: ViewBasedJSONModel.ISchema = this._dataModel.dataset.schema;
-  
-      if (schema.primaryKey.includes(name)) {
-        return 'row-header';
-      } else {
-         return 'body';
-       }
+    get cellRenderers(): RendererMap {
+      return this.grid.cellRenderers;
     }
   
     private _createGrid() {
@@ -725,7 +690,7 @@ class FeatherGrid extends Widget {
      * identically to phosphor's resetColumns() but does not call _repaintOverlay
      * or _repaintContent in the process.
      */
-    private resetAllColumnWidths() {
+    private _resetAllColumnWidths() {
       let column_base_size = this._baseColumnSize;
   
       // Resizing columns from body region
@@ -747,11 +712,11 @@ class FeatherGrid extends Widget {
       if (!mouseHandler.mouseIsDown) {
         let column_widths_dict = this._columnWidths;
   
-        this.resetAllColumnWidths();
+        this._resetAllColumnWidths();
   
         for (let key in column_widths_dict) {
-          let index = this.columnNameToIndex(key);
-          let region = this.columnNameToRegion(key);
+          let index = this.dataModel.columnNameToIndex(key);
+          let region = this.dataModel.columnNameToRegion(key);
           this.grid.resizeColumn(region, index, column_widths_dict[key]);
         }
       }
