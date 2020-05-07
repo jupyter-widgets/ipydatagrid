@@ -12,6 +12,10 @@ import {
 } from '@lumino/datagrid';
 
 import {
+  JSONExt
+} from '@lumino/coreutils';
+
+import {
   DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget,
   ISerializers, resolvePromisesDict, unpack_models, WidgetModel
 } from '@jupyter-widgets/base';
@@ -304,6 +308,11 @@ export
             }
           }, null);
         }
+      });
+
+      this.grid.columnsResized.connect((sender: FeatherGrid, args: void): void => {
+        this.model.set('column_widths', JSONExt.deepCopy(this.grid.columnWidths));
+        this.model.save_changes();
       });
 
       this.updateGridStyle();

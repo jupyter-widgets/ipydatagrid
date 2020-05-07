@@ -3,7 +3,6 @@ import { Message, IMessageHandler, MessageLoop } from "@lumino/messaging";
 import { BasicMouseHandler, BasicKeyHandler, TextRenderer, DataModel, BasicSelectionModel, CellRenderer, RendererMap } from "@lumino/datagrid";
 import { CommandRegistry } from "@lumino/commands";
 import { toArray } from "@lumino/algorithm";
-import { JSONExt } from "@lumino/coreutils";
 import { Signal, ISignal } from '@lumino/signaling';
 import { DataGrid } from "./core/datagrid";
 import { HeaderRenderer } from "./core/headerRenderer";
@@ -188,11 +187,8 @@ class FeatherGrid extends Widget {
         if (msg.type === 'column-resize-request' && mouseHandler.mouseIsDown) {
           const resizeMsg = msg as unknown as FeatherGridColumnResizeMessage;
           let columnName: string = this.dataModel.columnIndexToName(resizeMsg.index, resizeMsg.region);
-          const dict = JSONExt.deepCopy(this._columnWidths);
-  
-          dict[columnName] = resizeMsg.size;
-          this._columnWidths = dict;
-          //this.model.save_changes(); // TODO
+          this._columnWidths[columnName] = resizeMsg.size;
+          this._columnsResized.emit();
           return true;
         }
       }
@@ -644,6 +640,13 @@ class FeatherGrid extends Widget {
       return this._cellClicked;
     }
 
+    /**
+     * A signal emitted when a grid column is resized. 
+     */
+    get columnsResized(): ISignal<this, void> {
+      return this._columnsResized;
+    }
+
     set isLightTheme(value: boolean) {
       this._isLightTheme = value;
 
@@ -846,6 +849,7 @@ class FeatherGrid extends Widget {
     private _defaultRenderer: CellRenderer;
     private _defaultRendererSet: boolean = false;
     private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
+    private _columnsResized = new Signal<this, void>(this);
     private _isLightTheme: boolean = true;
 }
 
