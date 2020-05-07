@@ -34,7 +34,7 @@
     "build:lib": "tsc",
     "build:nbextension": "webpack -p",
     "build:widget-examples": "cd widget-examples/basic && webpack -p",
-    "build:all": "npm run build:labextension && npm run build:nbextension",
+    "build:all": "npm run build:labextension && npm run build:nbextension && npm run build:widget-examples",
     "clean": "npm run clean:lib && npm run clean:nbextension",
     "clean:lib": "rimraf lib",
     "clean:labextension": "rimraf datagrid/labextension",
