@@ -423,7 +423,7 @@ export class InteractiveFilterDialog extends BoxPanel {
       {
         className: '', style: {
           paddingLeft: '5px',
-          color: 'var(--jp-ui-font-color0,black)'
+          color: 'var(--ipydatagrid-filter-dlg-textcolor,black)'
         }
       },
       (this._mode === 'condition')
@@ -446,7 +446,7 @@ export class InteractiveFilterDialog extends BoxPanel {
         style: {
           marginRight: '5px',
           width: '200px',
-          background: 'var(--jp-layout-color0,black)',
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
           visibility: (
             this._filterOperator === 'empty'
             || this._filterOperator === 'notempty'
@@ -481,7 +481,7 @@ export class InteractiveFilterDialog extends BoxPanel {
           style: {
             width: '60px',
             padding: '1px',
-            border: '1px solid var(--jp-border-color0, #bdbdbd)'
+            border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)'
           },
           onclick: this.applyFilter.bind(this)
         }, 'Apply')
@@ -502,14 +502,14 @@ export class InteractiveFilterDialog extends BoxPanel {
       {
         className: 'widget-text', style: {
           paddingLeft: '5px',
-          color: 'var(--jp-ui-font-color0,black)',
+          color: 'var(--ipydatagrid-filter-dlg-textcolor,black)',
         }
       },
       h.input({
         style: {
           marginRight: '5px',
           width: '75px',
-          background: 'var(--jp-layout-color0,black)'
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
         },
         // Assigning a random key ensures that this element is always
         // rerendered
@@ -533,7 +533,7 @@ export class InteractiveFilterDialog extends BoxPanel {
         style: {
           marginRight: '5px',
           width: '75px',
-          background: 'var(--jp-layout-color0,black)'
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
         },
         // Assigning a random key ensures that this element is always
         // rerendered
@@ -559,7 +559,7 @@ export class InteractiveFilterDialog extends BoxPanel {
           style: {
             width: '60px',
             padding: '1px',
-            border: '1px solid var(--jp-border-color0, #bdbdbd)'
+            border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)'
           },
           onclick: this.applyFilter.bind(this)
         }, 'Apply')
@@ -603,7 +603,7 @@ export class InteractiveFilterDialog extends BoxPanel {
             width: '200px',
             height: '200px',
             margin: '5px',
-            background: 'var(--jp-layout-color0,white)'
+            background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
           },
           onchange: (evt) => {
             let selectElem = <HTMLSelectElement>evt.srcElement;
@@ -652,7 +652,7 @@ export class InteractiveFilterDialog extends BoxPanel {
         style: {
           width: '200px',
           fontSize: '12px',
-          background: 'var(--jp-layout-color0,black)'
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
         },
         // Assigning a random key ensures that this element is always
         // rerendered
@@ -686,7 +686,7 @@ export class InteractiveFilterDialog extends BoxPanel {
         className: 'jupyter-widgets jupyter-button widget-button',
         style: {
           width: '60px',
-          border: '1px solid var(--jp-border-color0, #bdbdbd)'
+          border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)'
         },
         onclick: this.applyFilter.bind(this)
       }, 'Apply')

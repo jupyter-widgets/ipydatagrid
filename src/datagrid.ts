@@ -28,9 +28,6 @@ import {
   InteractiveFilterDialog
 } from './core/filterMenu';
 
-// Import CSS
-import '../style/jupyter-widget.css';
-
 import {
   MODULE_NAME, MODULE_VERSION
 } from './version';
@@ -40,6 +37,9 @@ import {
 } from './cellrenderer'
 
 import { FeatherGrid } from './feathergrid';
+
+// Import CSS
+import '../style/jupyter-widget.css';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T; };

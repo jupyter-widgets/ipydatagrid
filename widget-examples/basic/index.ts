@@ -3,7 +3,7 @@ import {
 } from '../../src/feathergrid';
 
 import {
-    DockPanel, Widget, StackedPanel
+    DockPanel, Widget, StackedPanel, BoxPanel
 } from '@lumino/widgets';
 
 import {
@@ -208,22 +208,44 @@ function main() {
   luminoGrid.dataModel = luminoModel;
   luminoGrid.update();
 
-  const gw = new FeatherGrid();
-  gw.dataModel = vbjm;
-  gw.selectionModel = new BasicSelectionModel({
+  const fg = new FeatherGrid();
+  fg.dataModel = vbjm;
+  fg.selectionModel = new BasicSelectionModel({
       dataModel: vbjm,
       selectionMode: 'cell'
   });
-  gw.baseColumnSize = 80;
-  gw.baseRowSize = 30;
-  gw.editable = true;
+  fg.baseColumnSize = 80;
+  fg.baseRowSize = 30;
+  fg.editable = true;
+
+  const boxPanel = new BoxPanel();
+  boxPanel.spacing = 5;
+  boxPanel.addWidget(fg);
+  const button = document.createElement('button');
+  button.textContent = 'Toggle Theme';
+  button.onclick = () => {
+    fg.theme = fg.theme === 'light' ? 'dark' : 'light';
+  };
+
+  const buttonBoxPanel = new BoxPanel();
+  buttonBoxPanel.direction = 'left-to-right';
+  const bw = new Widget({node: button});
+  buttonBoxPanel.addWidget(bw);
+  const spacer = new Widget();
+  buttonBoxPanel.addWidget(spacer);
+  BoxPanel.setSizeBasis(bw, 100);
+  BoxPanel.setStretch(spacer, 1);
+
+  boxPanel.addWidget(buttonBoxPanel);
+  BoxPanel.setStretch(fg, 1);
+  BoxPanel.setSizeBasis(buttonBoxPanel, 25);
 
   const nestedGW = new FeatherGrid();
   nestedGW.dataModel = nestedModel;
   nestedGW.baseColumnSize = 80;
   nestedGW.baseRowSize = 30;
 
-  const panel1 = createPanel(gw, 'ipydatagrid widget');
+  const panel1 = createPanel(boxPanel, 'ipydatagrid widget');
   const panel2 = createPanel(luminoGrid, 'lumino datagrid');
   const panel3 = createPanel(nestedGW, 'ipydatagrid nested');
 
