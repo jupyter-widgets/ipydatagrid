@@ -251,13 +251,11 @@ class DataGrid(DOMWidget):
     editable = Bool(False).tag(sync=True)
     column_widths = Dict({}).tag(sync=True)
 
-
-    _cell_change_handlers = CallbackDispatcher()
-    _cell_click_handlers = CallbackDispatcher()
-
     def __init__(self, dataframe, **kwargs):
         self.data = dataframe
         super(DataGrid, self).__init__(**kwargs)
+        self._cell_click_handlers = CallbackDispatcher()
+        self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
         
     def __handle_custom_msg(self, _, content, buffers):
