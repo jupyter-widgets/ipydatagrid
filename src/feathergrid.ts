@@ -12,6 +12,7 @@ import { ViewBasedJSONModel } from "./core/viewbasedjsonmodel";
 import { Transform } from "./core/transform";
 import { Theme } from "./utils";
 
+import '@lumino/default-theme/style/datagrid.css';
 import '../style/feathergrid.css';
 
 // Shorthand for a string->T mapping
