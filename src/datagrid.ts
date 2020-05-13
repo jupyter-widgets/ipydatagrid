@@ -68,6 +68,7 @@ import {
   DataGrid
 } from './core/datagrid';
 
+import '@lumino/default-theme/style/datagrid.css';
 // Import CSS
 import '../css/datagrid.css'
 
