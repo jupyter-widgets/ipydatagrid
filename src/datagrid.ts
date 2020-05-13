@@ -284,84 +284,85 @@ export
   render() {
     this.el.classList.add('datagrid-container');
 
-    return this.updateRenderers().then(() => {
-      this.grid = new FeatherGrid();
-      this.grid.baseRowSize = this.model.get('base_row_size');
-      this.grid.baseColumnSize = this.model.get('base_column_size');
-      this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
-      this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
-      this.grid.headerVisibility = this.model.get('header_visibility');
+    this.grid = new FeatherGrid();
+    this.grid.baseRowSize = this.model.get('base_row_size');
+    this.grid.baseColumnSize = this.model.get('base_column_size');
+    this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
+    this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
+    this.grid.headerVisibility = this.model.get('header_visibility');
+    this.grid.dataModel = this.model.data_model;
+    this.grid.selectionModel = this.model.selectionModel;
+    this.grid.editable = this.model.get('editable');
+    // this.default_renderer must be created after setting grid.isLightTheme
+    // for proper color variable initialization
+    this.grid.isLightTheme = this._isLightTheme;
+
+    this.grid.cellClicked.connect((sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
+      if (this.model.comm) {
+        this.model.comm.send({
+          method: 'custom',
+          content: {
+            event_type: 'cell-click',
+            region: event.region,
+            column: event.column,
+            column_index: event.columnIndex,
+            row: event.row,
+            primary_key_row: event.primaryKeyRow,
+            cell_value: event.cellValue
+          }
+        }, null);
+      }
+    });
+
+    this.grid.columnsResized.connect((sender: FeatherGrid, args: void): void => {
+      this.model.set('column_widths', JSONExt.deepCopy(this.grid.columnWidths));
+      this.model.save_changes();
+    });
+    
+    this.model.on('data-model-changed', () => {
       this.grid.dataModel = this.model.data_model;
+    });
+
+    this.model.on('change:base_row_size', () => {
+      this.grid.baseRowSize = this.model.get('base_row_size');
+    });
+
+    this.model.on('change:base_column_size', () => {
+      this.grid.baseColumnSize = this.model.get('base_column_size');
+    });
+
+    this.model.on('change:column_widths', () => {
+      this.grid.columnWidths = this.model.get('column_widths');
+    });
+
+    this.model.on('change:base_row_header_size', () => {
+      this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
+    });
+
+    this.model.on('change:base_column_header_size', () => {
+      this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
+    });
+
+    this.model.on('change:header_visibility', () => {
+      this.grid.headerVisibility = this.model.get('header_visibility');
+    });
+
+    this.model.on_some_change(['default_renderer', 'renderers'], () => {
+      this.updateRenderers().then(this.updateGridRenderers.bind(this));
+    }, this);
+
+    this.model.on('selection-model-changed', () => {
       this.grid.selectionModel = this.model.selectionModel;
+    });
+
+    this.model.on('change:editable', () => {
       this.grid.editable = this.model.get('editable');
-      this.grid.isLightTheme = this._isLightTheme;
+    });
 
-      this.grid.cellClicked.connect((sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
-        if (this.model.comm) {
-          this.model.comm.send({
-            method: 'custom',
-            content: {
-              event_type: 'cell-click',
-              region: event.region,
-              column: event.column,
-              column_index: event.columnIndex,
-              row: event.row,
-              primary_key_row: event.primaryKeyRow,
-              cell_value: event.cellValue
-            }
-          }, null);
-        }
-      });
-
-      this.grid.columnsResized.connect((sender: FeatherGrid, args: void): void => {
-        this.model.set('column_widths', JSONExt.deepCopy(this.grid.columnWidths));
-        this.model.save_changes();
-      });
-
+    return this.updateRenderers().then(() => {
       this.updateGridStyle();
       this.updateGridRenderers();
-      
-      this.model.on('data-model-changed', () => {
-        this.grid.dataModel = this.model.data_model;
-      });
 
-      this.model.on('change:base_row_size', () => {
-        this.grid.baseRowSize = this.model.get('base_row_size');
-      });
-
-      this.model.on('change:base_column_size', () => {
-        this.grid.baseColumnSize = this.model.get('base_column_size');
-      });
-
-      this.model.on('change:column_widths', () => {
-        this.grid.columnWidths = this.model.get('column_widths');
-      });
-
-      this.model.on('change:base_row_header_size', () => {
-        this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
-      });
-
-      this.model.on('change:base_column_header_size', () => {
-        this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
-      });
-
-      this.model.on('change:header_visibility', () => {
-        this.grid.headerVisibility = this.model.get('header_visibility');
-      });
-
-      this.model.on_some_change(['default_renderer', 'renderers'], () => {
-        this.updateRenderers().then(this.updateGridRenderers.bind(this));
-      }, this);
-
-      this.model.on('selection-model-changed', () => {
-        this.grid.selectionModel = this.model.selectionModel;
-      });
-
-      this.model.on('change:editable', () => {
-        this.grid.editable = this.model.get('editable');
-      });
-
-      // @ts-ignore
       this.pWidget.addWidget(this.grid);
     });
   }
