@@ -31,7 +31,7 @@ const EXTENSION_ID = 'jupyter-datagrid:plugin';
 const datagridPlugin: IPlugin<Application<Widget>, void> = {
   id: EXTENSION_ID,
   requires: [IJupyterWidgetRegistry],
-  optional: [IThemeManager],
+  optional: [IThemeManager as any],
   activate: activateWidgetExtension,
   autoStart: true
 };
