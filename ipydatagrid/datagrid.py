@@ -333,7 +333,7 @@ class DataGrid(DOMWidget):
                       'fields': [{field['name']:None} for field in schema['fields']]}
 
     def get_cell_value(self, column, index_name):
-        """Gets the value for a single or multiple cells by column name and index name.
+        """Gets the value for a single or multiple cells by column name and index name."""
 
         if index_name not in self.row_mapping:
             self.row_mapping[index_name] = self._get_row_index_of_primary_key(index_name)
