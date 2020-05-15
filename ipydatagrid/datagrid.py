@@ -375,7 +375,7 @@ class DataGrid(DOMWidget):
         #if column is not None:
         #    return self._data['data'][row_index][column]
 
-        return self._data['data'][row_index][column]
+        return self._data['data'][row_index][column_name]
 
     def set_cell_value_by_index(self, column_index, row_index, value):
         """Sets the value for a single cell by column index and row index.
