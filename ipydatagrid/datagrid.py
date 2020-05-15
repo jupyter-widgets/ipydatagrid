@@ -340,7 +340,7 @@ class DataGrid(DOMWidget):
         
         return [self._data['data'][row][column_name] for row in self.row_mapping[primary_key_value]]
 
-    def set_cell_value(self, column_name, primary_key_value, value):
+    def set_cell_value(self, column_name, primary_key_value, new_value):
         """Sets the value for a single cell by column name and primary key.
 
         Note: This method returns a boolean to indicate if the operation
@@ -358,8 +358,8 @@ class DataGrid(DOMWidget):
             op_success = []
             for row_index in row_indices:
                 if column_name in self._data['data'][row_index] and row_index is not None:
-                    self._data['data'][row_index][column_name] = value
-                    self._notify_cell_change(row_index, column_name, value)
+                    self._data['data'][row_index][column_name] = new_value
+                    self._notify_cell_change(row_index, column_name, new_value)
                     op_success.append(True)
                 else:
                     op_success.append(False)
@@ -369,21 +369,20 @@ class DataGrid(DOMWidget):
         return False
 
     def get_cell_value_by_index(self, column_name, row_index):
-        """Gets the value for a single cell by column index and row index."""
+        """Gets the value for a single cell by column name and row index."""
 
         return self._data['data'][row_index][column_name]
 
-    def set_cell_value_by_index(self, column_index, row_index, value):
-        """Sets the value for a single cell by column index and row index.
+    def set_cell_value_by_index(self, column_name, row_index, new_value):
+        """Sets the value for a single cell by column name and row index.
 
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
 
-        column = self._column_index_to_name(column_index)
-        if column is not None and row_index >= 0 and row_index < len(self._data['data']):
-            self._data['data'][row_index][column] = value
-            self._notify_cell_change(row_index, column, value)
+        if column_name in self._data['data'][row_index] and row_index >= 0 and row_index < len(self._data['data']):
+            self._data['data'][row_index][column_name] = new_value
+            self._notify_cell_change(row_index, column_name, new_value)
             return True
 
         return False
