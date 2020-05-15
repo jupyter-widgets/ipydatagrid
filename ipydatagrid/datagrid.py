@@ -340,14 +340,14 @@ class DataGrid(DOMWidget):
         
         return [self._data['data'][row][column_name] for row in self.row_mapping[primary_key_value]]
 
-    def set_cell_value(self, column, primary_key, value):
+    def set_cell_value(self, column_name, primary_key_value, value):
         """Sets the value for a single cell by column name and primary key.
 
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
 
-        row_indices = self._get_row_index_of_primary_key(primary_key)
+        row_indices = self._get_row_index_of_primary_key(primary_key_value)
 
         # Bail early if key could not be found
         if not row_indices:
@@ -357,9 +357,9 @@ class DataGrid(DOMWidget):
         else:
             op_success = []
             for row_index in row_indices:
-                if column in self._data['data'][row_index] and row_index is not None:
-                    self._data['data'][row_index][column] = value
-                    self._notify_cell_change(row_index, column, value)
+                if column_name in self._data['data'][row_index] and row_index is not None:
+                    self._data['data'][row_index][column_name] = value
+                    self._notify_cell_change(row_index, column_name, value)
                     op_success.append(True)
                 else:
                     op_success.append(False)
