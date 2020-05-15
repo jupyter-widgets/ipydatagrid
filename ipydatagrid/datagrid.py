@@ -332,13 +332,13 @@ class DataGrid(DOMWidget):
                       'schema': schema,
                       'fields': [{field['name']:None} for field in schema['fields']]}
 
-    def get_cell_value(self, column, index_name):
+    def get_cell_value(self, column_name, primary_key_value):
         """Gets the value for a single or multiple cells by column name and index name."""
 
-        if index_name not in self.row_mapping:
-            self.row_mapping[index_name] = self._get_row_index_of_primary_key(index_name)
+        if primary_key_value not in self.row_mapping:
+            self.row_mapping[primary_key_value] = self._get_row_index_of_primary_key(primary_key_value)
         
-        return [self._data['data'][row][column] for row in self.row_mapping[index_name]]
+        return [self._data['data'][row][column_name] for row in self.row_mapping[primary_key_value]]
 
     def set_cell_value(self, column, primary_key, value):
         """Sets the value for a single cell by column name and primary key.
@@ -368,14 +368,14 @@ class DataGrid(DOMWidget):
 
         return False
 
-    def get_cell_value_by_index(self, column_index, row_index):
+    def get_cell_value_by_index(self, column_name, row_index):
         """Gets the value for a single cell by column index and row index."""
 
-        column = self._column_index_to_name(column_index)
-        if column is not None:
-            return self._data['data'][row_index][column]
+        #column = self._column_index_to_name(column_index)
+        #if column is not None:
+        #    return self._data['data'][row_index][column]
 
-        return None
+        return self._data['data'][row_index][column]
 
     def set_cell_value_by_index(self, column_index, row_index, value):
         """Sets the value for a single cell by column index and row index.
