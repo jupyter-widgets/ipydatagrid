@@ -86,7 +86,7 @@ class SelectionHelper():
         it = self.__iter__()
 
         for cell in it:
-            value = self._grid.get_cell_value_by_index(cell['c'], cell['r'])
+            value = self._grid._get_cell_value_by_numerical_index(cell['c'], cell['r'])
             values.append(value)
 
         return values
@@ -371,10 +371,6 @@ class DataGrid(DOMWidget):
     def get_cell_value_by_index(self, column_name, row_index):
         """Gets the value for a single cell by column index and row index."""
 
-        #column = self._column_index_to_name(column_index)
-        #if column is not None:
-        #    return self._data['data'][row_index][column]
-
         return self._data['data'][row_index][column_name]
 
     def set_cell_value_by_index(self, column_index, row_index, value):
@@ -602,3 +598,12 @@ class DataGrid(DOMWidget):
                 row_indices.append(i)
 
         return row_indices
+
+    def _get_cell_value_by_numerical_index(self, column_index, row_index):
+        """Gets the value for a single cell by column index and row index."""
+
+        column = self._column_index_to_name(column_index)
+        if column is not None:
+            return self._data['data'][row_index][column]
+
+        return None
