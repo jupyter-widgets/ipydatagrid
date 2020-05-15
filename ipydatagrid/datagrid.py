@@ -253,6 +253,7 @@ class DataGrid(DOMWidget):
 
     def __init__(self, dataframe, **kwargs):
         self.data = dataframe
+        self.row_mapping = {}
         super(DataGrid, self).__init__(**kwargs)
         self._cell_click_handlers = CallbackDispatcher()
         self._cell_change_handlers = CallbackDispatcher()
@@ -331,15 +332,13 @@ class DataGrid(DOMWidget):
                       'schema': schema,
                       'fields': [{field['name']:None} for field in schema['fields']]}
 
-    def get_cell_value(self, column, row_index):
-        """Gets the value for a single cell by column name and row index.
+    def get_cell_value(self, column, index_name):
+        """Gets the value for a single or multiple cells by column name and index name.
 
-        Tuples should be used to index into multi-index columns.
-
-        Note: The provided row_index should correspond to the row index in the
-        untransformed dataset."""
-
-        return self._data['data'][row_index][column]
+        if index_name not in self.row_mapping:
+            self.row_mapping[index_name] = self._get_row_index_of_primary_key(index_name)
+        
+        return [self._data['data'][row][column] for row in self.row_mapping[index_name]]
 
     def set_cell_value(self, column, primary_key, value):
         """Sets the value for a single cell by column name and primary key.
