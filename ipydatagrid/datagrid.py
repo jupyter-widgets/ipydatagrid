@@ -86,7 +86,7 @@ class SelectionHelper():
         it = self.__iter__()
 
         for cell in it:
-            value = self._grid.get_cell_value_by_index(cell['c'], cell['r'])
+            value = self._grid._get_cell_value_by_numerical_index(cell['c'], cell['r'])
             values.append(value)
 
         return values
@@ -331,24 +331,23 @@ class DataGrid(DOMWidget):
                       'schema': schema,
                       'fields': [{field['name']:None} for field in schema['fields']]}
 
-    def get_cell_value(self, column, row_index):
-        """Gets the value for a single cell by column name and row index.
+    def get_cell_value(self, column_name, primary_key_value):
+        """Gets the value for a single or multiple cells by column name and index name.
 
-        Tuples should be used to index into multi-index columns.
+           Tuples should be used to index into multi-index columns."""
 
-        Note: The provided row_index should correspond to the row index in the
-        untransformed dataset."""
+        row_indices = self._get_row_index_of_primary_key(primary_key_value)
+        
+        return [self._data['data'][row][column_name] for row in row_indices]
 
-        return self._data['data'][row_index][column]
-
-    def set_cell_value(self, column, primary_key, value):
+    def set_cell_value(self, column_name, primary_key_value, new_value):
         """Sets the value for a single cell by column name and primary key.
 
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
 
-        row_indices = self._get_row_index_of_primary_key(primary_key)
+        row_indices = self._get_row_index_of_primary_key(primary_key_value)
 
         # Bail early if key could not be found
         if not row_indices:
@@ -358,9 +357,9 @@ class DataGrid(DOMWidget):
         else:
             op_success = []
             for row_index in row_indices:
-                if column in self._data['data'][row_index] and row_index is not None:
-                    self._data['data'][row_index][column] = value
-                    self._notify_cell_change(row_index, column, value)
+                if column_name in self._data['data'][row_index] and row_index is not None:
+                    self._data['data'][row_index][column_name] = new_value
+                    self._notify_cell_change(row_index, column_name, new_value)
                     op_success.append(True)
                 else:
                     op_success.append(False)
@@ -369,26 +368,21 @@ class DataGrid(DOMWidget):
 
         return False
 
-    def get_cell_value_by_index(self, column_index, row_index):
-        """Gets the value for a single cell by column index and row index."""
+    def get_cell_value_by_index(self, column_name, row_index):
+        """Gets the value for a single cell by column name and row index."""
 
-        column = self._column_index_to_name(column_index)
-        if column is not None:
-            return self._data['data'][row_index][column]
+        return self._data['data'][row_index][column_name]
 
-        return None
-
-    def set_cell_value_by_index(self, column_index, row_index, value):
-        """Sets the value for a single cell by column index and row index.
+    def set_cell_value_by_index(self, column_name, row_index, new_value):
+        """Sets the value for a single cell by column name and row index.
 
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
 
-        column = self._column_index_to_name(column_index)
-        if column is not None and row_index >= 0 and row_index < len(self._data['data']):
-            self._data['data'][row_index][column] = value
-            self._notify_cell_change(row_index, column, value)
+        if column_name in self._data['data'][row_index] and row_index >= 0 and row_index < len(self._data['data']):
+            self._data['data'][row_index][column_name] = new_value
+            self._notify_cell_change(row_index, column_name, new_value)
             return True
 
         return False
@@ -603,3 +597,12 @@ class DataGrid(DOMWidget):
                 row_indices.append(i)
 
         return row_indices
+
+    def _get_cell_value_by_numerical_index(self, column_index, row_index):
+        """Gets the value for a single cell by column index and row index."""
+
+        column = self._column_index_to_name(column_index)
+        if column is not None:
+            return self._data['data'][row_index][column]
+
+        return None
