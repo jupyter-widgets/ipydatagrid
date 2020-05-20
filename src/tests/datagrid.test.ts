@@ -155,12 +155,12 @@ describe('Test trait: data', () => {
     });
 
     // Testing primary keys
-    expect(grid.view.columnNameToIndex('index1')).toBe(0);
-    expect(grid.view.columnNameToIndex('index2')).toBe(1);
+    expect(grid.model.data_model.columnNameToIndex('index1')).toBe(0);
+    expect(grid.model.data_model.columnNameToIndex('index2')).toBe(1);
 
     // Testing columns
-    expect(grid.view.columnNameToIndex('col1')).toBe(0);
-    expect(grid.view.columnNameToIndex('col2')).toBe(1);
+    expect(grid.model.data_model.columnNameToIndex('col1')).toBe(0);
+    expect(grid.model.data_model.columnNameToIndex('col2')).toBe(1);
   })
 
   test('Correct column name is determined from column index', async () => {
@@ -170,12 +170,12 @@ describe('Test trait: data', () => {
     });
 
     // Testing primary keys
-    expect(grid.view.columnIndexToName(0, 'row-header')).toBe('index1');
-    expect(grid.view.columnIndexToName(1, 'row-header')).toBe('index2');
+    expect(grid.model.data_model.columnIndexToName(0, 'row-header')).toBe('index1');
+    expect(grid.model.data_model.columnIndexToName(1, 'row-header')).toBe('index2');
 
     // Testing columns
-    expect(grid.view.columnIndexToName(0, 'body')).toBe('col1');
-    expect(grid.view.columnIndexToName(1, 'body')).toBe('col2');
+    expect(grid.model.data_model.columnIndexToName(0, 'body')).toBe('col1');
+    expect(grid.model.data_model.columnIndexToName(1, 'body')).toBe('col2');
   })
 
   test('Correct column region is determined from column name', async () => {
@@ -185,12 +185,12 @@ describe('Test trait: data', () => {
     });
 
     // Testing primary keys
-    expect(grid.view.columnNameToRegion('index1')).toBe('row-header');
-    expect(grid.view.columnNameToRegion('index2')).toBe('row-header');
+    expect(grid.model.data_model.columnNameToRegion('index1')).toBe('row-header');
+    expect(grid.model.data_model.columnNameToRegion('index2')).toBe('row-header');
 
     // Testing columns
-    expect(grid.view.columnNameToRegion('col1')).toBe('body');
-    expect(grid.view.columnNameToRegion('col2')).toBe('body');
+    expect(grid.model.data_model.columnNameToRegion('col1')).toBe('body');
+    expect(grid.model.data_model.columnNameToRegion('col2')).toBe('body');
   })
 });
 
@@ -201,7 +201,7 @@ test('Testing resizeColumns() is called upon model update', async () => {
   const grid = await Private.createGridWidget({
     data: testData.set1
   });
-  const mock = jest.spyOn(grid.view.grid, 'resizeColumn');
+  const mock = jest.spyOn(grid.view.grid.grid, 'resizeColumn');
 
   let mockDict = { 'col1': 200 };
   grid.model.set('column_widths', mockDict);

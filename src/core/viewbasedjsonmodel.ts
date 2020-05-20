@@ -217,6 +217,45 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return true;
   }
 
+  public columnNameToIndex(name: string): number {
+    const schema = this.dataset.schema;
+    const primaryKeysLength = schema.primaryKey.length - 1;
+
+    let index = -1;
+
+    if (schema.primaryKey.includes(name)) {
+      index = schema.primaryKey.indexOf(name);
+    } else {
+      const fields = schema.fields;
+
+      fields.forEach((value, i) => {
+        if (value.name == name) {
+          index = i - primaryKeysLength;
+        }
+      })
+    }
+    return index;
+  }
+
+  public columnIndexToName(index: number, region: DataModel.CellRegion): string {
+    let schema = this.dataset.schema;
+    if (region == 'row-header') {
+      return schema.primaryKey[index];
+    } else {
+      return schema.fields[schema.primaryKey.length + index - 1].name;
+    }
+  }
+
+  public columnNameToRegion(name: string): DataModel.ColumnRegion {
+    let schema = this.dataset.schema;
+
+    if (schema.primaryKey.includes(name)) {
+      return 'row-header';
+    } else {
+       return 'body';
+     }
+  }
+
   /**
    * Get the current View for the model.
    */

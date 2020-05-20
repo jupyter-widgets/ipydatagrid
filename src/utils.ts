@@ -118,69 +118,40 @@ namespace Theme {
     return c.formatRgb();
   }
 
-  function getDefaultCSSVariable(name: string) {
-    const defaults: { [keys: string]: string; } = {
-      '--jp-layout-color0': 'white',
-      '--jp-layout-color1': 'white',
-      '--jp-layout-color2': '#eeeeee',
-      '--jp-layout-color3': '#bdbdbd',
-      '--jp-layout-color4': '#757575',
-
-      '--jp-ui-font-color0': 'rgba(0, 0, 0, 1)',
-      '--jp-ui-font-color1': 'rgba(0, 0, 0, 0.87)',
-      '--jp-ui-font-color2': 'rgba(0, 0, 0, 0.54)',
-      '--jp-ui-font-color3': 'rgba(0, 0, 0, 0.38)',
-
-      '--jp-border-color0': '#bdbdbd',
-      '--jp-border-color1': '#bdbdbd',
-      '--jp-border-color2': '#e0e0e0',
-      '--jp-border-color3': '#eeeeee',
-
-      '--jp-brand-color0': '#1976d2',
-      '--jp-brand-color1': '#2196f3',
-      '--jp-brand-color2': '#64b5f6',
-      '--jp-brand-color3': '#bbdefb',
-      '--jp-brand-color4': '#e3f2fd',
-      '--jp-brand-color5': '#00e6ff',
-      '--jp-brand-color6': '#ffe100',
-      '--jp-brand-color7': '#009eb0',
-      '--jp-brand-color8': '#b09b00'
-    };
-
-    return defaults[name] ? defaults[name] : '';
-  }
-
   export
-  function getCSSVariable(name: string) {
-    const value = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+  function getComputedColor(name: string) {
+    const el = document.querySelector('.ipydatagrid-widget') || document.body;
+    const color = window.getComputedStyle(el).getPropertyValue(name);
+    if (color) {
+      return color;
+    }
 
-    return value ? value : getDefaultCSSVariable(name);
+    return '#ffffff';
   }
 
   export
   function getCSSColor(name: string, opacity: number = 1.) {
-    let color = getCSSVariable(name);
-    color = applyOpacity(color, opacity);
-    return color;
+    const color = getComputedColor(name);
+    return applyOpacity(color, opacity);
   }
 
   export
   function getBackgroundColor(index: number = 0, opacity: number = 1.) {
-    return getCSSColor('--jp-layout-color' + index, opacity);
+    return getCSSColor('--ipydatagrid-layout-color' + index, opacity);
   }
 
   export
   function getFontColor(index: number = 0, opacity: number = 1.) {
-    return getCSSColor('--jp-ui-font-color' + index, opacity);
+    return getCSSColor('--ipydatagrid-ui-font-color' + index, opacity);
   }
 
   export
   function getBorderColor(index: number = 0, opacity: number = 1.) {
-    return getCSSColor('--jp-border-color' + index, opacity);
+    return getCSSColor('--ipydatagrid-border-color' + index, opacity);
   }
 
   export
   function getBrandColor(index: number = 0, opacity: number = 1.) {
-    return getCSSColor('--jp-brand-color' + index, opacity);
+    return getCSSColor('--ipydatagrid-brand-color' + index, opacity);
   }
 }
