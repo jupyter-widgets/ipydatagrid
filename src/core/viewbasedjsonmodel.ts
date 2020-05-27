@@ -459,7 +459,6 @@ export class ViewBasedJSONModel extends MutableDataModel {
     const primaryKeyUuid = "ipydguuid";
 
     let newData = <ViewBasedJSONModel.IData><unknown>JSONExt.deepCopy(<ReadonlyJSONObject><unknown>data);
-    newData = <ViewBasedJSONModel.IData><unknown>newData;
 
     //@ts-ignore
     newData.schema.primaryKeyUuid = primaryKeyUuid;
