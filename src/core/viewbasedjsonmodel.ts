@@ -7,7 +7,7 @@ import {
 } from '@lumino/algorithm';
 
 import {
-  ReadonlyJSONObject, ReadonlyJSONValue
+  ReadonlyJSONObject, ReadonlyJSONValue, JSONExt
 } from '@lumino/coreutils';
 
 import {
@@ -444,6 +444,36 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   getSchemaIndex(region: DataModel.CellRegion, index: number): number {
     return this.currentView.getSchemaIndex(region, index)
+  }
+
+  /**
+   * Deep copies data object and mutates it before
+   * returning a ViewBasedJSONModel of the data. 
+   * ts-ignores are added since the properties to be mutated
+   * are readonly 
+   * 
+   * @param data - Data passed in to be transformed
+   * 
+   */
+  static fromJsonData(data: ViewBasedJSONModel.IData): ViewBasedJSONModel {
+    const primaryKeyUuid = "ipydguuid";
+
+    let newData = <ViewBasedJSONModel.IData><unknown>JSONExt.deepCopy(<ReadonlyJSONObject><unknown>data);
+
+    //@ts-ignore
+    newData.schema.primaryKeyUuid = primaryKeyUuid;
+
+    for (let field of newData.schema.fields) {
+      //@ts-ignore
+      field.rows = [field.name];
+    }
+    let count = 0;
+    for (let row of newData.data) {
+      //@ts-ignore
+      row[primaryKeyUuid] = count++;
+    }
+
+    return new ViewBasedJSONModel(newData);
   }
 
   private _currentView: View;
