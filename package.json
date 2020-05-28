@@ -10,7 +10,11 @@
   ],
   "files": [
     "lib/**/*.js",
+    "lib/**/*.js.map",
+    "lib/**/*.ts",
     "dist/*.js",
+    "dist/*.js.map",
+    "dist/*.png",
     "style/**/*.*"
   ],
   "homepage": "https://github.com/QuantStack/ipydatagrid",
