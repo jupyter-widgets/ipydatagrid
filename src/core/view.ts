@@ -156,6 +156,23 @@ class View {
     }
   }
 
+  /**
+   * Returns a Promise that resolves to an array of unique values contained in
+   * the provided column index.
+   *
+   * @param columnIndex - The index to retrieve unique values for.
+   */
+  async uniqueValues(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const columnName = this.metadata(region, 0, columnIndex)['name'];
+      let uniqueVals = new Set();
+      for (let row of this.dataset) {
+        uniqueVals.add(row[columnName]);
+      };
+      resolve(Array.from(uniqueVals));
+    });
+  }
+
   private readonly _data: View.DataSource;
   private readonly _bodyFields: ViewBasedJSONModel.IField[];
   private readonly _headerFields: ViewBasedJSONModel.IField[];

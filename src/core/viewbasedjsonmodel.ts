@@ -335,6 +335,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * Returns a Promise that resolves to an array of unique values contained in
    * the provided column index.
    *
+   * @param region - The CellRegion to retrieve unique values for.
    * @param columnIndex - The index to retrieve unique values for.
    */
   async uniqueValues(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
@@ -346,6 +347,17 @@ export class ViewBasedJSONModel extends MutableDataModel {
       };
       resolve(Array.from(uniqueVals));
     });
+  }
+
+  /**
+   * Returns a Promise that resolves to an array of unique values contained in
+   * the provided column index after all transforms have been applied.
+   * 
+   * @param region - The CellRegion to retrieve unique values for.
+   * @param columnIndex - The index to retrieve unique values for.
+   */
+  async uniqueValuesVisible(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
+    return this._currentView.uniqueValues(region, columnIndex);
   }
 
   get transformStateChanged(): ISignal<this, TransformStateManager.IEvent> {
