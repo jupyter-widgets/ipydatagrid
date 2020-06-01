@@ -98,7 +98,8 @@
     "typescript": "~3.6.4",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.2",
-    "svg-url-loader": "~3.0.3"
+    "svg-url-loader": "~3.0.3",
+    "url-loader": "^4.1.0"
   },
   "jupyterlab": {
     "extension": "lib/plugin"
