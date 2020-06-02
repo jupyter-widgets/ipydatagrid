@@ -1,12 +1,25 @@
 const path = require('path');
 const version = require('./package.json').version;
 
+const luminoThemeImages = /^.*@lumino\/default-theme.*.png$/;
+
 // Custom webpack rules
 const rules = [
   { test: /\.ts$/, loader: 'ts-loader' },
   { test: /\.js$/, loader: 'source-map-loader' },
   { test: /\.css$/, use: ['style-loader', 'css-loader']},
-  { test: /\.(jpg|png|gif)$/, use: ['file-loader']},
+  {
+    test: luminoThemeImages,
+    issuer: { test: /\.css$/ },
+    use: {
+      loader: 'url-loader'
+    }
+  },
+  {
+    test: /\.(jpg|png|gif)$/,
+    exclude: luminoThemeImages,
+    use: ['file-loader']
+  },
   {
     test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
     issuer: { test: /\.css$/ },
