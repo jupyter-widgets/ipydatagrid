@@ -270,7 +270,8 @@ export class SortExecutor extends TransformExecutor {
 
     data.forEach((value: any) => {
       const cellValue = value[field];
-      const notSortable = (typeof cellValue === 'number' && Number.isNaN(cellValue)) || 
+      const notSortable = cellValue === null ||
+        (typeof cellValue === 'number' && Number.isNaN(cellValue)) || 
         (cellValue instanceof Date && Number.isNaN(cellValue.getTime()));
 
       if (notSortable) {
