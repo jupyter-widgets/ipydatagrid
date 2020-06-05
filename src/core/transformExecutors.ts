@@ -266,19 +266,23 @@ export class SortExecutor extends TransformExecutor {
     }
 
     const data = input.data.slice(0);
-    const nans: any[] = [], nonNans: any[] = [];
+    const sortables: any[] = [], notSortables: any[] = [];
 
     data.forEach((value: any) => {
-      if (Number.isNaN(value[field])) {
-        nans.push(value);
+      const cellValue = value[field];
+      const notSortable = (typeof cellValue === 'number' && Number.isNaN(cellValue)) || 
+        (cellValue instanceof Date && Number.isNaN(cellValue.getTime()));
+
+      if (notSortable) {
+        notSortables.push(value);
       } else {
-        nonNans.push(value);
+        sortables.push(value);
       }
     });
 
     return {
       'schema': input.schema,
-      'data': nonNans.sort(sortFunc).concat(nans)
+      'data': sortables.sort(sortFunc).concat(notSortables)
     };
   }
 
