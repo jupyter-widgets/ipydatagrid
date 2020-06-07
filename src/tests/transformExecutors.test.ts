@@ -4,19 +4,27 @@ import { ViewBasedJSONModel } from "../core/viewbasedjsonmodel";
 import { ReadonlyJSONValue } from '@lumino/coreutils';
 import { Transform } from "../core/transform";
 
+const INVALID_DATE = new Date('INVALID');
+
 const sortTestCases: Private.SortTestCase[] = [
   // Number
   { desc: true, dType: 'number', data: [2, 1, 3], expected: [3, 2, 1] },
   { desc: false, dType: 'number', data: [2, 1, 3], expected: [1, 2, 3] },
+  { desc: false, dType: 'number', data: [2, null, 3], expected: [2, 3, null] },
+  { desc: false, dType: 'number', data: [2, Number.NaN, 3], expected: [2, 3, Number.NaN] },
   // String
   { desc: true, dType: 'string', data: ['A', 'C', 'B'], expected: ['C', 'B', 'A'] },
   { desc: false, dType: 'string', data: ['A', 'C', 'B'], expected: ['A', 'B', 'C'] },
+  { desc: false, dType: 'string', data: ['A', null, 'B'], expected: ['A', 'B', null] },
   // Boolean
   { desc: true, dType: 'boolean', data: [true, false, true], expected: [true, true, false] },
   { desc: false, dType: 'boolean', data: [true, false, true], expected: [false, true, true] },
+  { desc: false, dType: 'boolean', data: [true, null, false], expected: [false, true, null] },
   // Datetime
   { desc: true, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', '2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z'], expected: ['2019-09-12T18:38:47.431Z', '2019-09-10T18:38:47.431Z', '2019-09-07T18:38:47.431Z'] },
-  { desc: false, dType: 'daterime', data: ['2019-09-12T18:38:47.431Z', '2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z'], expected: ['2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z'] },
+  { desc: false, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', '2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z'], expected: ['2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z'] },
+  { desc: false, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', null, '2019-09-10T18:38:47.431Z'], expected: ['2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z', null] },
+  { desc: false, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', INVALID_DATE, '2019-09-10T18:38:47.431Z'], expected: ['2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z', INVALID_DATE] },
 ];
 
 // Run tests
