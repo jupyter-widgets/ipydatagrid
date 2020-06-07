@@ -253,18 +253,38 @@ export class SortExecutor extends TransformExecutor {
    */
   public apply(input: TransformExecutor.IData) : TransformExecutor.IData {
     let sortFunc: (a: any, b: any) => number;
+    const field = this._options.field;
 
     if (this._options.desc) {
       sortFunc = (a: any, b: any) : number => {
-        return (a[this._options.field] < b[this._options.field]) ? 1 : -1
+        return a[field] < b[field] ? 1 : -1
       };
     } else {
       sortFunc = (a: any, b: any) : number => {
-        return (a[this._options.field] > b[this._options.field]) ? 1 : -1
+        return a[field] > b[field] ? 1 : -1
       };
     }
-    return {'schema': input.schema,
-            'data': input.data.slice(0).sort(sortFunc)};
+
+    const data = input.data.slice(0);
+    const sortables: any[] = [], notSortables: any[] = [];
+
+    data.forEach((value: any) => {
+      const cellValue = value[field];
+      const notSortable = cellValue === null ||
+        (typeof cellValue === 'number' && Number.isNaN(cellValue)) || 
+        (cellValue instanceof Date && Number.isNaN(cellValue.getTime()));
+
+      if (notSortable) {
+        notSortables.push(value);
+      } else {
+        sortables.push(value);
+      }
+    });
+
+    return {
+      'schema': input.schema,
+      'data': sortables.sort(sortFunc).concat(notSortables)
+    };
   }
 
   protected _options: SortExecutor.IOptions;
