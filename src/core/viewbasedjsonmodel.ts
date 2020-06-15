@@ -388,7 +388,6 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * A signal emitted when the data model has changes to sync to the kernel.
    */
   get dataSync(): Signal<this, ViewBasedJSONModel.IDataSyncEvent> {
-    console.log("dataSync: ", this._dataSyncSignal)
     return this._dataSyncSignal;
   }
 
