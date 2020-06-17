@@ -276,7 +276,9 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
     const indices: number[] = view.dataset.map((val, i) => {
       const lookupVal = JSON.stringify(primaryKey.map(key => val[key]));
-      return this._primaryKeyMap.get(lookupVal) || i;
+      const retrievedVal = this._primaryKeyMap.get(lookupVal);
+
+      return typeof retrievedVal === "undefined" ? i : retrievedVal;
     });
 
     this.dataSync.emit({
