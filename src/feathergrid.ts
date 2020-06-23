@@ -301,6 +301,7 @@ class FeatherGrid extends Widget {
       }
 
       this.grid.headerVisibility = visibility;
+      this._updateColumnWidths();
     }
 
     get headerVisibility(): DataGrid.HeaderVisibility {
