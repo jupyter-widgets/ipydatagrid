@@ -237,7 +237,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return index;
   }
 
-  public columnIndexToName(index: number, region: DataModel.CellRegion): string {
+  public columnIndexToName(index: number, region: DataModel.ColumnRegion): string {
     let schema = this.dataset.schema;
     if (region == 'row-header') {
       return schema.primaryKey[index];

@@ -265,7 +265,7 @@ function unpack_data(
 }
 
 export
-  class DataGridView extends DOMWidgetView {
+class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     // initialize to light theme unless set earlier
@@ -284,18 +284,23 @@ export
   render() {
     this.el.classList.add('datagrid-container');
 
-    this.grid = new FeatherGrid();
-    this.grid.baseRowSize = this.model.get('base_row_size');
-    this.grid.baseColumnSize = this.model.get('base_column_size');
-    this.grid.baseRowHeaderSize = this.model.get('base_row_header_size');
-    this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
-    this.grid.headerVisibility = this.model.get('header_visibility');
-    this.grid.dataModel = this.model.data_model;
-    this.grid.selectionModel = this.model.selectionModel;
+    this.grid = new FeatherGrid({
+      defaultSizes: {
+        rowHeight: this.model.get('base_row_size'),
+        columnWidth: this.model.get('base_column_size'),
+        rowHeaderWidth: this.model.get('base_row_header_size'),
+        columnHeaderHeight: this.model.get('base_column_header_size')
+      },
+      headerVisibility: this.model.get('header_visibility')
+    });
+
+    this.grid.columnWidths = this.model.get('column_widths');
     this.grid.editable = this.model.get('editable');
     // this.default_renderer must be created after setting grid.isLightTheme
     // for proper color variable initialization
     this.grid.isLightTheme = this._isLightTheme;
+    this.grid.dataModel = this.model.data_model;
+    this.grid.selectionModel = this.model.selectionModel;
 
     this.grid.cellClicked.connect((sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
       if (this.model.comm) {
