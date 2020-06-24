@@ -116,7 +116,13 @@ export
     this.data_model.changed.connect((sender: ViewBasedJSONModel, args: any) => {
       if (args.type === 'cells-changed') {
         const value = this.data_model.data(args.region, args.row, args.column);
-        const datasetRow = this.data_model.getDatasetRowFromView(args.region, args.row)
+        const datasetRow = this.data_model.getDatasetRowFromView(args.region, args.row);
+        // Getting a copy of the data and update the front-end model in place
+        const newData = this.get('_data');
+        newData.data[datasetRow][args.column] = value; 
+        this.set('_data', newData);
+
+        // Update backend with new data
         this.comm.send({
           method: 'custom',
           content: {
@@ -129,7 +135,7 @@ export
         }, null);
       }
     });
-
+    
     this.updateTransforms();
     this.trigger('data-model-changed');
     this.updateSelectionModel();
