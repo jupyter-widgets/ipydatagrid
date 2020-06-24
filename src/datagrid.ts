@@ -121,7 +121,6 @@ export
         const newData = this.get('_data');
         newData.data[datasetRow][args.column] = value; 
         this.set('_data', newData);
-
         // Update backend with new data
         this.comm.send({
           method: 'custom',
@@ -135,7 +134,6 @@ export
         }, null);
       }
     });
-    
     this.updateTransforms();
     this.trigger('data-model-changed');
     this.updateSelectionModel();
