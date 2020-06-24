@@ -151,11 +151,19 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
 
 export
 class FeatherGrid extends Widget {
-    constructor() {
+    constructor(options: DataGrid.IOptions = {}) {
         super();
         this.addClass('ipydatagrid-widget');
 
-        this._createGrid();
+        if (options.defaultSizes) {
+          this._baseRowSize = options.defaultSizes.rowHeight || this._baseRowSize;
+          this._baseColumnSize = options.defaultSizes.columnWidth || this._baseColumnSize;
+          this._baseRowHeaderSize = options.defaultSizes.rowHeaderWidth || this._baseRowHeaderSize;
+          this._baseColumnHeaderSize = options.defaultSizes.columnHeaderHeight || this._baseColumnHeaderSize;
+        }
+        this._headerVisibility = options.headerVisibility || this._headerVisibility;
+
+        this._createGrid(options);
 
         this._defaultRenderer = new TextRenderer({
           font: '12px sans-serif',
@@ -235,6 +243,7 @@ class FeatherGrid extends Widget {
       }
 
       this.grid.defaultSizes = { ...this.grid.defaultSizes, columnWidth: size };
+      this._updateColumnWidths();
     }
 
     get baseColumnSize(): number {
@@ -263,6 +272,7 @@ class FeatherGrid extends Widget {
       }
 
       this.grid.defaultSizes = { ...this.grid.defaultSizes, rowHeaderWidth: size };
+      this._updateColumnWidths();
     }
 
     get baseRowHeaderSize(): number {
@@ -291,6 +301,7 @@ class FeatherGrid extends Widget {
       }
 
       this.grid.headerVisibility = visibility;
+      this._updateColumnWidths();
     }
 
     get headerVisibility(): DataGrid.HeaderVisibility {
@@ -354,15 +365,17 @@ class FeatherGrid extends Widget {
       return this.grid.cellRenderers;
     }
   
-    private _createGrid() {
+    private _createGrid(options: DataGrid.IOptions = {}) {
       this.grid = new DataGrid({
-        defaultSizes: {
-          rowHeight: this._baseRowSize,
-          columnWidth: this._baseColumnSize,
-          rowHeaderWidth: this._baseRowHeaderSize,
-          columnHeaderHeight: this._baseColumnHeaderSize
-        },
-        headerVisibility: this._headerVisibility
+        ...options, ...{
+          defaultSizes: {
+            rowHeight: this._baseRowSize,
+            columnWidth: this._baseColumnSize,
+            rowHeaderWidth: this._baseRowHeaderSize,
+            columnHeaderHeight: this._baseColumnHeaderSize
+          },
+          headerVisibility: this._headerVisibility
+        }
       });
 
       MessageLoop.installMessageHook(this.grid.viewport, this);
@@ -688,44 +701,40 @@ class FeatherGrid extends Widget {
     private _updateGridRenderers() {
       this.grid.cellRenderers.update({ 'body': this._rendererResolver.bind(this) });
     }
-  
-    /**
-     * This function resets the column sizes to the base column size and functions
-     * identically to phosphor's resetColumns() but does not call _repaintOverlay
-     * or _repaintContent in the process.
-     */
-    private _resetAllColumnWidths() {
-      let column_base_size = this._baseColumnSize;
-  
-      // Resizing columns from body region
-      for (let i = 0; i < this.grid.columnCount('body'); i++) {
-        this.grid.resizeColumn('body', i, column_base_size)
-      }
-  
-      // Resizing columns from row header region
-      for (let i = 0; i < this.grid.columnCount('column-header'); i++) {
-        this.grid.resizeColumn('row-header', i, column_base_size)
-      }
-    }
-  
+
     private _updateColumnWidths() {
-      //@ts-ignore added so we don't have to add basicmousehandler.ts fork
+      const columnWidths = this._columnWidths;
+      // @ts-ignore added so we don't have to add basicmousehandler.ts fork
       let mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler;
-  
+
       // Do not want this callback to be executed when user resizes using the mouse
-      if (!mouseHandler.mouseIsDown) {
-        let column_widths_dict = this._columnWidths;
-  
-        this._resetAllColumnWidths();
-  
-        for (let key in column_widths_dict) {
-          let index = this.dataModel.columnNameToIndex(key);
-          let region = this.dataModel.columnNameToRegion(key);
-          this.grid.resizeColumn(region, index, column_widths_dict[key]);
+      if (mouseHandler.mouseIsDown) {
+        return;
+      }
+
+      // Resizing columns from row header region
+      if (this._headerVisibility === 'row' || this._headerVisibility === 'all') {
+        const baseRowHeaderSize = this._baseRowHeaderSize;
+        const rowHeaderColCount = this.grid.columnCount('row-header');
+        for (let i = 0; i < rowHeaderColCount; i++) {
+          const colName = this.dataModel.columnIndexToName(i, 'row-header');
+          const colSize = columnWidths.hasOwnProperty(colName) ? columnWidths[colName] : baseRowHeaderSize;
+          
+          this.grid.resizeColumn('row-header', i, colSize);
         }
       }
+
+      // Resizing columns from body region
+      const baseColumnSize = this._baseColumnSize;
+      const bodyColCount = this.grid.columnCount('body');
+      for (let i = 0; i < bodyColCount; i++) {
+        const colName = this.dataModel.columnIndexToName(i, 'body');
+        const colSize = columnWidths.hasOwnProperty(colName) ? columnWidths[colName] : baseColumnSize;
+        
+        this.grid.resizeColumn('body', i, colSize);
+      }
     }
-  
+
     private _updateHeaderRenderer() {
       const headerRenderer = new HeaderRenderer({
         textOptions: {
