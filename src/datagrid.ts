@@ -108,32 +108,22 @@ export
           this.set('_data', this.data_model.dataset);
           this.save_changes();
           break;
+        case ('cell-edit-event'):
+          this.comm.send({
+            method: 'custom',
+            content: {
+              event_type: 'cell-changed',
+              region: msg.region,
+              row: msg.row,
+              column_index: msg.columnIndex,
+              value: msg.value
+            }
+          }, null);
+          break;
         default:
           throw 'unreachable';
       }
     })
-
-    this.data_model.changed.connect((sender: ViewBasedJSONModel, args: any) => {
-      if (args.type === 'cells-changed') {
-        const value = this.data_model.data(args.region, args.row, args.column);
-        const datasetRow = this.data_model.getDatasetRowFromView(args.region, args.row);
-        // Getting a copy of the data and update the front-end model in place
-        const newData = this.get('_data');
-        newData.data[datasetRow][args.column] = value; 
-        this.set('_data', newData);
-        // Update backend with new data
-        this.comm.send({
-          method: 'custom',
-          content: {
-            event_type: 'cell-changed',
-            region: args.region,
-            row: datasetRow,
-            column_index: args.column,
-            value: value
-          }
-        }, null);
-      }
-    });
     this.updateTransforms();
     this.trigger('data-model-changed');
     this.updateSelectionModel();
@@ -269,7 +259,7 @@ function unpack_data(
 }
 
 export
-class DataGridView extends DOMWidgetView {
+  class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     // initialize to light theme unless set earlier
@@ -327,7 +317,7 @@ class DataGridView extends DOMWidgetView {
       this.model.set('column_widths', JSONExt.deepCopy(this.grid.columnWidths));
       this.model.save_changes();
     });
-    
+
     this.model.on('data-model-changed', () => {
       this.grid.dataModel = this.model.data_model;
     });
@@ -410,7 +400,7 @@ class DataGridView extends DOMWidgetView {
 
     return Promise.all(promises);
   }
-  
+
   public updateGridStyle() {
     this.grid.updateGridStyle();
   }
@@ -430,9 +420,9 @@ class DataGridView extends DOMWidgetView {
   private updateGridRenderers() {
     const defaultRenderer = this.default_renderer.renderer;
     const renderers: Dict<CellRenderer> = {};
-    Object.entries(this.renderers).forEach(([name, rendererView]) =>{
-         renderers[name] = rendererView.renderer;
-      }
+    Object.entries(this.renderers).forEach(([name, rendererView]) => {
+      renderers[name] = rendererView.renderer;
+    }
     );
     this.grid.defaultRenderer = defaultRenderer;
     this.grid.renderers = renderers;
@@ -510,9 +500,9 @@ namespace Private {
     // Updating the primary key to account for a multiIndex primary key.
     const primaryKey = data.schema.primaryKey.map((key: string) => {
       for (let i = 0; i < data.schema.fields.length; i++) {
-        const curFieldKey = Array.isArray(key) 
-        ? data.schema.fields[i].name[0]
-        : data.schema.fields[i].name;
+        const curFieldKey = Array.isArray(key)
+          ? data.schema.fields[i].name[0]
+          : data.schema.fields[i].name;
         const newKey = Array.isArray(key) ? key[0] : key;
 
         if (curFieldKey == newKey) {
