@@ -430,6 +430,15 @@ export class ViewBasedJSONModel extends MutableDataModel {
       });
     }
 
+    // Notify listeners of the cell change event
+    this.dataSync.emit({
+      type: 'cell-edit-event',
+      columnIndex: options.column,
+      row: options.row,
+      region: options.region,
+      value: options.value
+    })
+
     // We need to rerun the transforms, as the changed cell may change the order
     // or visibility of other rows
     this.currentView = this._transformState.createView(this._dataset);
@@ -609,7 +618,7 @@ namespace ViewBasedJSONModel {
      */
     data: DataSource;
   }
-  export type IDataSyncEvent = ISyncCell | ISyncRowIndices;
+  export type IDataSyncEvent = ISyncCell | ISyncRowIndices | ICellEditEvent;
 
   /**
    * An event that indicates a needed change to the kernel-side dataset.
@@ -624,12 +633,39 @@ namespace ViewBasedJSONModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'row-indices-updated'
+    type: 'row-indices-updated';
 
     /**
      * An list of the rows in the untransformed dataset that are currently
      * represented in the `View`.
      */
     indices: number[];
+  }
+
+  export interface ICellEditEvent {
+    /**
+     * The discriminated type of the args object.
+     */
+    type: 'cell-edit-event';
+
+    /**
+     * The CellRegion associated with this change.
+     */
+    region: DataModel.CellRegion;
+
+    /**
+     * The row number associated with this change.
+     */
+    row: number;
+
+    /**
+     * The column index associated with this change.
+     */
+    columnIndex: number;
+
+    /**
+     * The new data value
+     */
+    value: ReadonlyJSONValue;
   }
 }
