@@ -633,7 +633,7 @@ namespace ViewBasedJSONModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'row-indices-updated'
+    type: 'row-indices-updated';
 
     /**
      * An list of the rows in the untransformed dataset that are currently
@@ -651,21 +651,21 @@ namespace ViewBasedJSONModel {
     /**
      * The CellRegion associated with this change.
      */
-    region: DataModel.CellRegion
+    region: DataModel.CellRegion;
 
     /**
      * The row number associated with this change.
      */
-    row: number
+    row: number;
 
     /**
      * The column index associated with this change.
      */
-    columnIndex: number
+    columnIndex: number;
 
     /**
      * The new data value
      */
-    value: ReadonlyJSONValue
+    value: ReadonlyJSONValue;
   }
 }

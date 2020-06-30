@@ -109,6 +109,11 @@ export
           this.save_changes();
           break;
         case ('cell-edit-event'):
+          // Update data in widget model
+          const newData = this.get('_data');
+          newData.data[msg.row][msg.columnIndex] = msg.value; 
+          this.set('_data', newData);
+
           this.comm.send({
             method: 'custom',
             content: {
@@ -123,7 +128,8 @@ export
         default:
           throw 'unreachable';
       }
-    })
+    });
+
     this.updateTransforms();
     this.trigger('data-model-changed');
     this.updateSelectionModel();
