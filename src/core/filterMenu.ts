@@ -1046,9 +1046,9 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
   //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
-    const row = hit.row
+    const row = hit.row;
     const colIndex = this._filterDialog.columnIndex;
-    const region = this._filterDialog.region
+    const region = this._filterDialog.region;
     const value = grid.dataModel!.data('body', row, 0);
 
     if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
