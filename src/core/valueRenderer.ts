@@ -132,7 +132,7 @@ export class FilterValueRenderer extends TextRenderer {
 
     // Check state to display checkbox
 
-    if (this._stateManager.has(this._dialog.region, this._dialog.columnIndex, config.row)) {
+    if (this._stateManager.has(this._dialog.region, this._dialog.columnIndex, config.value)) {
       gc.beginPath();
       gc.strokeStyle = "#000000";
       gc.moveTo(config.x + BOX_OFFSET + 3, config.y + BOX_OFFSET + 5);
