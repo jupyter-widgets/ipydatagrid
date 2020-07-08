@@ -268,8 +268,7 @@ export
   class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
-    // initialize to light theme unless set earlier
-    this._isLightTheme = this._isLightTheme === undefined ? true : this._isLightTheme;
+    this._initializeTheme();
     return this.pWidget.node;
   }
 
@@ -432,6 +431,19 @@ export
     );
     this.grid.defaultRenderer = defaultRenderer;
     this.grid.renderers = renderers;
+  }
+
+  private _initializeTheme() {
+    // initialize theme unless set earlier
+    if (this._isLightTheme !== undefined) {
+      return;
+    }
+
+    // initialize theme based on application settings
+    this._isLightTheme = !(
+      document.body.classList.contains('theme-dark') /* jupyter notebook or voila */ ||
+      document.body.dataset.jpThemeLight === 'false' /* jupyter lab */
+    );
   }
 
   renderers: Dict<CellRendererView>;

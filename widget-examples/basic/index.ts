@@ -233,7 +233,7 @@ function main() {
   buttonBoxPanel.addWidget(bw);
   const spacer = new Widget();
   buttonBoxPanel.addWidget(spacer);
-  BoxPanel.setSizeBasis(bw, 100);
+  BoxPanel.setSizeBasis(bw, 120);
   BoxPanel.setStretch(spacer, 1);
 
   boxPanel.addWidget(buttonBoxPanel);
