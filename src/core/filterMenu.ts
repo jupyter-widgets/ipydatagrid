@@ -268,6 +268,9 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._region = options.region;
     this._mode = options.mode;
 
+    // Setting filter flag
+    this.hasFilter = this._model.getFilterTransform(this._columnIndex) !== undefined
+
     // Update styling on unique value grid
     this._uniqueValueGrid.style = {
       voidColor: Theme.getBackgroundColor(),
@@ -910,6 +913,10 @@ export class InteractiveFilterDialog extends BoxPanel {
 
   // Unique value state
   private _uniqueValueStateManager: UniqueValueStateManager
+
+  // Checking filter status
+  hasFilter: boolean = false;
+  userInteractedWithDialog: boolean = false;
 }
 
 /**
@@ -1051,10 +1058,31 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
     const region = this._filterDialog.region;
     const value = grid.dataModel!.data('body', row, 0);
 
-    if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
-      this._uniqueValuesSelectionState.remove(region, colIndex, value)
+    const updateCheckState = () => {
+      if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
+        this._uniqueValuesSelectionState.remove(region, colIndex, value)
+      } else {
+        this._uniqueValuesSelectionState.add(region, colIndex, value)
+      }
+    }
+
+    // User is clicking for the first time when no filter is applied
+    if (!this._filterDialog.hasFilter && !this._filterDialog.userInteractedWithDialog) {
+      const uniqueVals = this._filterDialog.model.uniqueValues(
+        region,
+        colIndex
+      );
+  
+      uniqueVals.then(values => {
+        for (let value of values) {
+          this._uniqueValuesSelectionState.add(region, colIndex, value);
+        }
+        
+        this._filterDialog.userInteractedWithDialog = true;
+        updateCheckState();
+      });
     } else {
-      this._uniqueValuesSelectionState.add(region, colIndex, value)
+      updateCheckState();
     }
   }
 
