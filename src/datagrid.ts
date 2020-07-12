@@ -24,7 +24,7 @@ import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
 import { CellRendererModel, CellRendererView } from './cellrenderer';
-
+const sdfsdf = 345345;
 import { FeatherGrid } from './feathergrid';
 
 // Import CSS
