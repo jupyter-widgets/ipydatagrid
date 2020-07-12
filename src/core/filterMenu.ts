@@ -133,9 +133,7 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     const value = this._mode === 'condition'
       ? <Transform.FilterValue>this._filterValue
-      : this._uniqueValueStateManager.getIndices(this.region, this._columnIndex).map(row => {
-        return this._uniqueValueGrid.dataModel!.data('body', row, 0);
-      });
+      : this._uniqueValueStateManager.getValues(this.region, this._columnIndex);
 
     // Construct transform
     const transform: Transform.TransformSpec = {
@@ -1018,7 +1016,7 @@ export class UniqueValueStateManager {
     MessageLoop.postMessage(this._grid.viewport, msg);
   }
 
-  getIndices(region: DataModel.CellRegion, columnIndex: number): any[] {
+  getValues(region: DataModel.CellRegion, columnIndex: number): any[] {
     const key = this.getKeyName(region, columnIndex)
     if (this._state.hasOwnProperty(key)) {
       return Array.from(this._state[key])
@@ -1048,10 +1046,10 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
   //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
-
-    let value = hit.row
+    const row = hit.row;
     const colIndex = this._filterDialog.columnIndex;
-    const region = this._filterDialog.region
+    const region = this._filterDialog.region;
+    const value = grid.dataModel!.data('body', row, 0);
 
     if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
       this._uniqueValuesSelectionState.remove(region, colIndex, value)
