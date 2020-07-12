@@ -156,3 +156,6 @@ ipydatagrid/labextension/*.tgz
 
 # Packed lab extensions
 ipydatagrid/labextension
+
+conda_out
+recipe
