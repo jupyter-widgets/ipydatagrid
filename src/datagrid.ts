@@ -3,34 +3,27 @@
 
 import * as _ from 'underscore';
 
-import {
-  BasicSelectionModel
-} from '@lumino/datagrid';
+import { BasicSelectionModel } from '@lumino/datagrid';
+
+import { CellRenderer } from '@lumino/datagrid';
+
+import { JSONExt } from '@lumino/coreutils';
 
 import {
-  CellRenderer
-} from '@lumino/datagrid';
-
-import {
-  JSONExt
-} from '@lumino/coreutils';
-
-import {
-  DOMWidgetModel, DOMWidgetView, JupyterPhosphorPanelWidget,
-  ISerializers, resolvePromisesDict, unpack_models, WidgetModel
+  DOMWidgetModel,
+  DOMWidgetView,
+  JupyterPhosphorPanelWidget,
+  ISerializers,
+  resolvePromisesDict,
+  unpack_models,
+  WidgetModel,
 } from '@jupyter-widgets/base';
 
-import {
-  ViewBasedJSONModel
-} from './core/viewbasedjsonmodel'
+import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
 
-import {
-  MODULE_NAME, MODULE_VERSION
-} from './version';
+import { MODULE_NAME, MODULE_VERSION } from './version';
 
-import {
-  CellRendererModel, CellRendererView
-} from './cellrenderer'
+import { CellRendererModel, CellRendererView } from './cellrenderer';
 
 import { FeatherGrid } from './feathergrid';
 
@@ -38,11 +31,9 @@ import { FeatherGrid } from './feathergrid';
 import '../style/jupyter-widget.css';
 
 // Shorthand for a string->T mapping
-type Dict<T> = { [keys: string]: T; };
+type Dict<T> = { [keys: string]: T };
 
-
-export
-  class DataGridModel extends DOMWidgetModel {
+export class DataGridModel extends DOMWidgetModel {
   defaults() {
     return {
       ...super.defaults(),
@@ -64,7 +55,7 @@ export
       selection_mode: 'none',
       selections: [],
       editable: false,
-      column_widths: {}
+      column_widths: {},
     };
   }
 
@@ -81,18 +72,23 @@ export
 
     this.on('msg:custom', (content) => {
       if (content.event_type === 'cell-changed') {
-        this.data_model.setModelData('body', content.row, content.column_index, content.value);
+        this.data_model.setModelData(
+          'body',
+          content.row,
+          content.column_index,
+          content.value,
+        );
       }
     });
   }
 
   updateData() {
     const data = this.data;
-    const schema = Private.createSchema(data)
+    const schema = Private.createSchema(data);
 
     this.data_model = new ViewBasedJSONModel({
       data: data.data,
-      schema: schema
+      schema: schema,
     });
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
@@ -100,30 +96,33 @@ export
     });
     this.data_model.dataSync.connect((sender, msg) => {
       switch (msg.type) {
-        case ('row-indices-updated'):
+        case 'row-indices-updated':
           this.set('_visible_rows', msg.indices);
           this.save_changes();
           break;
-        case ('cell-updated'):
+        case 'cell-updated':
           this.set('_data', this.data_model.dataset);
           this.save_changes();
           break;
-        case ('cell-edit-event'):
+        case 'cell-edit-event':
           // Update data in widget model
           const newData = this.get('_data');
-          newData.data[msg.row][msg.columnIndex] = msg.value; 
+          newData.data[msg.row][msg.columnIndex] = msg.value;
           this.set('_data', newData);
 
-          this.comm.send({
-            method: 'custom',
-            content: {
-              event_type: 'cell-changed',
-              region: msg.region,
-              row: msg.row,
-              column_index: msg.columnIndex,
-              value: msg.value
-            }
-          }, null);
+          this.comm.send(
+            {
+              method: 'custom',
+              content: {
+                event_type: 'cell-changed',
+                region: msg.region,
+                row: msg.row,
+                column_index: msg.columnIndex,
+                value: msg.value,
+              },
+            },
+            null,
+          );
           break;
         default:
           throw 'unreachable';
@@ -154,34 +153,39 @@ export
       return;
     }
 
-    this.selectionModel = new BasicSelectionModel({ dataModel: this.data_model });
+    this.selectionModel = new BasicSelectionModel({
+      dataModel: this.data_model,
+    });
     this.selectionModel.selectionMode = selectionMode;
     this.trigger('selection-model-changed');
 
-    this.selectionModel.changed.connect((sender: BasicSelectionModel, args: void) => {
-      if (this.synchingWithKernel) {
-        return;
-      }
+    this.selectionModel.changed.connect(
+      (sender: BasicSelectionModel, args: void) => {
+        if (this.synchingWithKernel) {
+          return;
+        }
 
-      this.synchingWithKernel = true;
+        this.synchingWithKernel = true;
 
-      const selectionIter = sender.selections().iter();
-      const selections: any[] = [];
-      let selection = null;
-      while (selection = selectionIter.next()) {
-        selections.push({
-          r1: Math.min(selection.r1, selection.r2),
-          r2: Math.max(selection.r1, selection.r2),
-          c1: Math.min(selection.c1, selection.c2),
-          c2: Math.max(selection.c1, selection.c2),
-        });
-      }
+        const selectionIter = sender.selections().iter();
+        const selections: any[] = [];
+        let selection = null;
+        while ((selection = selectionIter.next())) {
+          selections.push({
+            r1: Math.min(selection.r1, selection.r2),
+            r2: Math.max(selection.r1, selection.r2),
+            c1: Math.min(selection.c1, selection.c2),
+            c2: Math.max(selection.c1, selection.c2),
+          });
+        }
 
-      this.set('selections', selections);
-      this.save_changes();
+        this.set('selections', selections);
+        this.save_changes();
 
-      this.synchingWithKernel = false;
-    }, this);
+        this.synchingWithKernel = false;
+      },
+      this,
+    );
   }
 
   updateSelections() {
@@ -194,7 +198,7 @@ export
     const selections = this.get('selections');
     this.selectionModel.clear();
 
-    for (let selection of selections) {
+    for (const selection of selections) {
       this.selectionModel.select({
         r1: selection.r1,
         c1: selection.c1,
@@ -202,7 +206,7 @@ export
         c2: selection.c2,
         cursorRow: selection.r1,
         cursorColumn: selection.c1,
-        clear: "none"
+        clear: 'none',
       });
     }
 
@@ -215,11 +219,11 @@ export
 
   static serializers: ISerializers = {
     ...DOMWidgetModel.serializers,
-    transforms: { deserialize: (unpack_models as any) },
-    renderers: { deserialize: (unpack_models as any) },
-    default_renderer: { deserialize: (unpack_models as any) },
-    _data: { deserialize: (unpack_data as any) },
-  }
+    transforms: { deserialize: unpack_models as any },
+    renderers: { deserialize: unpack_models as any },
+    default_renderer: { deserialize: unpack_models as any },
+    _data: { deserialize: unpack_data as any },
+  };
 
   static model_name = 'DataGridModel';
   static model_module = MODULE_NAME;
@@ -231,13 +235,13 @@ export
 
   data_model: ViewBasedJSONModel;
   selectionModel: BasicSelectionModel | null;
-  synchingWithKernel: boolean = false;
+  synchingWithKernel = false;
 }
 
 // modified from ipywidgets original
 function unpack_data(
   value: any | Dict<unknown> | string | (Dict<unknown> | string)[],
-  manager: any
+  manager: any,
 ): Promise<WidgetModel | Dict<WidgetModel> | WidgetModel[] | any> {
   if (Array.isArray(value)) {
     const unpacked: any[] = [];
@@ -247,7 +251,7 @@ function unpack_data(
     return Promise.all(unpacked);
   } else if (value instanceof Object && typeof value !== 'string') {
     const unpacked: { [key: string]: any } = {};
-    Object.keys(value).forEach(key => {
+    Object.keys(value).forEach((key) => {
       unpacked[key] = unpack_data(value[key], manager);
     });
     return resolvePromisesDict(unpacked);
@@ -258,14 +262,13 @@ function unpack_data(
   } else if (value === '$NegInfinity$') {
     return Promise.resolve(Number.NEGATIVE_INFINITY);
   } else if (value === '$NaT$') {
-    return Promise.resolve(new Date("INVALID"));
+    return Promise.resolve(new Date('INVALID'));
   } else {
     return Promise.resolve(value);
   }
 }
 
-export
-  class DataGridView extends DOMWidgetView {
+export class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
     this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
     this._initializeTheme();
@@ -288,9 +291,9 @@ export
         rowHeight: this.model.get('base_row_size'),
         columnWidth: this.model.get('base_column_size'),
         rowHeaderWidth: this.model.get('base_row_header_size'),
-        columnHeaderHeight: this.model.get('base_column_header_size')
+        columnHeaderHeight: this.model.get('base_column_header_size'),
       },
-      headerVisibility: this.model.get('header_visibility')
+      headerVisibility: this.model.get('header_visibility'),
     });
 
     this.grid.columnWidths = this.model.get('column_widths');
@@ -301,27 +304,37 @@ export
     this.grid.dataModel = this.model.data_model;
     this.grid.selectionModel = this.model.selectionModel;
 
-    this.grid.cellClicked.connect((sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
-      if (this.model.comm) {
-        this.model.comm.send({
-          method: 'custom',
-          content: {
-            event_type: 'cell-click',
-            region: event.region,
-            column: event.column,
-            column_index: event.columnIndex,
-            row: event.row,
-            primary_key_row: event.primaryKeyRow,
-            cell_value: event.cellValue
-          }
-        }, null);
-      }
-    });
+    this.grid.cellClicked.connect(
+      (sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
+        if (this.model.comm) {
+          this.model.comm.send(
+            {
+              method: 'custom',
+              content: {
+                event_type: 'cell-click',
+                region: event.region,
+                column: event.column,
+                column_index: event.columnIndex,
+                row: event.row,
+                primary_key_row: event.primaryKeyRow,
+                cell_value: event.cellValue,
+              },
+            },
+            null,
+          );
+        }
+      },
+    );
 
-    this.grid.columnsResized.connect((sender: FeatherGrid, args: void): void => {
-      this.model.set('column_widths', JSONExt.deepCopy(this.grid.columnWidths));
-      this.model.save_changes();
-    });
+    this.grid.columnsResized.connect(
+      (sender: FeatherGrid, args: void): void => {
+        this.model.set(
+          'column_widths',
+          JSONExt.deepCopy(this.grid.columnWidths),
+        );
+        this.model.save_changes();
+      },
+    );
 
     this.model.on('data-model-changed', () => {
       this.grid.dataModel = this.model.data_model;
@@ -344,16 +357,22 @@ export
     });
 
     this.model.on('change:base_column_header_size', () => {
-      this.grid.baseColumnHeaderSize = this.model.get('base_column_header_size');
+      this.grid.baseColumnHeaderSize = this.model.get(
+        'base_column_header_size',
+      );
     });
 
     this.model.on('change:header_visibility', () => {
       this.grid.headerVisibility = this.model.get('header_visibility');
     });
 
-    this.model.on_some_change(['default_renderer', 'renderers'], () => {
-      this.updateRenderers().then(this.updateGridRenderers.bind(this));
-    }, this);
+    this.model.on_some_change(
+      ['default_renderer', 'renderers'],
+      () => {
+        this.updateRenderers().then(this.updateGridRenderers.bind(this));
+      },
+      this,
+    );
 
     this.model.on('selection-model-changed', () => {
       this.grid.selectionModel = this.model.selectionModel;
@@ -372,7 +391,6 @@ export
   }
 
   private updateRenderers() {
-
     // Unlisten to previous renderers
     if (this.default_renderer) {
       this.stopListening(this.default_renderer, 'renderer-changed');
@@ -382,26 +400,45 @@ export
     }
 
     // And create views for new renderers
-    let promises = [];
+    const promises = [];
 
     const default_renderer = this.model.get('default_renderer');
-    promises.push(this.create_child_view(default_renderer).then((defaultRendererView: any) => {
-      this.default_renderer = defaultRendererView;
+    promises.push(
+      this.create_child_view(default_renderer).then(
+        (defaultRendererView: any) => {
+          this.default_renderer = defaultRendererView;
 
-      this.listenTo(this.default_renderer, 'renderer-changed', this.updateGridRenderers.bind(this));
-    }));
+          this.listenTo(
+            this.default_renderer,
+            'renderer-changed',
+            this.updateGridRenderers.bind(this),
+          );
+        },
+      ),
+    );
 
-    let renderer_promises: Dict<Promise<any>> = {};
-    _.each(this.model.get('renderers'), (model: CellRendererModel, key: string) => {
-      renderer_promises[key] = this.create_child_view(model);
-    });
-    promises.push(resolvePromisesDict(renderer_promises).then((rendererViews: Dict<CellRendererView>) => {
-      this.renderers = rendererViews;
+    const renderer_promises: Dict<Promise<any>> = {};
+    _.each(
+      this.model.get('renderers'),
+      (model: CellRendererModel, key: string) => {
+        renderer_promises[key] = this.create_child_view(model);
+      },
+    );
+    promises.push(
+      resolvePromisesDict(renderer_promises).then(
+        (rendererViews: Dict<CellRendererView>) => {
+          this.renderers = rendererViews;
 
-      for (const key in rendererViews) {
-        this.listenTo(rendererViews[key], 'renderer-changed', this.updateGridRenderers.bind(this));
-      }
-    }));
+          for (const key in rendererViews) {
+            this.listenTo(
+              rendererViews[key],
+              'renderer-changed',
+              this.updateGridRenderers.bind(this),
+            );
+          }
+        },
+      ),
+    );
 
     return Promise.all(promises);
   }
@@ -427,8 +464,7 @@ export
     const renderers: Dict<CellRenderer> = {};
     Object.entries(this.renderers).forEach(([name, rendererView]) => {
       renderers[name] = rendererView.renderer;
-    }
-    );
+    });
     this.grid.defaultRenderer = defaultRenderer;
     this.grid.renderers = renderers;
   }
@@ -441,8 +477,12 @@ export
 
     // initialize theme based on application settings
     this._isLightTheme = !(
-      document.body.classList.contains('theme-dark') /* jupyter notebook or voila */ ||
-      document.body.dataset.jpThemeLight === 'false' /* jupyter lab */
+      (
+        document.body.classList.contains(
+          'theme-dark',
+        ) /* jupyter notebook or voila */ ||
+        document.body.dataset.jpThemeLight === 'false'
+      ) /* jupyter lab */
     );
   }
 
@@ -456,29 +496,27 @@ export
 }
 
 export {
-  TextRendererModel, TextRendererView,
-  BarRendererModel, BarRendererView,
+  TextRendererModel,
+  TextRendererView,
+  BarRendererModel,
+  BarRendererView,
 } from './cellrenderer';
 
-export {
-  VegaExprModel, VegaExprView
-} from './vegaexpr';
+export { VegaExprModel, VegaExprView } from './vegaexpr';
 
 export namespace DataGridModel {
-
   /**
    * An options object for initializing the data model.
    */
   export interface IData {
-
-    data: ViewBasedJSONModel.DataSource
-    schema: ISchema
-    fields: { [key: string]: null }[]
+    data: ViewBasedJSONModel.DataSource;
+    schema: ISchema;
+    fields: { [key: string]: null }[];
   }
   export interface IField {
-    readonly name: string | any[]
-    readonly type: string
-    readonly rows: any[]
+    readonly name: string | any[];
+    readonly type: string;
+    readonly rows: any[];
   }
   export interface ISchema {
     readonly fields: IField[];
@@ -491,29 +529,29 @@ export namespace DataGridModel {
  * The namespace for the module implementation details.
  */
 namespace Private {
-
   /**
    * Creates a valid JSON Table Schema from the schema provided by pandas.
-   * 
+   *
    * @param data - The data that has been synced from the kernel.
    */
-  export function createSchema(data: DataGridModel.IData): ViewBasedJSONModel.ISchema {
-
+  export function createSchema(
+    data: DataGridModel.IData,
+  ): ViewBasedJSONModel.ISchema {
     // Construct a new array of schema fields based on the keys in data.fields
     // Note: this accounts for how tuples/lists may be serialized into strings
     // in the case of multiIndex columns.
     const fields: ViewBasedJSONModel.IField[] = [];
     data.fields.forEach((val: { [key: string]: null }, i: number) => {
-      let rows = Array.isArray(data.schema.fields[i].name)
+      const rows = Array.isArray(data.schema.fields[i].name)
         ? <any[]>data.schema.fields[i].name
-        : <string[]>[data.schema.fields[i].name]
-      let field = {
+        : <string[]>[data.schema.fields[i].name];
+      const field = {
         name: Object.keys(val)[0],
         type: data.schema.fields[i].type,
-        rows: rows
-      }
+        rows: rows,
+      };
       fields.push(field);
-    })
+    });
 
     // Updating the primary key to account for a multiIndex primary key.
     const primaryKey = data.schema.primaryKey.map((key: string) => {
@@ -527,13 +565,13 @@ namespace Private {
           return Object.keys(data.fields[i])[0];
         }
       }
-      return "unreachable";
+      return 'unreachable';
     });
 
     return {
       primaryKey: primaryKey,
       primaryKeyUuid: data.schema.primaryKeyUuid,
-      fields: fields
-    }
+      fields: fields,
+    };
   }
 }

@@ -43,7 +43,7 @@
     "clean:lib": "rimraf lib",
     "clean:labextension": "rimraf datagrid/labextension",
     "clean:nbextension": "rimraf datagrid/nbextension/static/index.js",
-    "lint": "eslint 'src/**/*.{ts}' --quiet --fix",
+    "lint": "eslint 'src/**/*.{js,ts}' --quiet --fix",
     "prepack": "npm run build:lib",
     "test": "jest",
     "watch": "npm-run-all -p watch:*",
@@ -110,5 +110,15 @@
   },
   "jupyterlab": {
     "extension": "lib/plugin"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix"
+    ]
   }
 }

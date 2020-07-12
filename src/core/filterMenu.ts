@@ -1,52 +1,29 @@
-import {
-  Transform
-} from './transform';
+import { Transform } from './transform';
 
-import {
-  ViewBasedJSONModel
-} from './viewbasedjsonmodel';
+import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
-import {
-  DataGrid
-} from './datagrid';
+import { DataGrid } from './datagrid';
 
-import {
-  DataModel
-} from '@lumino/datagrid';
+import { DataModel } from '@lumino/datagrid';
 
-import {
-  ElementExt
-} from '@lumino/domutils';
+import { ElementExt } from '@lumino/domutils';
 
-import {
-  Message, MessageLoop, ConflatableMessage
-} from '@lumino/messaging';
+import { Message, MessageLoop, ConflatableMessage } from '@lumino/messaging';
 
-import {
-  BasicMouseHandler
-} from '@lumino/datagrid';
+import { BasicMouseHandler } from '@lumino/datagrid';
 
-import {
-  Widget, BoxPanel
-} from '@lumino/widgets';
+import { Widget, BoxPanel } from '@lumino/widgets';
 
-import {
-  VirtualDOM, VirtualElement, h
-} from '@lumino/virtualdom'
+import { VirtualDOM, VirtualElement, h } from '@lumino/virtualdom';
 
-import {
-  FilterValueRenderer
-} from './valueRenderer';
+import { FilterValueRenderer } from './valueRenderer';
 
-import {
-  Theme
-} from '../utils';
+import { Theme } from '../utils';
 
 /**
  * An interactive widget to add filter transformations to the data model.
  */
 export class InteractiveFilterDialog extends BoxPanel {
-
   /**
    * Construct a new InteractiveFilterDialog.
    *
@@ -57,12 +34,14 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     // Set CSS
     this.addClass('ipydatagrid-filterMenu');
-    this.node.style.position = 'absolute'
+    this.node.style.position = 'absolute';
     this._model = options.model;
 
     // Widget to display condition operators
-    this._filterByConditionWidget = new Widget()
-    this._filterByConditionWidget.addClass('ipydatagrid-filter-condition-select')
+    this._filterByConditionWidget = new Widget();
+    this._filterByConditionWidget.addClass(
+      'ipydatagrid-filter-condition-select',
+    );
 
     // Grid to display unique values
     this._uniqueValueGrid = new DataGrid({
@@ -73,23 +52,23 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     // State management for unique value grid
     this._uniqueValueStateManager = new UniqueValueStateManager({
-      grid: this._uniqueValueGrid
+      grid: this._uniqueValueGrid,
     });
 
     const mouseHandler = new UniqueValueGridMouseHandler({
       stateManager: this._uniqueValueStateManager,
-      dialog: this
+      dialog: this,
     });
     //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     this._uniqueValueGrid.mouseHandler = mouseHandler;
 
     // Widget to display the dialog title
     this._titleWidget = new Widget();
-    this._titleWidget.addClass('ipydatagrid-filter-title')
+    this._titleWidget.addClass('ipydatagrid-filter-title');
 
     // Widget to display "apply" button.
     this._applyWidget = new Widget();
-    this._applyWidget.addClass('ipydatagrid-filter-apply')
+    this._applyWidget.addClass('ipydatagrid-filter-apply');
 
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
@@ -109,10 +88,10 @@ export class InteractiveFilterDialog extends BoxPanel {
       return false;
     } else if (Array.isArray(this._filterValue)) {
       if (
-        this._filterValue[0] === ''
-        || this._filterValue[0] === undefined
-        || this._filterValue[1] === ''
-        || this._filterValue[1] === undefined
+        this._filterValue[0] === '' ||
+        this._filterValue[0] === undefined ||
+        this._filterValue[1] === '' ||
+        this._filterValue[1] === undefined
       ) {
         return false;
       }
@@ -131,16 +110,20 @@ export class InteractiveFilterDialog extends BoxPanel {
       return;
     }
 
-    const value = this._mode === 'condition'
-      ? <Transform.FilterValue>this._filterValue
-      : this._uniqueValueStateManager.getValues(this.region, this._columnIndex);
+    const value =
+      this._mode === 'condition'
+        ? <Transform.FilterValue>this._filterValue
+        : this._uniqueValueStateManager.getValues(
+            this.region,
+            this._columnIndex,
+          );
 
     // Construct transform
     const transform: Transform.TransformSpec = {
       type: 'filter',
       columnIndex: this.model.getSchemaIndex(this._region, this._columnIndex),
       operator: this._filterOperator,
-      value: value
+      value: value,
     };
 
     this._model.addTransform(transform);
@@ -152,7 +135,8 @@ export class InteractiveFilterDialog extends BoxPanel {
    */
   updateDialog(): void {
     const lookupColumn = this.model.getSchemaIndex(
-      this._region, this._columnIndex
+      this._region,
+      this._columnIndex,
     );
     const columnState = this._model.transformMetadata(lookupColumn);
 
@@ -161,13 +145,13 @@ export class InteractiveFilterDialog extends BoxPanel {
       this._filterOperator = columnState.filter.operator;
       this._filterValue = columnState.filter.value;
     } else {
-      this._filterOperator = '<'
+      this._filterOperator = '<';
       this._filterValue = undefined;
     }
 
     // Override filter operator if in "Filter by value" mode.
     if (this._mode === 'value') {
-      this._filterOperator = 'in'
+      this._filterOperator = 'in';
     }
 
     // Render virtual DOM
@@ -180,43 +164,39 @@ export class InteractiveFilterDialog extends BoxPanel {
   private _render(): void {
     if (this._mode === 'condition') {
       this._applyWidget.node.style.minHeight = '65px';
-      this._uniqueValueGrid.setHidden(true)
-      this._filterByConditionWidget.setHidden(false)
+      this._uniqueValueGrid.setHidden(true);
+      this._filterByConditionWidget.setHidden(false);
 
       // selector
-      VirtualDOM.render([
-        this.createOperatorList(),
-      ], this._filterByConditionWidget.node);
+      VirtualDOM.render(
+        [this.createOperatorList()],
+        this._filterByConditionWidget.node,
+      );
 
       // title
-      VirtualDOM.render([
-        this.createTitleNode(),
-      ], this._titleWidget.node);
+      VirtualDOM.render([this.createTitleNode()], this._titleWidget.node);
 
       // apply buttons
-      VirtualDOM.render([
-        this._filterOperator === 'between'
-          ? this.createDualValueNode()
-          : this.createSingleValueNode()
-      ], this._applyWidget.node);
-
+      VirtualDOM.render(
+        [
+          this._filterOperator === 'between'
+            ? this.createDualValueNode()
+            : this.createSingleValueNode(),
+        ],
+        this._applyWidget.node,
+      );
     } else if (this._mode === 'value') {
       this._applyWidget.node.style.minHeight = '30px';
       this._uniqueValueGrid.setHidden(false);
       this._filterByConditionWidget.setHidden(true);
 
       // title
-      VirtualDOM.render([
-        this.createTitleNode(),
-      ], this._titleWidget.node);
+      VirtualDOM.render([this.createTitleNode()], this._titleWidget.node);
 
       // apply buttons
-      VirtualDOM.render([
-        this.createApplyButtonNode()
-      ], this._applyWidget.node);
+      VirtualDOM.render([this.createApplyButtonNode()], this._applyWidget.node);
 
       this._renderUniqueVals();
-
     } else {
       throw 'unreachable';
     }
@@ -228,42 +208,41 @@ export class InteractiveFilterDialog extends BoxPanel {
   async _renderUniqueVals() {
     const uniqueVals = this._model.uniqueValues(
       this._region,
-      this._columnIndex
+      this._columnIndex,
     );
 
-    uniqueVals.then(value => {
-      let items = value.map((val, i) => {
-        return { index: i, 'uniqueVals': val }
+    uniqueVals.then((value) => {
+      const items = value.map((val, i) => {
+        return { index: i, uniqueVals: val };
       });
 
-      let data: ViewBasedJSONModel.IData = {
+      const data: ViewBasedJSONModel.IData = {
         schema: {
           fields: [
             { name: 'index', type: 'integer', rows: [] },
-            { name: 'uniqueVals', type: 'number', rows: [] }
+            { name: 'uniqueVals', type: 'number', rows: [] },
           ],
           primaryKey: ['index'],
-          primaryKeyUuid: 'index'
+          primaryKeyUuid: 'index',
         },
-        data: items
-      }
+        data: items,
+      };
       this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
     });
   }
 
   /**
    * Open the menu at the specified location.
-   * 
+   *
    * @param options - The additional options for opening the menu.
    */
   open(options: InteractiveFilterDialog.IOpenOptions): void {
-
     // Update state with the metadata of the event that opened the menu.
     this._columnIndex = options.columnIndex;
     this._columnDType = this._model.metadata(
       options.region,
       0,
-      options.columnIndex
+      options.columnIndex,
     )['type'];
     this._region = options.region;
     this._mode = options.mode;
@@ -283,29 +262,29 @@ export class InteractiveFilterDialog extends BoxPanel {
     };
 
     this._uniqueValueGrid.cellRenderers.update({
-      'body': new FilterValueRenderer({
+      body: new FilterValueRenderer({
         stateManager: this._uniqueValueStateManager,
         dialog: this,
         textColor: Theme.getFontColor(),
-        backgroundColor: Theme.getBackgroundColor()
-      })
+        backgroundColor: Theme.getBackgroundColor(),
+      }),
     });
 
     // Update DOM elements and render virtual DOM
     this.updateDialog();
 
     // Get the current position and size of the main viewport.
-    let px = window.pageXOffset;
-    let py = window.pageYOffset;
-    let cw = document.documentElement.clientWidth;
-    let ch = document.documentElement.clientHeight;
+    const px = window.pageXOffset;
+    const py = window.pageYOffset;
+    const cw = document.documentElement.clientWidth;
+    const ch = document.documentElement.clientHeight;
 
     // Compute the maximum allowed height for the menu.
-    let maxHeight = ch - (options.forceY ? options.y : 0);
+    const maxHeight = ch - (options.forceY ? options.y : 0);
 
     // Fetch common variables.
-    let node = this.node;
-    let style = node.style;
+    const node = this.node;
+    const style = node.style;
 
     // Clear the menu geometry and prepare it for measuring.
     style.top = '';
@@ -319,15 +298,15 @@ export class InteractiveFilterDialog extends BoxPanel {
     Widget.attach(this, document.body);
 
     // Measure the size of the menu.
-    let { width, height } = node.getBoundingClientRect();
+    const { width, height } = node.getBoundingClientRect();
 
     // Adjust the X position of the menu to fit on-screen.
-    if (!options.forceX && (options.x + width > px + cw)) {
+    if (!options.forceX && options.x + width > px + cw) {
       options.x = px + cw - width;
     }
 
     // Adjust the Y position of the menu to fit on-screen.
-    if (!options.forceY && (options.y + height > py + ch)) {
+    if (!options.forceY && options.y + height > py + ch) {
       if (options.y > py + ch) {
         options.y = py + ch - height;
       } else {
@@ -387,11 +366,11 @@ export class InteractiveFilterDialog extends BoxPanel {
     event.stopPropagation();
     switch (event.keyCode) {
       // Enter
-      case (13):
+      case 13:
         this.applyFilter();
         return;
       // Escape
-      case (27):
+      case 27:
         this.close();
         return;
     }
@@ -419,14 +398,14 @@ export class InteractiveFilterDialog extends BoxPanel {
   createTitleNode(): VirtualElement {
     return h.div(
       {
-        className: '', style: {
+        className: '',
+        style: {
           paddingLeft: '5px',
-          color: 'var(--ipydatagrid-filter-dlg-textcolor,black)'
-        }
+          color: 'var(--ipydatagrid-filter-dlg-textcolor,black)',
+        },
       },
-      (this._mode === 'condition')
-        ? 'Filter by condition:'
-        : 'Filter by value:')
+      this._mode === 'condition' ? 'Filter by condition:' : 'Filter by value:',
+    );
   }
 
   /**
@@ -438,53 +417,62 @@ export class InteractiveFilterDialog extends BoxPanel {
    */
   createSingleValueNode(): VirtualElement {
     return h.div(
-      { className: 'widget-text', style: { paddingLeft: '5px', minHeight: '60px' } },
+      {
+        className: 'widget-text',
+        style: { paddingLeft: '5px', minHeight: '60px' },
+      },
       h.input({
         type: 'text',
         style: {
           marginRight: '5px',
           width: '200px',
           background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
-          visibility: (
-            this._filterOperator === 'empty'
-            || this._filterOperator === 'notempty'
-            || this._mode === 'value'
-          ) ? 'hidden' : 'visible'
+          visibility:
+            this._filterOperator === 'empty' ||
+            this._filterOperator === 'notempty' ||
+            this._mode === 'value'
+              ? 'hidden'
+              : 'visible',
         },
         // Assigning a random key ensures that this element is always
         // rerendered
         key: String(Math.random()),
         oninput: (evt) => {
-          const elem = <HTMLInputElement>evt.srcElement
-          this._filterValue = (this._columnDType === 'number'
-            || this._columnDType === 'integer')
-            ? Number(elem.value)
-            : elem.value;
+          const elem = <HTMLInputElement>evt.srcElement;
+          this._filterValue =
+            this._columnDType === 'number' || this._columnDType === 'integer'
+              ? Number(elem.value)
+              : elem.value;
         },
-        value: (this._filterValue !== undefined && !Array.isArray(this._filterValue))
-          ? String(this._filterValue)
-          : ''
+        value:
+          this._filterValue !== undefined && !Array.isArray(this._filterValue)
+            ? String(this._filterValue)
+            : '',
       }),
 
-
-      h.div({
-        className: '', style: {
-          width: '202px',
-          textAlign: 'right',
-          paddingTop: '5px'
-        }
-      },
-        h.button({
-          className: 'jupyter-widgets jupyter-button widget-button',
+      h.div(
+        {
+          className: '',
           style: {
-            width: '60px',
-            padding: '1px',
-            border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)'
+            width: '202px',
+            textAlign: 'right',
+            paddingTop: '5px',
           },
-          onclick: this.applyFilter.bind(this)
-        }, 'Apply')
-      )
-    )
+        },
+        h.button(
+          {
+            className: 'jupyter-widgets jupyter-button widget-button',
+            style: {
+              width: '60px',
+              padding: '1px',
+              border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)',
+            },
+            onclick: this.applyFilter.bind(this),
+          },
+          'Apply',
+        ),
+      ),
+    );
   }
 
   /**
@@ -498,16 +486,17 @@ export class InteractiveFilterDialog extends BoxPanel {
     const value = <any[]>this._filterValue;
     return h.div(
       {
-        className: 'widget-text', style: {
+        className: 'widget-text',
+        style: {
           paddingLeft: '5px',
           color: 'var(--ipydatagrid-filter-dlg-textcolor,black)',
-        }
+        },
       },
       h.input({
         style: {
           marginRight: '5px',
           width: '75px',
-          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
         },
         // Assigning a random key ensures that this element is always
         // rerendered
@@ -519,19 +508,19 @@ export class InteractiveFilterDialog extends BoxPanel {
             this._columnDType === 'number' || this._columnDType === 'integer'
               ? Number(elem.value)
               : elem.value,
-            (<any[]>this._filterValue)[1]
+            (<any[]>this._filterValue)[1],
           ];
         },
         // this._filterValue is converted to an array in
         // this.createOperatorList
-        value: value[0] !== undefined ? String(value[0]) : ''
+        value: value[0] !== undefined ? String(value[0]) : '',
       }),
       'and ',
       h.input({
         style: {
           marginRight: '5px',
           width: '75px',
-          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
         },
         // Assigning a random key ensures that this element is always
         // rerendered
@@ -543,26 +532,32 @@ export class InteractiveFilterDialog extends BoxPanel {
             (<any[]>this._filterValue)[0],
             this._columnDType === 'number' || this._columnDType === 'integer'
               ? Number(elem.value)
-              : elem.value
+              : elem.value,
           ];
         },
         // this._filterValue is converted to an array in
         // this.createOperatorList
-        value: value[1] !== undefined ? String(value[1]) : ''
+        value: value[1] !== undefined ? String(value[1]) : '',
       }),
       h.div(
-        { className: '', style: { width: '202px', textAlign: 'right', paddingTop: '5px' } },
-        h.button({
-          className: "jupyter-widgets jupyter-button widget-button",
-          style: {
-            width: '60px',
-            padding: '1px',
-            border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)'
+        {
+          className: '',
+          style: { width: '202px', textAlign: 'right', paddingTop: '5px' },
+        },
+        h.button(
+          {
+            className: 'jupyter-widgets jupyter-button widget-button',
+            style: {
+              width: '60px',
+              padding: '1px',
+              border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)',
+            },
+            onclick: this.applyFilter.bind(this),
           },
-          onclick: this.applyFilter.bind(this)
-        }, 'Apply')
-      )
-    )
+          'Apply',
+        ),
+      ),
+    );
   }
 
   /**
@@ -570,8 +565,11 @@ export class InteractiveFilterDialog extends BoxPanel {
    */
   protected createLoadingMessageNodes(): VirtualElement {
     return h.div(
-      { className: 'p-Menu-itemLabel widget-text', style: { paddingLeft: '5px' } },
-      'Loading unique values...'
+      {
+        className: 'p-Menu-itemLabel widget-text',
+        style: { paddingLeft: '5px' },
+      },
+      'Loading unique values...',
     );
   }
 
@@ -582,44 +580,48 @@ export class InteractiveFilterDialog extends BoxPanel {
   protected async createUniqueValueNodes(): Promise<VirtualElement> {
     const uniqueVals = await this._model.uniqueValues(
       this._region,
-      this._columnIndex
+      this._columnIndex,
     );
-    const optionElems = uniqueVals.map(val => {
-      return h.option({ value: val }, String(val))
+    const optionElems = uniqueVals.map((val) => {
+      return h.option({ value: val }, String(val));
     });
 
     return h.li(
       { className: 'p-Menu-item' },
-      h.div({
-        className: 'widget-select widget-select-multiple',
-        style: { width: '200px' }
-      },
-        h.select({
-          multiple: '',
-          value: '',
-          style: {
-            width: '200px',
-            height: '200px',
-            margin: '5px',
-            background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
-          },
-          onchange: (evt) => {
-            let selectElem = <HTMLSelectElement>evt.srcElement;
-            const values = [];
-            for (let i = 0; i < selectElem.options.length; i++) {
-              if (selectElem.options[i].selected) {
-                values.push(
-                  (this._columnDType === 'number'
-                    || this._columnDType === 'integer')
-                    ? Number(selectElem.options[i].value)
-                    : selectElem.options[i].value
-                )
+      h.div(
+        {
+          className: 'widget-select widget-select-multiple',
+          style: { width: '200px' },
+        },
+        h.select(
+          {
+            multiple: '',
+            value: '',
+            style: {
+              width: '200px',
+              height: '200px',
+              margin: '5px',
+              background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
+            },
+            onchange: (evt) => {
+              const selectElem = <HTMLSelectElement>evt.srcElement;
+              const values = [];
+              for (let i = 0; i < selectElem.options.length; i++) {
+                if (selectElem.options[i].selected) {
+                  values.push(
+                    this._columnDType === 'number' ||
+                      this._columnDType === 'integer'
+                      ? Number(selectElem.options[i].value)
+                      : selectElem.options[i].value,
+                  );
+                }
               }
-            }
-            this._filterValue = <number[] | string[]>values;
-          }
-        }, optionElems)
-      )
+              this._filterValue = <number[] | string[]>values;
+            },
+          },
+          optionElems,
+        ),
+      ),
     );
   }
 
@@ -631,7 +633,6 @@ export class InteractiveFilterDialog extends BoxPanel {
    * can cause attribute changes that are not recognized by VirtualDOM.
    */
   protected createOperatorList() {
-
     let operators: VirtualElement[];
 
     // TODO: Refactor this to a switch statement
@@ -646,51 +647,55 @@ export class InteractiveFilterDialog extends BoxPanel {
     }
 
     return h.div(
-      { className: 'widget-dropdown', style: { paddingLeft: '5px' } }, h.select({
-        style: {
-          width: '200px',
-          fontSize: '12px',
-          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)'
-        },
-        // Assigning a random key ensures that this element is always
-        // rerendered
-        key: String(Math.random()),
-        onchange: (evt) => {
-          const elem = <HTMLSelectElement>evt.srcElement
-          this._filterOperator = <Transform.FilterOperator>elem.value;
+      { className: 'widget-dropdown', style: { paddingLeft: '5px' } },
+      h.select(
+        {
+          style: {
+            width: '200px',
+            fontSize: '12px',
+            background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
+          },
+          // Assigning a random key ensures that this element is always
+          // rerendered
+          key: String(Math.random()),
+          onchange: (evt) => {
+            const elem = <HTMLSelectElement>evt.srcElement;
+            this._filterOperator = <Transform.FilterOperator>elem.value;
 
-          if (elem.value === 'between') {
-            this._filterValue = new Array(2);
-          }
-          // Re-render virtual DOM, in case input elements need to change.
-          this._render();
+            if (elem.value === 'between') {
+              this._filterValue = new Array(2);
+            }
+            // Re-render virtual DOM, in case input elements need to change.
+            this._render();
+          },
+          value: this._filterOperator,
         },
-        value: this._filterOperator
-      },
-        ...operators
-      )
-    )
+        ...operators,
+      ),
+    );
   }
 
   /**
    * Creates a `VirtualElement` to display an "apply" button.
    */
   protected createApplyButtonNode(): VirtualElement {
-    return h.div({
-      className: '',
-      style: { paddingLeft: '5px', textAlign: 'right', minHeight: '30px' }
-    },
-      h.button({
-        className: 'jupyter-widgets jupyter-button widget-button',
-        style: {
-          width: '60px',
-          border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)'
+    return h.div(
+      {
+        className: '',
+        style: { paddingLeft: '5px', textAlign: 'right', minHeight: '30px' },
+      },
+      h.button(
+        {
+          className: 'jupyter-widgets jupyter-button widget-button',
+          style: {
+            width: '60px',
+            border: '1px solid var(--ipydatagrid-menu-border-color, #bdbdbd)',
+          },
+          onclick: this.applyFilter.bind(this),
         },
-        onclick: this.applyFilter.bind(this)
-      }, 'Apply')
-
-    )
-
+        'Apply',
+      ),
+    );
   }
 
   /**
@@ -698,39 +703,79 @@ export class InteractiveFilterDialog extends BoxPanel {
    * for columns with a numerical dtype.
    */
   private _createNumericalOperators(): VirtualElement[] {
-    const op = this._filterOperator
+    const op = this._filterOperator;
     return [
-      h.option({
-        value: 'empty', ...(op === 'empty') && { selected: '' }
-      }, 'Is empty:'),
-      h.option({
-        value: 'notempty', ...(op === 'notempty') && { selected: '' }
-      }, 'Is not empty:'),
-      h.option({
-        value: '', disabled: 'disabled'
-      }, "───────────"),
-      h.option({
-        value: '<', ...(op === '<') && { selected: '' }
-      }, 'Less than:'),
-      h.option({
-        value: '>', ...(op === '>') && { selected: '' }
-      }, 'Greater than:'),
-      h.option({
-        value: '<=', ...(op === '<=') && { selected: '' }
-      }, 'Less than or equal to:'),
-      h.option({
-        value: '>=', ...(op === '>=') && { selected: '' }
-      }, 'Greater than or equal to:'),
-      h.option({
-        value: 'between', ...(op === 'between') && { selected: '' }
-      }, 'In between:'),
-      h.option({
-        value: '=', ...(op === '=') && { selected: '' }
-      }, 'Is equal to:'),
-      h.option({
-        value: '!=', ...(op === '!=') && { selected: '' }
-      }, 'Is not equal to:'),
-    ]
+      h.option(
+        {
+          value: 'empty',
+          ...(op === 'empty' && { selected: '' }),
+        },
+        'Is empty:',
+      ),
+      h.option(
+        {
+          value: 'notempty',
+          ...(op === 'notempty' && { selected: '' }),
+        },
+        'Is not empty:',
+      ),
+      h.option(
+        {
+          value: '',
+          disabled: 'disabled',
+        },
+        '───────────',
+      ),
+      h.option(
+        {
+          value: '<',
+          ...(op === '<' && { selected: '' }),
+        },
+        'Less than:',
+      ),
+      h.option(
+        {
+          value: '>',
+          ...(op === '>' && { selected: '' }),
+        },
+        'Greater than:',
+      ),
+      h.option(
+        {
+          value: '<=',
+          ...(op === '<=' && { selected: '' }),
+        },
+        'Less than or equal to:',
+      ),
+      h.option(
+        {
+          value: '>=',
+          ...(op === '>=' && { selected: '' }),
+        },
+        'Greater than or equal to:',
+      ),
+      h.option(
+        {
+          value: 'between',
+          ...(op === 'between' && { selected: '' }),
+        },
+        'In between:',
+      ),
+      h.option(
+        {
+          value: '=',
+          ...(op === '=' && { selected: '' }),
+        },
+        'Is equal to:',
+      ),
+      h.option(
+        {
+          value: '!=',
+          ...(op === '!=' && { selected: '' }),
+        },
+        'Is not equal to:',
+      ),
+    ];
   }
 
   /**
@@ -738,42 +783,86 @@ export class InteractiveFilterDialog extends BoxPanel {
    * for columns with a date dtype.
    */
   private _createDateOperators(): VirtualElement[] {
-    const op = this._filterOperator
+    const op = this._filterOperator;
     return [
-      h.option({
-        value: 'empty', ...(op === 'empty') && { selected: '' }
-      }, 'Is empty:'),
-      h.option({
-        value: 'notempty', ...(op === 'notempty') && { selected: '' }
-      }, 'Is not empty:'),
-      h.option({
-        value: '', disabled: 'disabled'
-      }, "───────────"),
-      h.option({
-        value: '<', ...(op === '<') && { selected: '' }
-      }, 'Date is before:'),
-      h.option({
-        value: '>', ...(op === '>') && { selected: '' }
-      }, 'Date is after:'),
-      h.option({
-        value: '<=', ...(op === '<') && { selected: '' }
-      }, 'Date is on or before:'),
-      h.option({
-        value: '>=', ...(op === '>') && { selected: '' }
-      }, 'Date is on or after:'),
-      h.option({
-        value: 'isOnSameDay', ...(op === 'between') && { selected: '' }
-      }, 'Date is exactly:'),
-      h.option({
-        value: 'between', ...(op === 'between') && { selected: '' }
-      }, 'Date is in between:'),
-      h.option({
-        value: '=', ...(op === '=') && { selected: '' }
-      }, 'Timestamp is exactly equal to:'),
-      h.option({
-        value: '!=', ...(op === '!=') && { selected: '' }
-      }, 'Timestamp is not exactly equal to:'),
-    ]
+      h.option(
+        {
+          value: 'empty',
+          ...(op === 'empty' && { selected: '' }),
+        },
+        'Is empty:',
+      ),
+      h.option(
+        {
+          value: 'notempty',
+          ...(op === 'notempty' && { selected: '' }),
+        },
+        'Is not empty:',
+      ),
+      h.option(
+        {
+          value: '',
+          disabled: 'disabled',
+        },
+        '───────────',
+      ),
+      h.option(
+        {
+          value: '<',
+          ...(op === '<' && { selected: '' }),
+        },
+        'Date is before:',
+      ),
+      h.option(
+        {
+          value: '>',
+          ...(op === '>' && { selected: '' }),
+        },
+        'Date is after:',
+      ),
+      h.option(
+        {
+          value: '<=',
+          ...(op === '<' && { selected: '' }),
+        },
+        'Date is on or before:',
+      ),
+      h.option(
+        {
+          value: '>=',
+          ...(op === '>' && { selected: '' }),
+        },
+        'Date is on or after:',
+      ),
+      h.option(
+        {
+          value: 'isOnSameDay',
+          ...(op === 'between' && { selected: '' }),
+        },
+        'Date is exactly:',
+      ),
+      h.option(
+        {
+          value: 'between',
+          ...(op === 'between' && { selected: '' }),
+        },
+        'Date is in between:',
+      ),
+      h.option(
+        {
+          value: '=',
+          ...(op === '=' && { selected: '' }),
+        },
+        'Timestamp is exactly equal to:',
+      ),
+      h.option(
+        {
+          value: '!=',
+          ...(op === '!=' && { selected: '' }),
+        },
+        'Timestamp is not exactly equal to:',
+      ),
+    ];
   }
 
   /**
@@ -781,15 +870,23 @@ export class InteractiveFilterDialog extends BoxPanel {
    * for columns with a boolean dtype.
    */
   private _createBooleanOperators(): VirtualElement[] {
-    const op = this._filterOperator
+    const op = this._filterOperator;
     return [
-      h.option({
-        value: 'empty', ...(op === 'empty') && { selected: '' }
-      }, 'Is empty:'),
-      h.option({
-        value: 'notempty', ...(op === 'notempty') && { selected: '' }
-      }, 'Is not empty:')
-    ]
+      h.option(
+        {
+          value: 'empty',
+          ...(op === 'empty' && { selected: '' }),
+        },
+        'Is empty:',
+      ),
+      h.option(
+        {
+          value: 'notempty',
+          ...(op === 'notempty' && { selected: '' }),
+        },
+        'Is not empty:',
+      ),
+    ];
   }
 
   /**
@@ -797,48 +894,100 @@ export class InteractiveFilterDialog extends BoxPanel {
    * for columns with a categorical dtype.
    */
   private _createCategoricalOperators(): VirtualElement[] {
-    const op = this._filterOperator
+    const op = this._filterOperator;
     return [
-      h.option({
-        value: 'empty', ...(op === 'empty') && { selected: '' }
-      }, 'Is empty'),
-      h.option({
-        value: 'notempty', ...(op === 'notempty') && { selected: '' }
-      }, 'Is not empty'),
-      h.option({
-        value: '', disabled: 'disabled'
-      }, "───────────"),
-      h.option({
-        value: 'contains', ...(op === 'contains') && { selected: '' }
-      }, 'Contains'),
-      h.option({
-        value: '!contains', ...(op === '!contains') && { selected: '' }
-      }, 'Does not contain'),
-      h.option({
-        value: 'startswith', ...(op === 'startswith') && { selected: '' }
-      }, 'Starts with'),
-      h.option({
-        value: 'endswith', ...(op === 'endswith') && { selected: '' }
-      }, 'Ends with'),
-      h.option({
-        value: '=', ...(op === '=') && { selected: '' }
-      }, 'Is exactly'),
-      h.option({
-        value: '!=', ...(op === '!=') && { selected: '' }
-      }, 'Is not exactly'),
-      h.option({
-        value: '', disabled: 'disabled'
-      }, "───────────"),
-      h.option({
-        value: '<', ...(op === '<') && { selected: '' }
-      }, 'Is before'),
-      h.option({
-        value: '>', ...(op === '>') && { selected: '' }
-      }, 'Is after'),
-      h.option({
-        value: 'between', ...(op === 'between') && { selected: '' }
-      }, 'Is in between'),
-    ]
+      h.option(
+        {
+          value: 'empty',
+          ...(op === 'empty' && { selected: '' }),
+        },
+        'Is empty',
+      ),
+      h.option(
+        {
+          value: 'notempty',
+          ...(op === 'notempty' && { selected: '' }),
+        },
+        'Is not empty',
+      ),
+      h.option(
+        {
+          value: '',
+          disabled: 'disabled',
+        },
+        '───────────',
+      ),
+      h.option(
+        {
+          value: 'contains',
+          ...(op === 'contains' && { selected: '' }),
+        },
+        'Contains',
+      ),
+      h.option(
+        {
+          value: '!contains',
+          ...(op === '!contains' && { selected: '' }),
+        },
+        'Does not contain',
+      ),
+      h.option(
+        {
+          value: 'startswith',
+          ...(op === 'startswith' && { selected: '' }),
+        },
+        'Starts with',
+      ),
+      h.option(
+        {
+          value: 'endswith',
+          ...(op === 'endswith' && { selected: '' }),
+        },
+        'Ends with',
+      ),
+      h.option(
+        {
+          value: '=',
+          ...(op === '=' && { selected: '' }),
+        },
+        'Is exactly',
+      ),
+      h.option(
+        {
+          value: '!=',
+          ...(op === '!=' && { selected: '' }),
+        },
+        'Is not exactly',
+      ),
+      h.option(
+        {
+          value: '',
+          disabled: 'disabled',
+        },
+        '───────────',
+      ),
+      h.option(
+        {
+          value: '<',
+          ...(op === '<' && { selected: '' }),
+        },
+        'Is before',
+      ),
+      h.option(
+        {
+          value: '>',
+          ...(op === '>' && { selected: '' }),
+        },
+        'Is after',
+      ),
+      h.option(
+        {
+          value: 'between',
+          ...(op === 'between' && { selected: '' }),
+        },
+        'Is in between',
+      ),
+    ];
   }
 
   /**
@@ -859,7 +1008,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    * Returns the current input value of the dialog.
    */
   get value(): InteractiveFilterDialog.FilterValue {
-    return this._filterValue
+    return this._filterValue;
   }
 
   /**
@@ -893,23 +1042,23 @@ export class InteractiveFilterDialog extends BoxPanel {
   private _model: ViewBasedJSONModel;
 
   // Cell metadata
-  private _columnDType: string = 'number';
-  private _columnIndex: number = 0;
+  private _columnDType = 'number';
+  private _columnIndex = 0;
   private _region: DataModel.CellRegion = 'column-header';
 
   // Menu state
   private _mode: 'condition' | 'value' = 'value';
   private _filterOperator: Transform.FilterOperator = '<';
-  private _filterValue: InteractiveFilterDialog.FilterValue
+  private _filterValue: InteractiveFilterDialog.FilterValue;
 
   // Phosphor widgets
-  private _uniqueValueGrid: DataGrid
-  private _filterByConditionWidget: Widget
-  private _titleWidget: Widget
-  private _applyWidget: Widget
+  private _uniqueValueGrid: DataGrid;
+  private _filterByConditionWidget: Widget;
+  private _titleWidget: Widget;
+  private _applyWidget: Widget;
 
   // Unique value state
-  private _uniqueValueStateManager: UniqueValueStateManager
+  private _uniqueValueStateManager: UniqueValueStateManager;
 }
 
 /**
@@ -920,18 +1069,18 @@ export namespace InteractiveFilterDialog {
    * An options object for creating an `InteractiveFilterDialog`.
    */
   export interface IOptions {
-    model: ViewBasedJSONModel
+    model: ViewBasedJSONModel;
   }
 
   /**
    * A type alias for various filter modes.
    */
-  export type FilterMode = 'condition' | 'value'
+  export type FilterMode = 'condition' | 'value';
 
   /**
    * Type alias for valid input element values.
    */
-  export type FilterValue = Transform.FilterValue | undefined | undefined[]
+  export type FilterValue = Transform.FilterValue | undefined | undefined[];
 
   /**
    * An options object for the `open` method of this item.
@@ -940,39 +1089,39 @@ export namespace InteractiveFilterDialog {
     /**
      * The client X coordinate of the menu location.
      */
-    x: number,
+    x: number;
 
     /**
      * The client Y coordinate of the menu location.
      */
-    y: number,
+    y: number;
 
     /**
      * The CellRegion of the `cellClick` that triggered this call.
      */
-    region: DataModel.CellRegion,
+    region: DataModel.CellRegion;
 
     /**
      * The column index of the `cellClick` that triggered this call.
      */
-    columnIndex: number,
+    columnIndex: number;
 
     /**
      * Disallow repositioning of the X coordinates to prevent the menu from
      * extending out of the window.
      */
-    forceX: boolean,
+    forceX: boolean;
 
     /**
      * Disallow repositioning of the Y coordinates to prevent the menu from
      * extending out of the window.
      */
-    forceY: boolean
+    forceY: boolean;
 
     /**
      * Selects if widget will open in `condition` or `value` mode.
      */
-    mode: FilterMode
+    mode: FilterMode;
   }
 }
 
@@ -986,18 +1135,18 @@ export class UniqueValueStateManager {
   }
 
   has(region: DataModel.CellRegion, columnIndex: number, value: any): boolean {
-    const key = this.getKeyName(region, columnIndex)
+    const key = this.getKeyName(region, columnIndex);
     return this._state.hasOwnProperty(key) && this._state[key].has(value);
   }
 
   getKeyName(region: DataModel.CellRegion, columnIndex: number): string {
-    return `${region}:${columnIndex}`
+    return `${region}:${columnIndex}`;
   }
 
   add(region: DataModel.CellRegion, columnIndex: number, value: any): void {
     const key = this.getKeyName(region, columnIndex);
     if (this._state.hasOwnProperty(key)) {
-      this._state[key].add(value)
+      this._state[key].add(value);
     } else {
       this._state[key] = new Set<number | string>();
       this._state[key].add(value);
@@ -1007,33 +1156,33 @@ export class UniqueValueStateManager {
   }
 
   remove(region: DataModel.CellRegion, columnIndex: number, value: any): void {
-    const key = this.getKeyName(region, columnIndex)
+    const key = this.getKeyName(region, columnIndex);
 
     if (this._state.hasOwnProperty(key)) {
-      this._state[key].delete(value)
+      this._state[key].delete(value);
     }
     const msg = new PaintRequest('all', 0, 0, 0, 0);
     MessageLoop.postMessage(this._grid.viewport, msg);
   }
 
   getValues(region: DataModel.CellRegion, columnIndex: number): any[] {
-    const key = this.getKeyName(region, columnIndex)
+    const key = this.getKeyName(region, columnIndex);
     if (this._state.hasOwnProperty(key)) {
-      return Array.from(this._state[key])
+      return Array.from(this._state[key]);
     } else {
-      return []
+      return [];
     }
   }
 
-  private _state: { [key: string]: Set<number | string> } = {}
-  private _grid: DataGrid
+  private _state: { [key: string]: Set<number | string> } = {};
+  private _grid: DataGrid;
 }
 
 class UniqueValueGridMouseHandler extends BasicMouseHandler {
   constructor(options: UniqueValueGridMouseHandler.IOptions) {
-    super()
-    this._uniqueValuesSelectionState = options.stateManager
-    this._filterDialog = options.dialog
+    super();
+    this._uniqueValuesSelectionState = options.stateManager;
+    this._filterDialog = options.dialog;
   }
 
   /**
@@ -1052,15 +1201,15 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
     const value = grid.dataModel!.data('body', row, 0);
 
     if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
-      this._uniqueValuesSelectionState.remove(region, colIndex, value)
+      this._uniqueValuesSelectionState.remove(region, colIndex, value);
     } else {
-      this._uniqueValuesSelectionState.add(region, colIndex, value)
+      this._uniqueValuesSelectionState.add(region, colIndex, value);
     }
   }
 
-  private _uniqueValuesSelectionState: UniqueValueStateManager
-  private _filterDialog: InteractiveFilterDialog
-};
+  private _uniqueValuesSelectionState: UniqueValueStateManager;
+  private _filterDialog: InteractiveFilterDialog;
+}
 
 class PaintRequest extends ConflatableMessage {
   /**
@@ -1076,7 +1225,13 @@ class PaintRequest extends ConflatableMessage {
    *
    * @param c2 - The bottom-right column of the dirty region.
    */
-  constructor(region: DataModel.CellRegion | 'all', r1: number, c1: number, r2: number, c2: number) {
+  constructor(
+    region: DataModel.CellRegion | 'all',
+    r1: number,
+    c1: number,
+    r2: number,
+    c2: number,
+  ) {
     super('paint-request');
     this._region = region;
     this._r1 = r1;
@@ -1159,16 +1314,14 @@ class PaintRequest extends ConflatableMessage {
  * The namespace for the `UniqueValueStateManager` class statics.
  */
 export namespace UniqueValueStateManager {
-
   /**
    * An options object for initializing an UniqueValueStateManager.
    */
   export interface IOptions {
-
     /**
      * The DataGrid to manage selection state for
      */
-    grid: DataGrid
+    grid: DataGrid;
   }
 }
 
@@ -1183,11 +1336,11 @@ export namespace UniqueValueGridMouseHandler {
     /**
      * The state manager linked to the grid for this mouse handler.
      */
-    stateManager: UniqueValueStateManager
+    stateManager: UniqueValueStateManager;
 
     /**
      * The dialog linked to this mouse handler.
      */
-    dialog: InteractiveFilterDialog
+    dialog: InteractiveFilterDialog;
   }
 }

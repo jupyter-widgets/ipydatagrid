@@ -1,30 +1,20 @@
-import {
-  DataModel, MutableDataModel
-} from '@lumino/datagrid';
+import { DataModel, MutableDataModel } from '@lumino/datagrid';
+
+import { each } from '@lumino/algorithm';
 
 import {
-  each
-} from '@lumino/algorithm';
-
-import {
-  ReadonlyJSONObject, ReadonlyJSONValue, JSONExt
+  ReadonlyJSONObject,
+  ReadonlyJSONValue,
+  JSONExt,
 } from '@lumino/coreutils';
 
-import {
-  ISignal, Signal
-} from '@lumino/signaling';
+import { ISignal, Signal } from '@lumino/signaling';
 
-import {
-  Transform
-} from './transform';
+import { Transform } from './transform';
 
-import {
-  View
-} from './view';
+import { View } from './view';
 
-import {
-  TransformStateManager
-} from './transformStateManager';
+import { TransformStateManager } from './transformStateManager';
 
 import { ArrayUtils } from '../utils';
 
@@ -32,7 +22,6 @@ import { ArrayUtils } from '../utils';
  * A view based data model implementation for in-memory JSON data.
  */
 export class ViewBasedJSONModel extends MutableDataModel {
-
   /**
    * Create a data model with static JSON data.
    *
@@ -46,15 +35,20 @@ export class ViewBasedJSONModel extends MutableDataModel {
     // Note: This will also result in the `model-reset` signal being sent.
     this._transformState.changed.connect((sender, value) => {
       this.currentView = this._transformState.createView(this._dataset);
-      this._transformSignal.emit(value)
-    })
+      this._transformSignal.emit(value);
+    });
     // first run: generate a list of indices corresponding
     // to the locations of multi-index arrays.
-    const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(this);
+    const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(
+      this,
+    );
     // second run: map the index locations generated above to
     // the dataset so we have access to the multi index arrays
     // only.
-    let retVal = ArrayUtils.generateDataGridMergedCellLocations(this, multiIndexArrayLocations);
+    let retVal = ArrayUtils.generateDataGridMergedCellLocations(
+      this,
+      multiIndexArrayLocations,
+    );
     // final run: we need to check that the merging hierarchy makes sense. i.e. we don't
     // want to render a merged range below a non-merged range. This function will check
     // that this requirement is met. If it is not, we simply render each cell individually
@@ -73,8 +67,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
   private _updateDataset(data: ViewBasedJSONModel.IData): void {
     this._dataset = data;
     this._updatePrimaryKeyMap();
-    let view = new View(this._dataset);
-    this.currentView = view
+    const view = new View(this._dataset);
+    this.currentView = view;
   }
 
   /**
@@ -84,21 +78,20 @@ export class ViewBasedJSONModel extends MutableDataModel {
   private _updatePrimaryKeyMap(): void {
     this._primaryKeyMap.clear();
 
-    const primaryKey = this._dataset.schema.primaryKey
-    
-    each(this._dataset.data, (rowData, index) => {
-      let keys = primaryKey.map(key => rowData[key])
-      this._primaryKeyMap.set(JSON.stringify(keys), index)
-    })
-  }
+    const primaryKey = this._dataset.schema.primaryKey;
 
+    each(this._dataset.data, (rowData, index) => {
+      const keys = primaryKey.map((key) => rowData[key]);
+      this._primaryKeyMap.set(JSON.stringify(keys), index);
+    });
+  }
 
   areCellsMerged(cell1: number[], cell2: number[]): boolean {
     const [row2, col2] = cell2;
 
     const siblings = this.getMergedSiblingCells(cell1);
 
-    for (let sibling of siblings) {
+    for (const sibling of siblings) {
       if (row2 === sibling[0] && col2 === sibling[1]) {
         return true;
       }
@@ -106,7 +99,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
     return false;
   }
-    /**
+  /**
    * Returns a list of [row, column] cells indices forming a merged cell group
    * @param row row index
    * @param column column index
@@ -117,9 +110,9 @@ export class ViewBasedJSONModel extends MutableDataModel {
       return [];
     }
 
-    for (let cellGroup of this._mergedCellLocations[row]) {
-      for (let rowCell of cellGroup) {
-        let [rowIndex, columnIndex] = rowCell;
+    for (const cellGroup of this._mergedCellLocations[row]) {
+      for (const rowCell of cellGroup) {
+        const [rowIndex, columnIndex] = rowCell;
         if (row === rowIndex && column == columnIndex) {
           return cellGroup;
         }
@@ -136,7 +129,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @returns - The row count for the region.
    */
   rowCount(region: DataModel.RowRegion): number {
-    return this.currentView.rowCount(region)
+    return this.currentView.rowCount(region);
   }
 
   /**
@@ -147,7 +140,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @returns - The column count for the region.
    */
   columnCount(region: DataModel.ColumnRegion): number {
-    return this.currentView.columnCount(region)
+    return this.currentView.columnCount(region);
   }
 
   /**
@@ -159,7 +152,11 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @returns The metadata for the column.
    */
-  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
+  metadata(
+    region: DataModel.CellRegion,
+    row: number,
+    column: number,
+  ): DataModel.Metadata {
     return this.currentView.metadata(region, row, column);
   }
 
@@ -190,10 +187,27 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param value - The new value to update the indicated cell with.
    *
    */
-  setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
-    const datasetRow = this.getDatasetRowFromView(region, row)
-    this.updateCellValue({ region: region, row: datasetRow, column: column, value: value });
-    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1 });
+  setData(
+    region: DataModel.CellRegion,
+    row: number,
+    column: number,
+    value: any,
+  ): boolean {
+    const datasetRow = this.getDatasetRowFromView(region, row);
+    this.updateCellValue({
+      region: region,
+      row: datasetRow,
+      column: column,
+      value: value,
+    });
+    this.emitChanged({
+      type: 'cells-changed',
+      region: region,
+      row: row,
+      column: column,
+      rowSpan: 1,
+      columnSpan: 1,
+    });
 
     return true;
   }
@@ -210,9 +224,26 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param value - The new value to update the indicated cell with.
    *
    */
-  setModelData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
-    this.updateCellValue({ region: region, row: row, column: column, value: value });
-    this.emitChanged({ type: 'cells-changed', region: region, row: row, column: column, rowSpan: 1, columnSpan: 1 });
+  setModelData(
+    region: DataModel.CellRegion,
+    row: number,
+    column: number,
+    value: any,
+  ): boolean {
+    this.updateCellValue({
+      region: region,
+      row: row,
+      column: column,
+      value: value,
+    });
+    this.emitChanged({
+      type: 'cells-changed',
+      region: region,
+      row: row,
+      column: column,
+      rowSpan: 1,
+      columnSpan: 1,
+    });
 
     return true;
   }
@@ -232,13 +263,16 @@ export class ViewBasedJSONModel extends MutableDataModel {
         if (value.name == name) {
           index = i - primaryKeysLength;
         }
-      })
+      });
     }
     return index;
   }
 
-  public columnIndexToName(index: number, region: DataModel.ColumnRegion): string {
-    let schema = this.dataset.schema;
+  public columnIndexToName(
+    index: number,
+    region: DataModel.ColumnRegion,
+  ): string {
+    const schema = this.dataset.schema;
     if (region == 'row-header') {
       return schema.primaryKey[index];
     } else {
@@ -247,13 +281,13 @@ export class ViewBasedJSONModel extends MutableDataModel {
   }
 
   public columnNameToRegion(name: string): DataModel.ColumnRegion {
-    let schema = this.dataset.schema;
+    const schema = this.dataset.schema;
 
     if (schema.primaryKey.includes(name)) {
       return 'row-header';
     } else {
-       return 'body';
-     }
+      return 'body';
+    }
   }
 
   /**
@@ -275,15 +309,15 @@ export class ViewBasedJSONModel extends MutableDataModel {
       : this._dataset.schema.primaryKey;
 
     const indices: number[] = view.dataset.map((val, i) => {
-      const lookupVal = JSON.stringify(primaryKey.map(key => val[key]));
+      const lookupVal = JSON.stringify(primaryKey.map((key) => val[key]));
       const retrievedVal = this._primaryKeyMap.get(lookupVal);
 
-      return typeof retrievedVal === "undefined" ? i : retrievedVal;
+      return typeof retrievedVal === 'undefined' ? i : retrievedVal;
     });
 
     this.dataSync.emit({
       type: 'row-indices-updated',
-      indices: indices
+      indices: indices,
     });
   }
 
@@ -329,7 +363,9 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @param columnIndex - The column index of the metadata to be retrieved.
    */
-  transformMetadata(columnIndex: number): TransformStateManager.IColumn | undefined {
+  transformMetadata(
+    columnIndex: number,
+  ): TransformStateManager.IColumn | undefined {
     return this._transformState.metadata(columnIndex);
   }
 
@@ -340,13 +376,16 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param region - The CellRegion to retrieve unique values for.
    * @param columnIndex - The index to retrieve unique values for.
    */
-  async uniqueValues(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
+  async uniqueValues(
+    region: DataModel.CellRegion,
+    columnIndex: number,
+  ): Promise<any[]> {
     return new Promise((resolve, reject) => {
       const columnName = this.metadata(region, 0, columnIndex)['name'];
-      let uniqueVals = new Set();
-      for (let row of this.dataset.data) {
+      const uniqueVals = new Set();
+      for (const row of this.dataset.data) {
         uniqueVals.add(row[columnName]);
-      };
+      }
       resolve(Array.from(uniqueVals));
     });
   }
@@ -354,11 +393,14 @@ export class ViewBasedJSONModel extends MutableDataModel {
   /**
    * Returns a Promise that resolves to an array of unique values contained in
    * the provided column index after all transforms have been applied.
-   * 
+   *
    * @param region - The CellRegion to retrieve unique values for.
    * @param columnIndex - The index to retrieve unique values for.
    */
-  async uniqueValuesVisible(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
+  async uniqueValuesVisible(
+    region: DataModel.CellRegion,
+    columnIndex: number,
+  ): Promise<any[]> {
     return this._currentView.uniqueValues(region, columnIndex);
   }
 
@@ -383,21 +425,22 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param options - The options for this method.
    */
   getDatasetRowFromView(region: DataModel.CellRegion, row: number): number {
-
     if (region == 'column-header' || region == 'corner-header') {
       return row;
     }
     // Get the index of the row in the full dataset to be updated
-    const primaryKey = (Array.isArray(this._dataset.schema.primaryKey))
-    ? this._dataset.schema.primaryKey
-    : [this._dataset.schema.primaryKey];
+    const primaryKey = Array.isArray(this._dataset.schema.primaryKey)
+      ? this._dataset.schema.primaryKey
+      : [this._dataset.schema.primaryKey];
 
-    let keyValues = primaryKey.map(key =>
-      this._currentView.dataset[row][key]
+    const keyValues = primaryKey.map(
+      (key) => this._currentView.dataset[row][key],
     );
 
-    const lookupIndex: number = this._primaryKeyMap.get(JSON.stringify(keyValues))!;
-    
+    const lookupIndex: number = this._primaryKeyMap.get(
+      JSON.stringify(keyValues),
+    )!;
+
     return lookupIndex;
   }
 
@@ -421,7 +464,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
     this._dataset = {
       data: newData,
-      schema: this._dataset.schema
+      schema: this._dataset.schema,
     };
 
     if (options.syncData) {
@@ -436,8 +479,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
       columnIndex: options.column,
       row: options.row,
       region: options.region,
-      value: options.value
-    })
+      value: options.value,
+    });
 
     // We need to rerun the transforms, as the changed cell may change the order
     // or visibility of other rows
@@ -466,32 +509,34 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param index - The column index to look up.
    */
   getSchemaIndex(region: DataModel.CellRegion, index: number): number {
-    return this.currentView.getSchemaIndex(region, index)
+    return this.currentView.getSchemaIndex(region, index);
   }
 
   /**
    * Deep copies data object and mutates it before
-   * returning a ViewBasedJSONModel of the data. 
+   * returning a ViewBasedJSONModel of the data.
    * ts-ignores are added since the properties to be mutated
-   * are readonly 
-   * 
+   * are readonly
+   *
    * @param data - Data passed in to be transformed
-   * 
+   *
    */
   static fromJsonData(data: ViewBasedJSONModel.IData): ViewBasedJSONModel {
-    const primaryKeyUuid = "ipydguuid";
+    const primaryKeyUuid = 'ipydguuid';
 
-    let newData = <ViewBasedJSONModel.IData><unknown>JSONExt.deepCopy(<ReadonlyJSONObject><unknown>data);
+    const newData = <ViewBasedJSONModel.IData>(
+      (<unknown>JSONExt.deepCopy(<ReadonlyJSONObject>(<unknown>data)))
+    );
 
     //@ts-ignore
     newData.schema.primaryKeyUuid = primaryKeyUuid;
 
-    for (let field of newData.schema.fields) {
+    for (const field of newData.schema.fields) {
       //@ts-ignore
       field.rows = [field.name];
     }
     let count = 0;
-    for (let row of newData.data) {
+    for (const row of newData.data) {
       //@ts-ignore
       row[primaryKeyUuid] = count++;
     }
@@ -500,9 +545,13 @@ export class ViewBasedJSONModel extends MutableDataModel {
   }
 
   private _currentView: View;
-  private _transformSignal = new Signal<this, TransformStateManager.IEvent>(this);
-  private _dataSyncSignal = new Signal<this, ViewBasedJSONModel.IDataSyncEvent>(this);
-  private _primaryKeyMap: Map<ReadonlyJSONValue, number> = new Map()
+  private _transformSignal = new Signal<this, TransformStateManager.IEvent>(
+    this,
+  );
+  private _dataSyncSignal = new Signal<this, ViewBasedJSONModel.IDataSyncEvent>(
+    this,
+  );
+  private _primaryKeyMap: Map<ReadonlyJSONValue, number> = new Map();
 
   protected _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;
@@ -512,8 +561,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
 /**
  * The namespace for the `ViewBasedJSONModel` class statics.
  */
-export
-namespace ViewBasedJSONModel {
+export namespace ViewBasedJSONModel {
   /**
    * An object which describes a column of data in the model.
    *

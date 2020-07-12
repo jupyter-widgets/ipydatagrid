@@ -1,27 +1,17 @@
 // Copyright (c) QuantStack
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  Application, IPlugin
-} from '@lumino/application';
+import { Application, IPlugin } from '@lumino/application';
 
-import {
-  Widget
-} from '@lumino/widgets';
+import { Widget } from '@lumino/widgets';
 
-import {
-  IJupyterWidgetRegistry, WidgetView
-} from '@jupyter-widgets/base';
+import { IJupyterWidgetRegistry, WidgetView } from '@jupyter-widgets/base';
 
-import {
-  IThemeManager
-} from '@jupyterlab/apputils';
+import { IThemeManager } from '@jupyterlab/apputils';
 
 import * as widgetExports from './datagrid';
 
-import {
-  MODULE_NAME, MODULE_VERSION
-} from './version';
+import { MODULE_NAME, MODULE_VERSION } from './version';
 
 const EXTENSION_ID = 'jupyter-datagrid:plugin';
 
@@ -33,24 +23,26 @@ const datagridPlugin: IPlugin<Application<Widget>, void> = {
   requires: [IJupyterWidgetRegistry],
   optional: [IThemeManager as any],
   activate: activateWidgetExtension,
-  autoStart: true
+  autoStart: true,
 };
 
 export default datagridPlugin;
 
-
 /**
  * Activate the widget extension.
  */
-function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWidgetRegistry, themeManager: IThemeManager): void {
+function activateWidgetExtension(
+  app: Application<Widget>,
+  registry: IJupyterWidgetRegistry,
+  themeManager: IThemeManager,
+): void {
   // Exporting a patched DataGridView widget which handles dynamic theme changes
   class DataGridView extends widgetExports.DataGridView {
-
-    initialize(parameters:WidgetView.InitializeParameters) {
+    initialize(parameters: WidgetView.InitializeParameters) {
       if (themeManager.theme != null) {
-         this.isLightTheme = themeManager.isLight(themeManager.theme);
+        this.isLightTheme = themeManager.isLight(themeManager.theme);
       }
-      super.initialize(parameters)
+      super.initialize(parameters);
     }
 
     render() {
@@ -63,7 +55,7 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
 
     private onThemeChanged() {
       if (themeManager.theme != null) {
-          this.isLightTheme = themeManager.isLight(themeManager.theme);
+        this.isLightTheme = themeManager.isLight(themeManager.theme);
       }
       this.updateGridStyle();
       this.default_renderer.onThemeChanged();
@@ -86,7 +78,7 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
     version: MODULE_VERSION,
     exports: {
       ...widgetExports,
-      DataGridView
+      DataGridView,
     },
   });
 }

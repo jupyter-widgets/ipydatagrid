@@ -1,14 +1,8 @@
-import {
-  TextRenderer, CellRenderer, GraphicsContext
-} from '@lumino/datagrid'
+import { TextRenderer, CellRenderer, GraphicsContext } from '@lumino/datagrid';
 
-import {
-  ViewBasedJSONModel
-} from './viewbasedjsonmodel';
+import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
-import {
-  Theme
-} from '../utils';
+import { Theme } from '../utils';
 
 import { TransformStateManager } from './transformStateManager';
 
@@ -18,7 +12,6 @@ import { DataGrid } from './datagrid';
  * A custom cell renderer for headers that provides a menu icon.
  */
 export class HeaderRenderer extends TextRenderer {
-
   constructor(options: HeaderRenderer.IOptions) {
     super(options.textOptions);
     this._isLightTheme = options.isLightTheme;
@@ -32,7 +25,7 @@ export class HeaderRenderer extends TextRenderer {
     return this._grid.dataModel as ViewBasedJSONModel;
   }
 
-   /**
+  /**
    * Draw the background for the cell.
    *
    * @param gc - The graphics context to use for drawing.
@@ -40,10 +33,13 @@ export class HeaderRenderer extends TextRenderer {
    * @param config - The configuration data for the cell.
    */
   drawBackground(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
-    const merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+    const merges =
+      config.region === 'column-header'
+        ? this.model.getMergedSiblingCells([config.row, config.column])
+        : [];
 
     // Resolve the background color for the cell.
-    let color = CellRenderer.resolveOption(this.backgroundColor, config);
+    const color = CellRenderer.resolveOption(this.backgroundColor, config);
 
     // Bail if there is no background color to draw.
     if (!color) {
@@ -54,20 +50,23 @@ export class HeaderRenderer extends TextRenderer {
       let xStart = Number.MAX_SAFE_INTEGER;
       let yStart = Number.MAX_SAFE_INTEGER;
       let xEnd = Number.MIN_SAFE_INTEGER;
-      let yEnd = Number.MIN_SAFE_INTEGER
+      let yEnd = Number.MIN_SAFE_INTEGER;
 
       const grid = this._grid!;
-      for (let merge of merges) {
+      for (const merge of merges) {
         const [row, column] = merge;
 
-        const headerOffset = config.region === 'corner-header' ? 0 : this._grid!.headerWidth -this._grid.scrollX;
-        let x1 = grid.columnOffset("body", column) + headerOffset;
-        let y1 = grid.rowOffset("column-header", row);
-        let x2 = x1 + grid.columnSize("body", column)
-        let y2 = y1 + grid.rowSize("column-header", row);
+        const headerOffset =
+          config.region === 'corner-header'
+            ? 0
+            : this._grid!.headerWidth - this._grid.scrollX;
+        const x1 = grid.columnOffset('body', column) + headerOffset;
+        const y1 = grid.rowOffset('column-header', row);
+        const x2 = x1 + grid.columnSize('body', column);
+        const y2 = y1 + grid.rowSize('column-header', row);
         xStart = Math.min(xStart, x1);
-        yStart = Math.min(yStart, y1);    
-        xEnd = Math.max(xEnd, x2);  
+        yStart = Math.min(yStart, y1);
+        xEnd = Math.max(xEnd, x2);
         yEnd = Math.max(yEnd, y2);
       }
 
@@ -76,10 +75,9 @@ export class HeaderRenderer extends TextRenderer {
 
       // Fill the cell with the background color.
       gc.fillStyle = color;
-      
+
       gc.fillRect(xStart, yStart, width, height);
-    }
-    else {
+    } else {
       // Fill the cell with the background color.
       gc.fillStyle = color;
       gc.fillRect(config.x, config.y, config.width, config.height);
@@ -87,15 +85,15 @@ export class HeaderRenderer extends TextRenderer {
   }
 
   /**
-  * Draw the text for the cell.
-  *
-  * @param gc - The graphics context to use for drawing.
-  *
-  * @param config - The configuration data for the cell.
-  */
+   * Draw the text for the cell.
+   *
+   * @param gc - The graphics context to use for drawing.
+   *
+   * @param config - The configuration data for the cell.
+   */
   drawText(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     // Resolve the font for the cell.
-    let font = CellRenderer.resolveOption(this.font, config);
+    const font = CellRenderer.resolveOption(this.font, config);
 
     // Bail if there is no font to draw.
     if (!font) {
@@ -103,7 +101,7 @@ export class HeaderRenderer extends TextRenderer {
     }
 
     // Resolve the text color for the cell.
-    let color = CellRenderer.resolveOption(this.textColor, config);
+    const color = CellRenderer.resolveOption(this.textColor, config);
 
     // Bail if there is no text color to draw.
     if (!color) {
@@ -111,15 +109,18 @@ export class HeaderRenderer extends TextRenderer {
     }
 
     // Format the cell value to text.
-    let format = this.format;
-    let text = format(config);
+    const format = this.format;
+    const text = format(config);
 
     // Bail if there is no text to draw.
     if (!text) {
       return;
     }
 
-    const merges = config.region === 'column-header' ? this.model.getMergedSiblingCells([config.row, config.column]) : [];
+    const merges =
+      config.region === 'column-header'
+        ? this.model.getMergedSiblingCells([config.row, config.column])
+        : [];
 
     let width = config.width;
     let height = config.height;
@@ -130,20 +131,23 @@ export class HeaderRenderer extends TextRenderer {
       let xStart = Number.MAX_SAFE_INTEGER;
       let yStart = Number.MAX_SAFE_INTEGER;
       let xEnd = Number.MIN_SAFE_INTEGER;
-      let yEnd = Number.MIN_SAFE_INTEGER
+      let yEnd = Number.MIN_SAFE_INTEGER;
 
-      for (let merge of merges) {
+      for (const merge of merges) {
         const [row, column] = merge;
         const grid = this._grid!;
 
-        const offsetX = config.region === 'corner-header' ? 0 : this._grid!.headerWidth - this._grid.scrollX;
-        let x1 = grid.columnOffset("body", column) + offsetX;
-        let y1 = grid.rowOffset("column-header", row);
-        let x2 = x1 + grid.columnSize("body", column)
-        let y2 = y1 + grid.rowSize("column-header", row);
+        const offsetX =
+          config.region === 'corner-header'
+            ? 0
+            : this._grid!.headerWidth - this._grid.scrollX;
+        const x1 = grid.columnOffset('body', column) + offsetX;
+        const y1 = grid.rowOffset('column-header', row);
+        const x2 = x1 + grid.columnSize('body', column);
+        const y2 = y1 + grid.rowSize('column-header', row);
         xStart = Math.min(xStart, x1);
-        yStart = Math.min(yStart, y1);    
-        xEnd = Math.max(xEnd, x2);  
+        yStart = Math.min(yStart, y1);
+        xEnd = Math.max(xEnd, x2);
         yEnd = Math.max(yEnd, y2);
 
         width = xEnd - xStart;
@@ -154,11 +158,11 @@ export class HeaderRenderer extends TextRenderer {
     }
 
     // Resolve the vertical and horizontal alignment.
-    let vAlign = CellRenderer.resolveOption(this.verticalAlignment, config);
-    let hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
+    const vAlign = CellRenderer.resolveOption(this.verticalAlignment, config);
+    const hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
-    let boxHeight = height - (vAlign === 'center' ? 1 : 2);
+    const boxHeight = height - (vAlign === 'center' ? 1 : 2);
 
     // Bail if the text box has no effective size.
     if (boxHeight <= 0) {
@@ -166,7 +170,7 @@ export class HeaderRenderer extends TextRenderer {
     }
 
     // Compute the text height for the gc font.
-    let textHeight = TextRenderer.measureFontHeight(font);
+    const textHeight = TextRenderer.measureFontHeight(font);
 
     // Set up the text position variables.
     let textX: number;
@@ -218,33 +222,37 @@ export class HeaderRenderer extends TextRenderer {
     // Draw the text
     gc.fillText(text, textX, textY);
 
-
     // Check if not bottom row of 'column-header' CellRegion
-    if (config.region === 'column-header' && config.row !== this._grid.dataModel!.rowCount('column-header') - 1) {
+    if (
+      config.region === 'column-header' &&
+      config.row !== this._grid.dataModel!.rowCount('column-header') - 1
+    ) {
       return;
     }
 
     // Fill the area behind the menu icon
     // Note: This seems to perform better than adding a clip path
-    const backgroundSize = HeaderRenderer.iconWidth
-      + HeaderRenderer.iconWidth
-      + HeaderRenderer.iconSpacing
-      + 2 * HeaderRenderer.buttonPadding;
+    const backgroundSize =
+      HeaderRenderer.iconWidth +
+      HeaderRenderer.iconWidth +
+      HeaderRenderer.iconSpacing +
+      2 * HeaderRenderer.buttonPadding;
 
     gc.fillStyle = CellRenderer.resolveOption(this.backgroundColor, config);
     gc.fillRect(
-      (config.x + config.width - backgroundSize),
-      (config.y + config.height - backgroundSize),
+      config.x + config.width - backgroundSize,
+      config.y + config.height - backgroundSize,
       backgroundSize,
-      backgroundSize
+      backgroundSize,
     );
 
-    const iconStart = config.x
-      + config.width
-      - HeaderRenderer.iconWidth
-      - HeaderRenderer.buttonPadding;
+    const iconStart =
+      config.x +
+      config.width -
+      HeaderRenderer.iconWidth -
+      HeaderRenderer.buttonPadding;
 
-    // Draw filter icon 
+    // Draw filter icon
     this.drawFilterIcon(gc, config);
     // Sets filter icon to gray fill
     gc.fillStyle = Theme.getBorderColor(1);
@@ -255,24 +263,21 @@ export class HeaderRenderer extends TextRenderer {
       // Get cell metadata
       const schemaIndex = this.model.getSchemaIndex(
         config.region,
-        config.column
+        config.column,
       );
 
-      const colMetaData: TransformStateManager.IColumn | undefined =
-        this.model.transformMetadata(schemaIndex);
+      const colMetaData:
+        | TransformStateManager.IColumn
+        | undefined = this.model.transformMetadata(schemaIndex);
 
       // Fill filter icon if filter applied
-      if (colMetaData
-        && (colMetaData['filter'])) {
-
+      if (colMetaData && colMetaData['filter']) {
         gc.fillStyle = Theme.getBrandColor(this._isLightTheme ? 8 : 6);
         gc.fill();
       }
 
       // Fill sort icon if sort applied
-      if (colMetaData
-        && colMetaData['sort']) {
-
+      if (colMetaData && colMetaData['sort']) {
         // Display ascending or descending icon depending on order
         if (colMetaData['sort'].desc) {
           this.drawSortArrow(gc, config, iconStart, false);
@@ -287,82 +292,82 @@ export class HeaderRenderer extends TextRenderer {
 
   /**
    * Draw the filter icon for the cell
-   * 
+   *
    * @param gc - The graphics context to use for drawing.
    *
    * @param config - The configuration data for the cell.
    */
   drawFilterIcon(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
+    const filterIconStart =
+      config.x +
+      config.width -
+      HeaderRenderer.iconWidth -
+      HeaderRenderer.buttonPadding;
 
-    const filterIconStart = config.x
-      + config.width
-      - HeaderRenderer.iconWidth
-      - HeaderRenderer.buttonPadding;
-
-    let filterRightStemWidthX: number = HeaderRenderer.iconWidth / 2 + 1;
-    let filterLeftStemWidthX: number = HeaderRenderer.iconWidth / 2 - 1;
-    let filterTop: number = config.height - HeaderRenderer.iconHeight - 1 + config.y;
+    const filterRightStemWidthX: number = HeaderRenderer.iconWidth / 2 + 1;
+    const filterLeftStemWidthX: number = HeaderRenderer.iconWidth / 2 - 1;
+    const filterTop: number =
+      config.height - HeaderRenderer.iconHeight - 1 + config.y;
 
     gc.beginPath();
     // Start drawing in top left of filter icon
-    gc.moveTo(
-      filterIconStart,
-      filterTop
-    );
+    gc.moveTo(filterIconStart, filterTop);
 
-    gc.lineTo(filterIconStart + HeaderRenderer.iconWidth,
-      filterTop);
+    gc.lineTo(filterIconStart + HeaderRenderer.iconWidth, filterTop);
     // Y is the y value of the top of the stem
-    gc.lineTo(filterIconStart + filterRightStemWidthX,
-      config.y + config.height - HeaderRenderer.iconHeight + 2);
+    gc.lineTo(
+      filterIconStart + filterRightStemWidthX,
+      config.y + config.height - HeaderRenderer.iconHeight + 2,
+    );
     // Y is the y value of the bottom of the stem
-    gc.lineTo(filterIconStart + filterRightStemWidthX,
-      config.y + config.height - 1.5 * HeaderRenderer.buttonPadding);
-    gc.lineTo(filterIconStart + filterLeftStemWidthX,
-      config.y + config.height - 2 * HeaderRenderer.buttonPadding);
-    gc.lineTo(filterIconStart + filterLeftStemWidthX,
-      config.y + config.height - HeaderRenderer.iconHeight + 2);
+    gc.lineTo(
+      filterIconStart + filterRightStemWidthX,
+      config.y + config.height - 1.5 * HeaderRenderer.buttonPadding,
+    );
+    gc.lineTo(
+      filterIconStart + filterLeftStemWidthX,
+      config.y + config.height - 2 * HeaderRenderer.buttonPadding,
+    );
+    gc.lineTo(
+      filterIconStart + filterLeftStemWidthX,
+      config.y + config.height - HeaderRenderer.iconHeight + 2,
+    );
     gc.closePath();
-
   }
 
   /**
-   * Draw the ascending and descending sort icons for the cell 
-   * 
+   * Draw the ascending and descending sort icons for the cell
+   *
    * @param gc - The graphics context to use for drawing.
    *
    * @param config - The configuration data for the cell.
-   * 
+   *
    * @param filterIconStart - The bottom right corner of drawing area.
-   * 
+   *
    * @param asc - Indicates whether to draw ascending or descending icon.
    */
-  drawSortArrow(gc: GraphicsContext, config: CellRenderer.CellConfig, filterIconStart: number, asc: boolean): void {
-
-    let arrowWidth = HeaderRenderer.iconWidth - 2;
-    const sortIconStart = filterIconStart
-      - HeaderRenderer.iconSpacing;
-    let ascArrowRightStemWidth: number = sortIconStart
-      - arrowWidth / 2
-      + 0.5;
-    let descArrowRightStemWidth: number = sortIconStart
-      - arrowWidth / 2
-      - 0.5;
-    let arrowHeadSideY: number = config.height
-    + config.y
-      - HeaderRenderer.buttonPadding
-      - HeaderRenderer.iconHeight
-      + 4;
-    let arrowMiddle: number = sortIconStart
-      - arrowWidth / 2;
-    let ascArrowTipY: number = config.height
-      + config.y
-      - HeaderRenderer.iconHeight
-      - 1;
-    let ascArrowBottomY: number = config.height
-      - 8
-      + config.y
-      + HeaderRenderer.buttonPadding;
+  drawSortArrow(
+    gc: GraphicsContext,
+    config: CellRenderer.CellConfig,
+    filterIconStart: number,
+    asc: boolean,
+  ): void {
+    const arrowWidth = HeaderRenderer.iconWidth - 2;
+    const sortIconStart = filterIconStart - HeaderRenderer.iconSpacing;
+    const ascArrowRightStemWidth: number = sortIconStart - arrowWidth / 2 + 0.5;
+    const descArrowRightStemWidth: number =
+      sortIconStart - arrowWidth / 2 - 0.5;
+    const arrowHeadSideY: number =
+      config.height +
+      config.y -
+      HeaderRenderer.buttonPadding -
+      HeaderRenderer.iconHeight +
+      4;
+    const arrowMiddle: number = sortIconStart - arrowWidth / 2;
+    const ascArrowTipY: number =
+      config.height + config.y - HeaderRenderer.iconHeight - 1;
+    const ascArrowBottomY: number =
+      config.height - 8 + config.y + HeaderRenderer.buttonPadding;
 
     gc.beginPath();
 
@@ -371,8 +376,7 @@ export class HeaderRenderer extends TextRenderer {
       // Y is the tip of the ascending arrow
       gc.moveTo(arrowMiddle, ascArrowTipY);
       gc.lineTo(sortIconStart, arrowHeadSideY);
-      gc.lineTo(sortIconStart,
-        arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart, arrowHeadSideY + 1);
 
       // Draw to middle of arrow
       gc.lineTo(ascArrowRightStemWidth, arrowHeadSideY + 1);
@@ -380,52 +384,40 @@ export class HeaderRenderer extends TextRenderer {
       // Y is the bottom of the arrow stem
       gc.lineTo(arrowMiddle + 0.5, ascArrowBottomY);
       gc.lineTo(arrowMiddle - 0.5, ascArrowBottomY);
-      gc.lineTo(arrowMiddle - 0.5,
-        arrowHeadSideY + 1);
-      gc.lineTo(sortIconStart - arrowWidth,
-        arrowHeadSideY + 1);
-      gc.lineTo(sortIconStart - arrowWidth,
-        arrowHeadSideY);
-
+      gc.lineTo(arrowMiddle - 0.5, arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart - arrowWidth, arrowHeadSideY + 1);
+      gc.lineTo(sortIconStart - arrowWidth, arrowHeadSideY);
     } else {
-
       // Draw starting in middle of arrow
       // Y is the tip of the descending arrow
       gc.moveTo(arrowMiddle, ascArrowBottomY);
-      gc.lineTo(sortIconStart - arrowWidth,
-        arrowHeadSideY + 4.5);
-      gc.lineTo(sortIconStart - arrowWidth,
-        arrowHeadSideY + 3.5);
+      gc.lineTo(sortIconStart - arrowWidth, arrowHeadSideY + 4.5);
+      gc.lineTo(sortIconStart - arrowWidth, arrowHeadSideY + 3.5);
 
       // Draw to middle of arrow
-      gc.lineTo(descArrowRightStemWidth,
-        arrowHeadSideY + 3.5);
+      gc.lineTo(descArrowRightStemWidth, arrowHeadSideY + 3.5);
 
       // Y is the bottom of the arrow stem
       gc.lineTo(descArrowRightStemWidth, ascArrowTipY);
       gc.lineTo(arrowMiddle + 0.5, ascArrowTipY);
 
       // Draw left side of descending arrow
-      gc.lineTo(arrowMiddle + 0.5,
-        arrowHeadSideY + 3.5);
-      gc.lineTo(sortIconStart,
-        arrowHeadSideY + 3.5);
-      gc.lineTo(sortIconStart,
-        arrowHeadSideY + 4.5);
+      gc.lineTo(arrowMiddle + 0.5, arrowHeadSideY + 3.5);
+      gc.lineTo(sortIconStart, arrowHeadSideY + 3.5);
+      gc.lineTo(sortIconStart, arrowHeadSideY + 4.5);
     }
     gc.closePath();
-
   }
 
   /**
    * Indicates the size of the menu icon, to support the current implementation
    * of hit testing.
    */
-  static buttonSize: number = 11;
-  static iconHeight: number = 12;
-  static iconWidth: number = 7;
-  static buttonPadding: number = 3;
-  static iconSpacing: number = 1.5;
+  static buttonSize = 11;
+  static iconHeight = 12;
+  static iconWidth = 7;
+  static buttonPadding = 3;
+  static iconSpacing = 1.5;
 
   private _isLightTheme: boolean;
   private _grid: DataGrid;
@@ -435,12 +427,10 @@ export class HeaderRenderer extends TextRenderer {
  * The namespace for the `HeaderRenderer` class statics.
  */
 export namespace HeaderRenderer {
-
   /**
    * An options object for initializing a renderer.
    */
   export interface IOptions {
-
     /**
      * The data model this renderer should get metadata from.
      */

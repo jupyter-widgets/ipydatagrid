@@ -1,29 +1,19 @@
-import {
-  DataGrid
-} from './datagrid';
+import { DataGrid } from './datagrid';
 
-import {
-  DataModel
-} from '@lumino/datagrid';
+import { DataModel } from '@lumino/datagrid';
 
-import {
-  CommandRegistry
-} from '@lumino/commands'
+import { CommandRegistry } from '@lumino/commands';
 
-import {
-  Menu
-} from '@lumino/widgets';
+import { Menu } from '@lumino/widgets';
 
 /**
  * An object which provides context menus for the data grid.
- * 
+ *
  * #### Notes
  * This item creates one Menu widget, then changes it's items based on
- * the `cellClick` signal from `DataGrid`. 
+ * the `cellClick` signal from `DataGrid`.
  */
-export
-  abstract class GridContextMenu {
-
+export abstract class GridContextMenu {
   /**
    * Construct a new grid context menu.
    *
@@ -37,9 +27,9 @@ export
   /**
    * Opens the context menu in reponse to the `cellClick` signal of the
    * data grid.
-   * 
+   *
    * @param grid - The "sender" of the signal.
-   * 
+   *
    * @param hit  - The "value" of the signal.
    */
   abstract open(grid: DataGrid, hit: DataGrid.HitTestResult): void;
@@ -48,51 +38,47 @@ export
    * The menu widget which displays the relevant context items.
    */
   protected readonly _menu: Menu;
-
 }
 
 /**
  * The namespace for the `GridContextMenu` class statics.
  */
-export
-namespace GridContextMenu {
+export namespace GridContextMenu {
   /**
    * An options object for initializing a data grid.
    */
-  export
-    interface IOptions {
-
+  export interface IOptions {
     /**
      * The data grid the context menu should be attached to.
      */
-    grid: DataGrid,
+    grid: DataGrid;
 
     /**
      * The command registry to use with the context menu.
      */
-    commands: CommandRegistry
+    commands: CommandRegistry;
 
     /**
      * The custom renderer to use to render menu items.
      */
-    renderer?: Menu.Renderer
+    renderer?: Menu.Renderer;
   }
 }
 
 /**
  * An WIP object which provides context menus for the data grid.
- * 
+ *
  * #### Notes
- * This is primarily here for demo purposes to demonstrate how we may want to 
+ * This is primarily here for demo purposes to demonstrate how we may want to
  * manage context menus.
  */
 export class FeatherGridContextMenu extends GridContextMenu {
   /**
    * Opens the context menu in reponse to the `cellClick` signal of the
    * data grid.
-   * 
+   *
    * @param grid - The "sender" of the signal.
-   * 
+   *
    * @param hit  - The "value" of the signal.
    */
   open(grid: DataGrid, hit: DataGrid.HitTestResult): void {
@@ -105,7 +91,7 @@ export class FeatherGridContextMenu extends GridContextMenu {
       rowIndex: hit.row,
       columnIndex: hit.column,
       clientX: hit.x,
-      clientY: hit.y
+      clientY: hit.y,
     };
 
     // Add menu items based on the region of the grid that was clicked on.
@@ -113,59 +99,59 @@ export class FeatherGridContextMenu extends GridContextMenu {
       case 'column-header':
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.SortAscending,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.SortDescending,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByValueDialog,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.ClearThisFilter,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.ClearFiltersInAllColumns,
-          args: args
+          args: args,
         });
         break;
       case 'corner-header':
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.SortAscending,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.SortDescending,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByValueDialog,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.ClearThisFilter,
-          args: args
+          args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.ClearFiltersInAllColumns,
-          args: args
+          args: args,
         });
         break;
       case 'body':
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.RevertGrid,
-          args: args
+          args: args,
         });
         break;
       default:
@@ -181,21 +167,19 @@ export class FeatherGridContextMenu extends GridContextMenu {
  * The namespace for the `IPyDataGridContextMenu` class statics.
  */
 export namespace FeatherGridContextMenu {
-
   /**
    * An options object for initializing a context menu.
    */
   export interface IOptions {
-
     /**
      * The data grid to listen to clicks on.
      */
-    grid: DataGrid,
+    grid: DataGrid;
 
     /**
      * The command registry used by the menu.
      */
-    commands: CommandRegistry
+    commands: CommandRegistry;
   }
 
   /**
@@ -208,17 +192,17 @@ export namespace FeatherGridContextMenu {
     OpenFilterByValueDialog = 'filterValue:openDialog',
     RevertGrid = 'grid:reset',
     ClearThisFilter = 'filter:clearCurrentColumn',
-    ClearFiltersInAllColumns = 'filter:clearAllColumns'
+    ClearFiltersInAllColumns = 'filter:clearAllColumns',
   }
 
   /**
    * Arguments to be provided to a command for execution.
    */
   export type CommandArgs = {
-    region: DataModel.CellRegion,
-    rowIndex: number,
-    columnIndex: number,
-    clientX: number,
-    clientY: number
-  }
+    region: DataModel.CellRegion;
+    rowIndex: number;
+    columnIndex: number;
+    clientX: number;
+    clientY: number;
+  };
 }

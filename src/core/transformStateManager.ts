@@ -1,66 +1,55 @@
-import {
-  Transform
-} from './transform';
+import { Transform } from './transform';
+
+import { View } from './view';
+
+import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
 import {
-  View
-} from './view';
-
-import {
-  ViewBasedJSONModel
-} from './viewbasedjsonmodel';
-
-import {
-  SortExecutor, FilterExecutor, TransformExecutor
+  SortExecutor,
+  FilterExecutor,
+  TransformExecutor,
 } from './transformExecutors';
 
-import {
-  each
-} from '@lumino/algorithm';
+import { each } from '@lumino/algorithm';
 
-import {
-  JSONExt
-} from '@lumino/coreutils';
+import { JSONExt } from '@lumino/coreutils';
 
-import {
-  Signal, ISignal
-} from '@lumino/signaling'
+import { Signal, ISignal } from '@lumino/signaling';
 
 /**
  * A state manager for tracking the active transformations of a model.
  */
 export class TransformStateManager {
-
   protected _add(transform: Transform.TransformSpec): void {
     // Add column to state if not already present
     if (!this._state.hasOwnProperty(transform.columnIndex)) {
       this._state[transform.columnIndex] = {
         sort: undefined,
-        filter: undefined
-      }
+        filter: undefined,
+      };
     }
 
     // Add the transform to the state
     switch (transform.type) {
-      case ('sort'):
+      case 'sort':
         // Only allow one sort transform.
         // TODO: Support multiple sort columns.
-        for (let key of Object.keys(this._state)) {
+        for (const key of Object.keys(this._state)) {
           this._state[key]['sort'] = undefined;
         }
         this._state[transform.columnIndex]['sort'] = transform;
         break;
-      case ('filter'):
+      case 'filter':
         this._state[transform.columnIndex]['filter'] = transform;
         break;
       default:
         throw 'unreachable';
     }
-  };
+  }
 
   /**
    * Adds the provided transform to the active state.
-   * 
+   *
    * @param transform - The transform to be added.
    */
   add(transform: Transform.TransformSpec): void {
@@ -68,8 +57,8 @@ export class TransformStateManager {
       this._add(transform);
       this._changed.emit({
         type: 'transforms-updated',
-        transforms: this.activeTransforms
-       });
+        transforms: this.activeTransforms,
+      });
     } catch (err) {
       this.clear();
     }
@@ -77,32 +66,32 @@ export class TransformStateManager {
 
   /**
    * Replaces the existing state with the provided list of transforms.
-   * 
+   *
    * @param transforms - The list of transforms to be added.
    */
   replace(transforms: Transform.TransformSpec[]): void {
     // Bail if the transforms are the same as the current state
-    if (JSONExt.deepEqual(transforms, this.activeTransforms)){
+    if (JSONExt.deepEqual(transforms, this.activeTransforms)) {
       return;
     }
-    
+
     try {
       this._state = {};
       each(transforms, (transform) => {
         this._add(transform);
       });
       this._changed.emit({
-        type: 'transforms-updated' ,
-        transforms: this.activeTransforms
+        type: 'transforms-updated',
+        transforms: this.activeTransforms,
       });
     } catch (err) {
       this.clear();
     }
-  };
+  }
 
   /**
    * Creates a new data model View with the active transformations.
-   * 
+   *
    * @param data - The dataset to operate on.
    */
   createView(data: Readonly<ViewBasedJSONModel.IData>): View {
@@ -116,30 +105,32 @@ export class TransformStateManager {
 
   /**
    * Creates an optimzed list of TransformExecutors for the provided data.
-   * 
+   *
    * @param data - The dataset to operate on.
    */
-  private _createExecutors(data: ViewBasedJSONModel.IData): TransformExecutor[] {
+  private _createExecutors(
+    data: ViewBasedJSONModel.IData,
+  ): TransformExecutor[] {
     const sortExecutors: SortExecutor[] = [];
     const filterExecutors: FilterExecutor[] = [];
 
     Object.keys(this._state).forEach((columnIndex) => {
-      let transform: TransformStateManager.IColumn = this._state[columnIndex];
+      const transform: TransformStateManager.IColumn = this._state[columnIndex];
 
       if (transform.sort) {
-        let executor = new SortExecutor({
+        const executor = new SortExecutor({
           field: data.schema.fields[transform.sort.columnIndex]['name'],
           dType: data.schema.fields[transform.sort.columnIndex]['type'],
           desc: transform.sort.desc,
         });
         sortExecutors.push(executor);
-      };
+      }
       if (transform.filter) {
-        let executor = new FilterExecutor({
+        const executor = new FilterExecutor({
           field: data.schema.fields[transform.filter.columnIndex]['name'],
           dType: data.schema.fields[transform.filter.columnIndex]['type'],
           operator: transform.filter.operator,
-          value: transform.filter.value
+          value: transform.filter.value,
         });
         filterExecutors.push(executor);
       }
@@ -151,9 +142,9 @@ export class TransformStateManager {
 
   /**
    * Removes the provided transformation from the active state.
-   * 
+   *
    * @param columnIndex - The index of the column state to be removed.
-   * 
+   *
    * @param transformType - The type of the transform to be removed from state.
    */
   remove(columnIndex: number, transformType: string): void {
@@ -163,7 +154,7 @@ export class TransformStateManager {
     }
 
     try {
-      let columnState = this._state[columnIndex];
+      const columnState = this._state[columnIndex];
       if (transformType === 'sort') {
         columnState.sort = undefined;
       } else if (transformType === 'filter') {
@@ -176,7 +167,7 @@ export class TransformStateManager {
       }
       this._changed.emit({
         type: 'transforms-updated',
-        transforms: this.activeTransforms
+        transforms: this.activeTransforms,
       });
     } catch (err) {
       this.clear();
@@ -185,7 +176,7 @@ export class TransformStateManager {
 
   /**
    * Returns the transform metadata for the provided column.
-   * 
+   *
    * @param columnIndex - The column index of the metadata to be retrieved.
    */
   metadata(columnIndex: number): TransformStateManager.IColumn | undefined {
@@ -203,7 +194,7 @@ export class TransformStateManager {
     this._state = {};
     this._changed.emit({
       type: 'transforms-updated',
-      transforms: this.activeTransforms
+      transforms: this.activeTransforms,
     });
   }
 
@@ -219,12 +210,12 @@ export class TransformStateManager {
    */
   get activeTransforms(): Transform.TransformSpec[] {
     const transforms: Transform.TransformSpec[] = [];
-    each(Object.keys(this._state), (column)=>{
+    each(Object.keys(this._state), (column) => {
       if (this._state[column].sort) {
-        transforms.push(this._state[column].sort!)
+        transforms.push(this._state[column].sort!);
       }
       if (this._state[column].filter) {
-        transforms.push(this._state[column].filter!)
+        transforms.push(this._state[column].filter!);
       }
     });
     return transforms;
@@ -238,19 +229,18 @@ export class TransformStateManager {
  * The namespace for the `TransformStateManager` class statics.
  */
 export namespace TransformStateManager {
-
   /**
    * An object when specifies the schema for a single column of state.
    */
   export interface IColumn {
-    filter: Transform.Filter | undefined,
-    sort: Transform.Sort | undefined
+    filter: Transform.Filter | undefined;
+    sort: Transform.Sort | undefined;
   }
   export interface IState {
-    [key: string]: IColumn
+    [key: string]: IColumn;
   }
   export interface IEvent {
-    readonly type: 'transforms-updated'
-    readonly transforms: Transform.TransformSpec[]
+    readonly type: 'transforms-updated';
+    readonly transforms: Transform.TransformSpec[];
   }
 }
