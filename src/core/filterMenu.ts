@@ -42,6 +42,81 @@ import {
   Theme
 } from '../utils';
 
+class SelectCanvasWidget extends Widget {
+  constructor(options: UniqueValueGridMouseHandler.IOptions) {
+    super();
+    this.canvas = document.createElement("canvas");
+    this.canvas.style.height = "30px";
+    this.node.style.minHeight = "20px";
+    this.canvas.style.color = 'yellow';
+    this.node.appendChild(this.canvas);
+    this.uniqueValueStateManager = options.stateManager;
+  }
+
+  addClickEventListener() {
+    this.canvas.addEventListener('click', (e) => {
+      console.log('been clicked');
+      this.addCheckMark();
+      console.log(this.uniqueValueStateManager)
+    })
+  }
+
+  addCheckMark() {
+    const gc = this.canvas.getContext('2d')!;
+    const BOX_OFFSET = 8;
+    const x = 0;
+    const y = 0;
+    gc.lineWidth = 1;
+
+    gc.beginPath();
+    gc.strokeStyle = "#000000";
+    gc.moveTo(x + BOX_OFFSET + 3, y + BOX_OFFSET + 5);
+    gc.lineTo(x + BOX_OFFSET + 4, y + BOX_OFFSET + 8);
+    gc.lineTo(x + BOX_OFFSET + 8, y + BOX_OFFSET + 2);
+    gc.lineWidth = 2;
+    gc.stroke();
+  }
+
+
+  renderCheckbox() {
+    // const canvas = this.node.querySelector('.select-canvas') as unknown as HTMLCanvasElement;
+    const gc = this.canvas.getContext('2d')!;
+
+    // Set display size (css pixels).
+    const size = 20;
+    this.canvas.style.width = size + "px";
+    this.canvas.style.height = size + "px";
+
+    // Set actual size in memory (scaled to account for extra pixel density).
+    var scale = window.devicePixelRatio; // Change to 1 on retina screens to see blurry canvas.
+    this.canvas.width = Math.floor(size * scale);
+    this.canvas.height = Math.floor(size * scale);
+
+    // Normalize coordinate system to use css pixels.
+    gc.scale(scale, scale);
+
+    
+    const BOX_OFFSET = 8;
+    const x = 0;
+    const y = 0;
+    gc.lineWidth = 1;
+
+    gc.fillStyle = '#ffffff'
+    gc.fillRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10)
+
+    gc.strokeStyle = 'black';
+    gc.strokeRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10)
+  }
+
+  onAfterAttach() {
+    this.renderCheckbox();
+    this.addClickEventListener();
+  }
+
+  private canvas: HTMLCanvasElement;
+  private uniqueValueStateManager: UniqueValueStateManager;
+}
+
 /**
  * An interactive widget to add filter transformations to the data model.
  */
@@ -91,12 +166,20 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._applyWidget = new Widget();
     this._applyWidget.addClass('ipydatagrid-filter-apply')
 
+    // Create new widget
+    const checkbox = new SelectCanvasWidget({
+      stateManager: this._uniqueValueStateManager,
+      dialog: this
+    });
+
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
+    this.addWidget(checkbox);
     this.addWidget(this._filterByConditionWidget);
     this.addWidget(this._uniqueValueGrid);
     this.addWidget(this._applyWidget);
   }
+
 
   /**
    * Checks for any undefined values in `this._filterValue`.
