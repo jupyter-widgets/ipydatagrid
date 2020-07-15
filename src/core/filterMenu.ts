@@ -14,6 +14,10 @@ import {
   DataModel
 } from '@lumino/datagrid';
 
+import { 
+  Signal, ISignal 
+} from '@lumino/signaling';
+
 import {
   ElementExt
 } from '@lumino/domutils';
@@ -41,81 +45,6 @@ import {
 import {
   Theme
 } from '../utils';
-
-class SelectCanvasWidget extends Widget {
-  constructor(options: UniqueValueGridMouseHandler.IOptions) {
-    super();
-    this.canvas = document.createElement("canvas");
-    this.canvas.style.height = "30px";
-    this.node.style.minHeight = "20px";
-    this.canvas.style.color = 'yellow';
-    this.node.appendChild(this.canvas);
-    this.uniqueValueStateManager = options.stateManager;
-  }
-
-  addClickEventListener() {
-    this.canvas.addEventListener('click', (e) => {
-      console.log('been clicked');
-      this.addCheckMark();
-      console.log(this.uniqueValueStateManager)
-    })
-  }
-
-  addCheckMark() {
-    const gc = this.canvas.getContext('2d')!;
-    const BOX_OFFSET = 8;
-    const x = 0;
-    const y = 0;
-    gc.lineWidth = 1;
-
-    gc.beginPath();
-    gc.strokeStyle = "#000000";
-    gc.moveTo(x + BOX_OFFSET + 3, y + BOX_OFFSET + 5);
-    gc.lineTo(x + BOX_OFFSET + 4, y + BOX_OFFSET + 8);
-    gc.lineTo(x + BOX_OFFSET + 8, y + BOX_OFFSET + 2);
-    gc.lineWidth = 2;
-    gc.stroke();
-  }
-
-
-  renderCheckbox() {
-    // const canvas = this.node.querySelector('.select-canvas') as unknown as HTMLCanvasElement;
-    const gc = this.canvas.getContext('2d')!;
-
-    // Set display size (css pixels).
-    const size = 20;
-    this.canvas.style.width = size + "px";
-    this.canvas.style.height = size + "px";
-
-    // Set actual size in memory (scaled to account for extra pixel density).
-    var scale = window.devicePixelRatio; // Change to 1 on retina screens to see blurry canvas.
-    this.canvas.width = Math.floor(size * scale);
-    this.canvas.height = Math.floor(size * scale);
-
-    // Normalize coordinate system to use css pixels.
-    gc.scale(scale, scale);
-
-    
-    const BOX_OFFSET = 8;
-    const x = 0;
-    const y = 0;
-    gc.lineWidth = 1;
-
-    gc.fillStyle = '#ffffff'
-    gc.fillRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10)
-
-    gc.strokeStyle = 'black';
-    gc.strokeRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10)
-  }
-
-  onAfterAttach() {
-    this.renderCheckbox();
-    this.addClickEventListener();
-  }
-
-  private canvas: HTMLCanvasElement;
-  private uniqueValueStateManager: UniqueValueStateManager;
-}
 
 /**
  * An interactive widget to add filter transformations to the data model.
@@ -166,18 +95,44 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._applyWidget = new Widget();
     this._applyWidget.addClass('ipydatagrid-filter-apply')
 
-    // Create new widget
-    const checkbox = new SelectCanvasWidget({
-      stateManager: this._uniqueValueStateManager,
-      dialog: this
-    });
+    // Create the "Select All" widget and connecting to
+    // lumino signal
+    this._selectAllCheckbox = new SelectCanvasWidget();
+    this.connectToCheckbox();
 
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
-    this.addWidget(checkbox);
+    this.addWidget(this._selectAllCheckbox);
     this.addWidget(this._filterByConditionWidget);
     this.addWidget(this._uniqueValueGrid);
     this.addWidget(this._applyWidget);
+  }
+
+  /**
+   * Connects to the "Select All" widget signal and
+   * toggles checking all/none of the unique elements
+   * by adding/removing them from the state object
+   */
+  connectToCheckbox() {
+    this._selectAllCheckbox.checkChanged.connect((sender: SelectCanvasWidget, checked: boolean) => {
+      this.userInteractedWithDialog = true;
+      const colIndex = this._columnIndex;
+      const region = this._region;
+      const uniqueVals = this.model.uniqueValues(
+        region,
+        colIndex
+      );
+    
+      uniqueVals.then(values => {
+        for (let value of values) {
+          if (checked) {
+            this._uniqueValueStateManager.add(region, colIndex, value);
+          } else {
+            this._uniqueValueStateManager.remove(region, colIndex, value);
+          }
+        }
+      });
+    })
   }
 
 
@@ -263,8 +218,9 @@ export class InteractiveFilterDialog extends BoxPanel {
   private _render(): void {
     if (this._mode === 'condition') {
       this._applyWidget.node.style.minHeight = '65px';
-      this._uniqueValueGrid.setHidden(true)
-      this._filterByConditionWidget.setHidden(false)
+      this._selectAllCheckbox.setHidden(true);
+      this._uniqueValueGrid.setHidden(true);
+      this._filterByConditionWidget.setHidden(false);
 
       // selector
       VirtualDOM.render([
@@ -285,6 +241,7 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     } else if (this._mode === 'value') {
       this._applyWidget.node.style.minHeight = '30px';
+      this._selectAllCheckbox.setHidden(false);
       this._uniqueValueGrid.setHidden(false);
       this._filterByConditionWidget.setHidden(true);
 
@@ -335,6 +292,38 @@ export class InteractiveFilterDialog extends BoxPanel {
   }
 
   /**
+   * Checks whether all unique elements in the column
+   * are present as "selected" in the state. This 
+   * function is used to determine whether the
+   * "Select all" button should be ticked when
+   * opening the filter by value menu.
+   */
+  checkAllValuesTicked() {
+    const uniqueVals = this._model.uniqueValues(
+      this._region,
+      this._columnIndex
+    );
+
+    uniqueVals.then(values => {
+      for (const value of values) {
+        // If there is a unique value which is not present in the state then it is 
+        // not ticked, and therefore we should not tick the "Select all" checkbox.
+        if (!this._uniqueValueStateManager.has(this._region, this._columnIndex, value)) {
+          this._selectAllCheckbox.checked = false;
+          break;
+        }
+      }
+      // This is handling an edge case where the "Select all" box needs to be ticked
+      // upon instantiation of the dialog box, even if the state has unique values
+      // which are not present in the state. The state is empty upon instantiation and
+      // won't change until the user proactively clicks on any of the checkboxes.
+      if (!this.userInteractedWithDialog) {
+        this._selectAllCheckbox.checked = true;
+      }
+    });
+  }
+
+  /**
    * Open the menu at the specified location.
    * 
    * @param options - The additional options for opening the menu.
@@ -353,6 +342,9 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     // Setting filter flag
     this.hasFilter = this._model.getFilterTransform(this._columnIndex) !== undefined
+
+    // Determines whether we should or not tick the "Select all" chekcbox
+    this.checkAllValuesTicked();
 
     // Update styling on unique value grid
     this._uniqueValueGrid.style = {
@@ -1000,6 +992,133 @@ export class InteractiveFilterDialog extends BoxPanel {
   // Checking filter status
   hasFilter: boolean = false;
   userInteractedWithDialog: boolean = false;
+
+  private _selectAllCheckbox: SelectCanvasWidget;
+}
+
+/**
+ * A lumino widget to draw and control the 
+ * "Select All" checkbox
+ */
+class SelectCanvasWidget extends Widget {
+  constructor() {
+    super();
+    this.canvas = document.createElement("canvas");
+    this.node.style.minHeight = "20px";
+    this.node.appendChild(this.canvas);
+  }
+
+  get checked(): boolean {
+    return this._checked;
+  }
+
+  /**
+   * We re-render reach time the box is checked
+   */
+  set checked(value: boolean) {
+    this._checked = value;
+    this.renderCheckbox();
+  }
+
+  get checkChanged(): ISignal<this, boolean> {
+    return this._checkedChanged;
+  }
+
+  /**
+   * Toggles and checkbox value and emits
+   * a signal to add all unique values to
+   * the state
+   */
+  toggleCheckMark = () => {
+    this._checked = !this._checked;
+    this.renderCheckbox();
+    this._checkedChanged.emit(this._checked);
+  }
+
+  /**
+   * Rendering the actual tickmark inside the
+   * canvas box. This function is only called
+   * from within renderCheckbox() below
+   */
+  addCheckMark() {
+    const gc = this.canvas.getContext('2d')!;
+    const BOX_OFFSET = 8;
+    const x = 0;
+    const y = 0;
+    gc.lineWidth = 1;
+    gc.beginPath();
+    gc.strokeStyle = "#000000";
+    gc.moveTo(x + BOX_OFFSET + 3, y + BOX_OFFSET + 5);
+    gc.lineTo(x + BOX_OFFSET + 4, y + BOX_OFFSET + 8);
+    gc.lineTo(x + BOX_OFFSET + 8, y + BOX_OFFSET + 2);
+    gc.lineWidth = 2;
+    gc.stroke();
+  }
+
+
+  /**
+   * Renders the checkbox and tick mark. Tick mark 
+   * rendering is conditional
+   */
+  renderCheckbox() {
+    const gc = this.canvas.getContext('2d')!;
+
+    // Needed to avoid blurring issue.
+    // Set display size (css pixels).
+    const size = 100;
+    this.canvas.style.width = size + "px";
+    this.canvas.style.height = size + "px";
+
+    // Set actual size in memory (scaled to account for extra pixel density)
+    var scale = window.devicePixelRatio; 
+    this.canvas.width = Math.floor(size * scale);
+    this.canvas.height = Math.floor(size * scale);
+
+    // Normalize coordinate system to use css pixels.
+    gc.scale(scale, scale);
+
+    // Draw the checkmark rectangle
+    const BOX_OFFSET = 8;
+    const x = 0;
+    const y = 0;
+    gc.lineWidth = 1;
+    gc.fillStyle = '#ffffff'
+    gc.fillRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10)
+    gc.strokeStyle = 'black';
+    gc.strokeRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10)
+
+    // Draw "Select all" text
+    gc.font = "12px sans-serif";
+    gc.fillStyle = Theme.getBorderColor(1);
+    gc.fillText("Select all", x + 30, y + 17);
+
+    // Draw actual tickmark inside the checkmark rect
+    if (this._checked) {
+      this.addCheckMark();
+    }
+  }
+
+  /**
+   * Adding an event listener for clicks in the box
+   * area and rendering the checkbox
+   */
+  onAfterAttach() {
+    this.renderCheckbox();
+    this.canvas.addEventListener('click', this.toggleCheckMark, true);
+  }
+
+  /**
+   * Removing the event listener to declutter the
+   * DOM space
+   * @param msg lumino msg
+   */
+  protected onAfterDetach(msg: Message): void {
+    this.canvas.removeEventListener('click', this.toggleCheckMark, true);
+  }
+
+  private canvas: HTMLCanvasElement;
+  private _checked: boolean = false;
+  private _checkedChanged = new Signal<this, boolean>(this);
 }
 
 /**
