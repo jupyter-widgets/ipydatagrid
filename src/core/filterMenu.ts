@@ -1006,7 +1006,8 @@ class SelectCanvasWidget extends Widget {
   constructor() {
     super();
     this.canvas = document.createElement("canvas");
-    this.node.style.minHeight = "20px";
+    this.node.style.minHeight = "16px";
+    this.node.style.overflow = "visible";
     this.node.appendChild(this.canvas);
   }
 
@@ -1091,8 +1092,8 @@ class SelectCanvasWidget extends Widget {
 
     // Draw "Select all" text
     gc.font = "12px sans-serif";
-    gc.fillStyle = Theme.getBorderColor(1);
-    gc.fillText("Select all", x + 30, y + 17);
+    gc.fillStyle = Theme.getFontColor(0);
+    gc.fillText("(Select All)", x + 30, y + 17);
 
     // Draw actual tickmark inside the checkmark rect
     if (this._checked) {
