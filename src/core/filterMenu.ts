@@ -311,6 +311,8 @@ export class InteractiveFilterDialog extends BoxPanel {
         if (!this._uniqueValueStateManager.has(this._region, this._columnIndex, value)) {
           this._selectAllCheckbox.checked = false;
           break;
+        } else {
+          this._selectAllCheckbox.checked = true;
         }
       }
       // This is handling an edge case where the "Select all" box needs to be ticked
