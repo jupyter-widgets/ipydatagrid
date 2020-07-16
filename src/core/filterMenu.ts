@@ -116,22 +116,10 @@ export class InteractiveFilterDialog extends BoxPanel {
   connectToCheckbox() {
     this._selectAllCheckbox.checkChanged.connect((sender: SelectCanvasWidget, checked: boolean) => {
       this.userInteractedWithDialog = true;
-      const colIndex = this._columnIndex;
-      const region = this._region;
-      const uniqueVals = this.model.uniqueValues(
-        region,
-        colIndex
-      );
-    
-      uniqueVals.then(values => {
-        for (let value of values) {
-          if (checked) {
-            this._uniqueValueStateManager.add(region, colIndex, value);
-          } else {
-            this._uniqueValueStateManager.remove(region, colIndex, value);
-          }
-        }
-      });
+
+      // Adding all unique values to the state **IF** the select
+      // all box is "checked"
+      this.addRemoveAllUniqueValuesToState(checked);
     })
   }
 
@@ -921,6 +909,23 @@ export class InteractiveFilterDialog extends BoxPanel {
     ]
   }
 
+  async addRemoveAllUniqueValuesToState(add: boolean) {
+    const uniqueVals = this.model.uniqueValues(
+      this._region,
+      this._columnIndex
+    );
+
+    return uniqueVals.then(values => {
+      for (let value of values) {
+        if (add) {
+          this._uniqueValueStateManager.add(this._region, this._columnIndex, value);
+        } else {
+          this._uniqueValueStateManager.remove(this._region, this._columnIndex, value);
+        }
+      }
+    });
+  }
+
   /**
    * Returns a reference to the data model used for this menu.
    */
@@ -1273,16 +1278,7 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
 
     // User is clicking for the first time when no filter is applied
     if (!this._filterDialog.hasFilter && !this._filterDialog.userInteractedWithDialog) {
-      const uniqueVals = this._filterDialog.model.uniqueValues(
-        region,
-        colIndex
-      );
-  
-      uniqueVals.then(values => {
-        for (let value of values) {
-          this._uniqueValuesSelectionState.add(region, colIndex, value);
-        }
-        
+      this._filterDialog.addRemoveAllUniqueValuesToState(true).then(() => {
         this._filterDialog.userInteractedWithDialog = true;
         updateCheckState();
       });
