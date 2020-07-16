@@ -157,6 +157,11 @@ export class InteractiveFilterDialog extends BoxPanel {
       return;
     }
 
+    if (!this.hasFilter && !this.userInteractedWithDialog) {
+      this.close();
+      return;
+    }
+
     const value = this._mode === 'condition'
       ? <Transform.FilterValue>this._filterValue
       : this._uniqueValueStateManager.getValues(this.region, this._columnIndex);
@@ -286,30 +291,28 @@ export class InteractiveFilterDialog extends BoxPanel {
    * "Select all" button should be ticked when
    * opening the filter by value menu.
    */
-  checkAllValuesTicked() {
+  updateSelectAllCheckboxState() {
+    if (!this.userInteractedWithDialog && !this.hasFilter) {
+      this._selectAllCheckbox.checked = true;
+      return;
+    }
+
     const uniqueVals = this._model.uniqueValues(
       this._region,
       this._columnIndex
     );
 
     uniqueVals.then(values => {
+      let showAsChecked = true;
       for (const value of values) {
         // If there is a unique value which is not present in the state then it is 
         // not ticked, and therefore we should not tick the "Select all" checkbox.
         if (!this._uniqueValueStateManager.has(this._region, this._columnIndex, value)) {
-          this._selectAllCheckbox.checked = false;
+          showAsChecked = false;
           break;
-        } else {
-          this._selectAllCheckbox.checked = true;
         }
       }
-      // This is handling an edge case where the "Select all" box needs to be ticked
-      // upon instantiation of the dialog box, even if the state has unique values
-      // which are not present in the state. The state is empty upon instantiation and
-      // won't change until the user proactively clicks on any of the checkboxes.
-      if (!this.userInteractedWithDialog) {
-        this._selectAllCheckbox.checked = true;
-      }
+      this._selectAllCheckbox.checked = showAsChecked;
     });
   }
 
@@ -331,10 +334,12 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._mode = options.mode;
 
     // Setting filter flag
-    this.hasFilter = this._model.getFilterTransform(this._columnIndex) !== undefined
+    this.hasFilter = this._model.getFilterTransform(this.model.getSchemaIndex(this._region, this._columnIndex)) !== undefined;
+
+    this.userInteractedWithDialog = false;
 
     // Determines whether we should or not tick the "Select all" chekcbox
-    this.checkAllValuesTicked();
+    this.updateSelectAllCheckboxState();
 
     // Update styling on unique value grid
     this._uniqueValueGrid.style = {
@@ -1263,6 +1268,11 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
   //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
+
+    // Bail if hitting on an invalid area
+    if (hit.region === "void") {
+      return;
+    }
     const row = hit.row;
     const colIndex = this._filterDialog.columnIndex;
     const region = this._filterDialog.region;
@@ -1274,6 +1284,9 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
       } else {
         this._uniqueValuesSelectionState.add(region, colIndex, value)
       }
+
+      // Updating the "Select all" chexboox if needed
+      this._filterDialog.updateSelectAllCheckboxState();
     }
 
     // User is clicking for the first time when no filter is applied
