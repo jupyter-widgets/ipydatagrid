@@ -1280,9 +1280,9 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
 
     const updateCheckState = () => {
       if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
-        this._uniqueValuesSelectionState.remove(region, colIndex, value)
+        this._uniqueValuesSelectionState.remove(region, colIndex, value);
       } else {
-        this._uniqueValuesSelectionState.add(region, colIndex, value)
+        this._uniqueValuesSelectionState.add(region, colIndex, value);
       }
 
       // Updating the "Select all" chexboox if needed
