@@ -98,7 +98,7 @@ export class InteractiveFilterDialog extends BoxPanel {
     // Create the "Select All" widget and connecting to
     // lumino signal
     this._selectAllCheckbox = new SelectCanvasWidget();
-    this.connectToCheckbox();
+    this._connectToCheckbox();
 
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
@@ -113,7 +113,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    * toggles checking all/none of the unique elements
    * by adding/removing them from the state object
    */
-  connectToCheckbox() {
+  private _connectToCheckbox() {
     this._selectAllCheckbox.checkChanged.connect((sender: SelectCanvasWidget, checked: boolean) => {
       this.userInteractedWithDialog = true;
 
