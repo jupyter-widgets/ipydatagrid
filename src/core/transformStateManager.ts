@@ -230,6 +230,14 @@ export class TransformStateManager {
     return transforms;
   }
 
+  getFilterTransform(columnIndex: number): Transform.TransformSpec | undefined {
+    if (!this._state.hasOwnProperty(columnIndex)) {
+      return undefined;
+    }
+    
+    return this._state[columnIndex].filter;
+  }
+
   private _state: TransformStateManager.IState = {};
   private _changed = new Signal<this, TransformStateManager.IEvent>(this);
 }
