@@ -6,13 +6,9 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 
-import {
-  ReadonlyJSONObject
-} from '@lumino/coreutils';
+import { ReadonlyJSONObject } from '@lumino/coreutils';
 
-import {
-  DataModel
-} from '@lumino/datagrid';
+import { DataModel } from '@lumino/datagrid';
 import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
 /**
@@ -21,15 +17,14 @@ import { ViewBasedJSONModel } from './viewbasedjsonmodel';
  * Note: Most of this is just repurposed from JSONModel, and can likely be
  * streamlined quite a bit.
  */
-export
-class View {
+export class View {
   /**
    * Create a view with static JSON data.
    *
    * @param options - The options for initializing the view.
    */
   constructor(options: View.IOptions) {
-    let split = Private.splitFields(options.schema);
+    const split = Private.splitFields(options.schema);
     this._data = options.data;
     this._bodyFields = split.bodyFields;
     this._headerFields = split.headerFields;
@@ -47,7 +42,7 @@ class View {
     if (region === 'body') {
       return this._data.length;
     } else {
-      return this._bodyFields[0].rows.length
+      return this._bodyFields[0].rows.length;
     }
   }
 
@@ -74,7 +69,11 @@ class View {
    *
    * @returns The metadata for the column.
    */
-  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
+  metadata(
+    region: DataModel.CellRegion,
+    row: number,
+    column: number,
+  ): DataModel.Metadata {
     if (region === 'body' || region === 'column-header') {
       return this._bodyFields[column];
     }
@@ -117,18 +116,17 @@ class View {
         break;
       case 'corner-header':
         field = this._headerFields[column];
-        value = field.rows[row]
+        value = field.rows[row];
         break;
       default:
         throw 'unreachable';
     }
 
     // Test whether the value is a missing value.
-    let missing = (
+    const missing =
       this._missingValues !== null &&
       typeof value === 'string' &&
-      this._missingValues[value] === true
-    );
+      this._missingValues[value] === true;
 
     // Return the final value.
     return missing ? null : value;
@@ -162,13 +160,16 @@ class View {
    *
    * @param columnIndex - The index to retrieve unique values for.
    */
-  async uniqueValues(region: DataModel.CellRegion, columnIndex: number): Promise<any[]> {
+  async uniqueValues(
+    region: DataModel.CellRegion,
+    columnIndex: number,
+  ): Promise<any[]> {
     return new Promise((resolve, reject) => {
       const columnName = this.metadata(region, 0, columnIndex)['name'];
-      let uniqueVals = new Set();
-      for (let row of this.dataset) {
+      const uniqueVals = new Set();
+      for (const row of this.dataset) {
         uniqueVals.add(row[columnName]);
-      };
+      }
       resolve(Array.from(uniqueVals));
     });
   }
@@ -182,8 +183,7 @@ class View {
 /**
  * The namespace for the `View` class statics.
  */
-export
-namespace View {
+export namespace View {
   /**
    * An object which describes a column of data in the view.
    *
@@ -199,8 +199,7 @@ namespace View {
    * This is based on the JSON Table Schema specification:
    * https://specs.frictionlessdata.io/table-schema/
    */
-  export
-  interface ISchema {
+  export interface ISchema {
     /**
      * The fields which describe the view columns.
      *
@@ -235,14 +234,12 @@ namespace View {
    * the rows of the table. The keys of the records correspond to the
    * field names of the columns.
    */
-  export
-  type DataSource = ReadonlyArray<ReadonlyJSONObject>;
+  export type DataSource = ReadonlyArray<ReadonlyJSONObject>;
 
   /**
    * An options object for initializing a view.
    */
-  export
-  interface IOptions {
+  export interface IOptions {
     /**
      * The schema for the for the view.
      *
@@ -266,8 +263,7 @@ namespace Private {
   /**
    * An object which holds the results of splitting schema fields.
    */
-  export
-  interface ISplitFieldsResult {
+  export interface ISplitFieldsResult {
     /**
      * The non-primary key fields to use for the grid body.
      */
@@ -282,8 +278,7 @@ namespace Private {
   /**
    * Split the schema fields into header and body fields.
    */
-  export
-  function splitFields(schema: View.ISchema): ISplitFieldsResult {
+  export function splitFields(schema: View.ISchema): ISplitFieldsResult {
     // Normalize the primary keys.
     let primaryKeys: string[];
     if (schema.primaryKey === undefined) {
@@ -294,10 +289,10 @@ namespace Private {
       primaryKeys = schema.primaryKey;
     }
     // Separate the fields for the body and header.
-    let bodyFields: ViewBasedJSONModel.IField[] = [];
-    let headerFields: ViewBasedJSONModel.IField[] = [];
-    for (let field of schema.fields) {
-      // Skipping the primary key unique identifier so 
+    const bodyFields: ViewBasedJSONModel.IField[] = [];
+    const headerFields: ViewBasedJSONModel.IField[] = [];
+    for (const field of schema.fields) {
+      // Skipping the primary key unique identifier so
       // it is not rendered.
       if (field.rows[0] == schema.primaryKeyUuid) {
         continue;
@@ -316,24 +311,24 @@ namespace Private {
   /**
    * A type alias for a missing value map.
    */
-  export
-  type MissingValuesMap = { [key: string]: boolean };
+  export type MissingValuesMap = { [key: string]: boolean };
 
   /**
    * Create a missing values map for a schema.
    *
    * This returns `null` if there are no missing values.
    */
-  export
-  function createMissingMap(schema: View.ISchema): MissingValuesMap | null {
+  export function createMissingMap(
+    schema: View.ISchema,
+  ): MissingValuesMap | null {
     // Bail early if there are no missing values.
     if (!schema.missingValues || schema.missingValues.length === 0) {
       return null;
     }
 
     // Collect the missing values into a map.
-    let result: MissingValuesMap = Object.create(null);
-    for (let value of schema.missingValues) {
+    const result: MissingValuesMap = Object.create(null);
+    for (const value of schema.missingValues) {
       result[value] = true;
     }
 

@@ -2,65 +2,63 @@
  * A declarative spec for specifying transformations.
  */
 export namespace Transform {
-  export type TransformSpec = Transform.Sort | Transform.Filter
+  export type TransformSpec = Transform.Sort | Transform.Filter;
 
   /**
-   * A declarative spec for the `Sort` transformation. 
+   * A declarative spec for the `Sort` transformation.
    */
   export type Sort = {
-
     /**
      * A type alias for this transformation.
      */
-    type: "sort",
+    type: 'sort';
 
     /**
      * The column in the data schema to apply the transformation to.
      */
-    columnIndex: number,
+    columnIndex: number;
 
     /**
      * Indicates if the sort should be performed descending or ascending.
      */
-    desc: boolean
-  }
+    desc: boolean;
+  };
 
   /**
-   * A declarative spec for the `Filter` transformation. 
+   * A declarative spec for the `Filter` transformation.
    */
   export type Filter = {
-
     /**
      * A type alias for this trasformation.
      */
-    type: "filter",
+    type: 'filter';
 
     /**
      * The column in the data schema to apply the transformation to.
      */
-    columnIndex: number,
+    columnIndex: number;
 
     /**
      * The operator for this trasformation.
      */
-    operator: FilterOperator,
+    operator: FilterOperator;
 
     /**
      * The value(s) to apply for this transformation.
      */
-    value: string | string[] | number | number[]
-  }
+    value: string | string[] | number | number[];
+  };
 
   /**
    * A type to represent valid filter values.
    */
-  export type FilterValue = string | string[] | number | number[]
+  export type FilterValue = string | string[] | number | number[];
 
   /**
    * The available operators for this transform.
    */
-  export type FilterOperator = (
-    '<'
+  export type FilterOperator =
+    | '<'
     | '>'
     | '='
     | '<='
@@ -74,6 +72,5 @@ export namespace Transform {
     | 'endswith'
     | 'contains'
     | '!contains'
-    | 'isOnSameDay'
-  );
+    | 'isOnSameDay';
 }

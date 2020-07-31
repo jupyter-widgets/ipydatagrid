@@ -1,12 +1,9 @@
-import {
-  CellRenderer, TextRenderer, GraphicsContext
-} from '@lumino/datagrid';
+import { CellRenderer, TextRenderer, GraphicsContext } from '@lumino/datagrid';
 
 /**
  * A cell renderer which renders data values as bars.
  */
-export
-class BarRenderer extends TextRenderer {
+export class BarRenderer extends TextRenderer {
   /**
    * Construct a new bar renderer.
    *
@@ -15,7 +12,7 @@ class BarRenderer extends TextRenderer {
   constructor(options: BarRenderer.IOptions = {}) {
     super(options);
     this.barColor = options.barColor || '#4682b4';
-    this.barValue = options.barValue || 0.;
+    this.barValue = options.barValue || 0;
     this.orientation = options.orientation || 'horizontal';
     this.barVerticalAlignment = options.barVerticalAlignment || 'bottom';
     this.barHorizontalAlignment = options.barHorizontalAlignment || 'left';
@@ -40,12 +37,16 @@ class BarRenderer extends TextRenderer {
   /**
    * The horizontal alignment of the bar, default is 'bottom'.
    */
-  readonly barVerticalAlignment: CellRenderer.ConfigOption<TextRenderer.VerticalAlignment>;
+  readonly barVerticalAlignment: CellRenderer.ConfigOption<
+    TextRenderer.VerticalAlignment
+  >;
 
   /**
    * The vertical alignment of the bar, default is 'left'.
    */
-  readonly barHorizontalAlignment: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
+  readonly barHorizontalAlignment: CellRenderer.ConfigOption<
+    TextRenderer.HorizontalAlignment
+  >;
 
   /**
    * Whether to draw the text on the bar or not, default is true.
@@ -80,7 +81,13 @@ class BarRenderer extends TextRenderer {
    */
   prepare(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     // Look up the default state from the renderer.
-    let { font, textColor, barColor, backgroundColor, horizontalAlignment } = this;
+    const {
+      font,
+      textColor,
+      barColor,
+      backgroundColor,
+      horizontalAlignment,
+    } = this;
 
     // Set up the default font.
     if (font && typeof font === 'string') {
@@ -117,8 +124,14 @@ class BarRenderer extends TextRenderer {
   drawBar(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     const barColor = CellRenderer.resolveOption(this.barColor, config);
     let barValue = CellRenderer.resolveOption(this.barValue, config);
-    const vAlign = CellRenderer.resolveOption(this.barVerticalAlignment, config);
-    const hAlign = CellRenderer.resolveOption(this.barHorizontalAlignment, config);
+    const vAlign = CellRenderer.resolveOption(
+      this.barVerticalAlignment,
+      config,
+    );
+    const hAlign = CellRenderer.resolveOption(
+      this.barHorizontalAlignment,
+      config,
+    );
     const orientation = CellRenderer.resolveOption(this.orientation, config);
 
     // Bail if there is no color to draw.
@@ -127,11 +140,11 @@ class BarRenderer extends TextRenderer {
     }
 
     // Be careful not to draw outside of the cell
-    if (barValue > 1.) {
-      barValue = 1.;
+    if (barValue > 1) {
+      barValue = 1;
     }
-    if (barValue < 0.) {
-      barValue = 0.;
+    if (barValue < 0) {
+      barValue = 0;
     }
 
     let x: number = config.x;
@@ -142,7 +155,7 @@ class BarRenderer extends TextRenderer {
     if (orientation === 'horizontal') {
       const rect_width = barValue * config.width;
 
-      if (hAlign === 'center') x += (config.width - rect_width) / 2.;
+      if (hAlign === 'center') x += (config.width - rect_width) / 2;
       if (hAlign === 'right') x += config.width - rect_width;
 
       gc.fillRect(x, y, rect_width, config.height);
@@ -150,7 +163,7 @@ class BarRenderer extends TextRenderer {
       const rect_height = barValue * config.height;
 
       if (vAlign === 'center') {
-        y += (config.height - rect_height) / 2.;
+        y += (config.height - rect_height) / 2;
       } else if (vAlign === 'bottom') {
         y += config.height - rect_height;
       }
@@ -163,19 +176,16 @@ class BarRenderer extends TextRenderer {
 /**
  * The namespace for the `BarRenderer` class statics.
  */
-export
-namespace BarRenderer {
+export namespace BarRenderer {
   /**
    * A type alias for the supported orientation modes.
    */
-  export
-  type Orientation = 'horizontal' | 'vertical';
+  export type Orientation = 'horizontal' | 'vertical';
 
   /**
    * An options object for initializing a bar renderer.
    */
-  export
-  interface IOptions extends TextRenderer.IOptions {
+  export interface IOptions extends TextRenderer.IOptions {
     /**
      * The background color for the cells.
      *
@@ -202,14 +212,18 @@ namespace BarRenderer {
      *
      * The default is `bottom`.
      */
-    barVerticalAlignment?: CellRenderer.ConfigOption<TextRenderer.VerticalAlignment>;
+    barVerticalAlignment?: CellRenderer.ConfigOption<
+      TextRenderer.VerticalAlignment
+    >;
 
     /**
      * The vertical alignment of the bar, can be left, center or right.
      *
      * The default is `left`.
      */
-    barHorizontalAlignment?: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
+    barHorizontalAlignment?: CellRenderer.ConfigOption<
+      TextRenderer.HorizontalAlignment
+    >;
 
     /**
      * Whether to draw the text on the bar or not.
