@@ -415,6 +415,10 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return this._transformState.activeTransforms;
   }
 
+  getFilterTransform(columnIndex: number): Transform.TransformSpec | undefined {
+    return this._transformState.getFilterTransform(columnIndex);
+  }
+
   /**
    * Updates the indicated value in the dataset.
    *

@@ -124,10 +124,6 @@ export class FilterExecutor extends TransformExecutor {
       case 'in':
         filterFunc = (item: any) => {
           const values = <any[]>this._options.value;
-
-          if (this._options.dType === 'boolean') {
-            return values.includes(String(item[this._options.field]));
-          }
           return values.includes(item[this._options.field]);
         };
         break;

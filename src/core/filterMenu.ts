@@ -6,6 +6,8 @@ import { DataGrid } from './datagrid';
 
 import { DataModel } from '@lumino/datagrid';
 
+import { Signal, ISignal } from '@lumino/signaling';
+
 import { ElementExt } from '@lumino/domutils';
 
 import { Message, MessageLoop, ConflatableMessage } from '@lumino/messaging';
@@ -70,11 +72,34 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._applyWidget = new Widget();
     this._applyWidget.addClass('ipydatagrid-filter-apply');
 
+    // Create the "Select All" widget and connecting to
+    // lumino signal
+    this._selectAllCheckbox = new SelectCanvasWidget();
+    this._connectToCheckbox();
+
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
+    this.addWidget(this._selectAllCheckbox);
     this.addWidget(this._filterByConditionWidget);
     this.addWidget(this._uniqueValueGrid);
     this.addWidget(this._applyWidget);
+  }
+
+  /**
+   * Connects to the "Select All" widget signal and
+   * toggles checking all/none of the unique elements
+   * by adding/removing them from the state object
+   */
+  private _connectToCheckbox() {
+    this._selectAllCheckbox.checkChanged.connect(
+      (sender: SelectCanvasWidget, checked: boolean) => {
+        this.userInteractedWithDialog = true;
+
+        // Adding all unique values to the state **IF** the select
+        // all box is "checked"
+        this.addRemoveAllUniqueValuesToState(checked);
+      },
+    );
   }
 
   /**
@@ -107,6 +132,11 @@ export class InteractiveFilterDialog extends BoxPanel {
     // TODO: Create some kind of visual error state to indicate the blank field
     // that needs a value.
     if (!this.hasValidFilterValue) {
+      return;
+    }
+
+    if (!this.hasFilter && !this.userInteractedWithDialog) {
+      this.close();
       return;
     }
 
@@ -164,6 +194,7 @@ export class InteractiveFilterDialog extends BoxPanel {
   private _render(): void {
     if (this._mode === 'condition') {
       this._applyWidget.node.style.minHeight = '65px';
+      this._selectAllCheckbox.setHidden(true);
       this._uniqueValueGrid.setHidden(true);
       this._filterByConditionWidget.setHidden(false);
 
@@ -187,6 +218,7 @@ export class InteractiveFilterDialog extends BoxPanel {
       );
     } else if (this._mode === 'value') {
       this._applyWidget.node.style.minHeight = '30px';
+      this._selectAllCheckbox.setHidden(false);
       this._uniqueValueGrid.setHidden(false);
       this._filterByConditionWidget.setHidden(true);
 
@@ -232,6 +264,44 @@ export class InteractiveFilterDialog extends BoxPanel {
   }
 
   /**
+   * Checks whether all unique elements in the column
+   * are present as "selected" in the state. This
+   * function is used to determine whether the
+   * "Select all" button should be ticked when
+   * opening the filter by value menu.
+   */
+  updateSelectAllCheckboxState() {
+    if (!this.userInteractedWithDialog && !this.hasFilter) {
+      this._selectAllCheckbox.checked = true;
+      return;
+    }
+
+    const uniqueVals = this._model.uniqueValues(
+      this._region,
+      this._columnIndex,
+    );
+
+    uniqueVals.then((values) => {
+      let showAsChecked = true;
+      for (const value of values) {
+        // If there is a unique value which is not present in the state then it is
+        // not ticked, and therefore we should not tick the "Select all" checkbox.
+        if (
+          !this._uniqueValueStateManager.has(
+            this._region,
+            this._columnIndex,
+            value,
+          )
+        ) {
+          showAsChecked = false;
+          break;
+        }
+      }
+      this._selectAllCheckbox.checked = showAsChecked;
+    });
+  }
+
+  /**
    * Open the menu at the specified location.
    *
    * @param options - The additional options for opening the menu.
@@ -246,6 +316,17 @@ export class InteractiveFilterDialog extends BoxPanel {
     )['type'];
     this._region = options.region;
     this._mode = options.mode;
+
+    // Setting filter flag
+    this.hasFilter =
+      this._model.getFilterTransform(
+        this.model.getSchemaIndex(this._region, this._columnIndex),
+      ) !== undefined;
+
+    this.userInteractedWithDialog = false;
+
+    // Determines whether we should or not tick the "Select all" chekcbox
+    this.updateSelectAllCheckboxState();
 
     // Update styling on unique value grid
     this._uniqueValueGrid.style = {
@@ -990,6 +1071,28 @@ export class InteractiveFilterDialog extends BoxPanel {
     ];
   }
 
+  async addRemoveAllUniqueValuesToState(add: boolean) {
+    const uniqueVals = this.model.uniqueValues(this._region, this._columnIndex);
+
+    return uniqueVals.then((values) => {
+      for (const value of values) {
+        if (add) {
+          this._uniqueValueStateManager.add(
+            this._region,
+            this._columnIndex,
+            value,
+          );
+        } else {
+          this._uniqueValueStateManager.remove(
+            this._region,
+            this._columnIndex,
+            value,
+          );
+        }
+      }
+    });
+  }
+
   /**
    * Returns a reference to the data model used for this menu.
    */
@@ -1059,6 +1162,137 @@ export class InteractiveFilterDialog extends BoxPanel {
 
   // Unique value state
   private _uniqueValueStateManager: UniqueValueStateManager;
+
+  // Checking filter status
+  hasFilter = false;
+  userInteractedWithDialog = false;
+
+  private _selectAllCheckbox: SelectCanvasWidget;
+}
+
+/**
+ * A lumino widget to draw and control the
+ * "Select All" checkbox
+ */
+class SelectCanvasWidget extends Widget {
+  constructor() {
+    super();
+    this.canvas = document.createElement('canvas');
+    this.node.style.minHeight = '16px';
+    this.node.style.overflow = 'visible';
+    this.node.appendChild(this.canvas);
+  }
+
+  get checked(): boolean {
+    return this._checked;
+  }
+
+  /**
+   * We re-render reach time the box is checked
+   */
+  set checked(value: boolean) {
+    this._checked = value;
+    this.renderCheckbox();
+  }
+
+  get checkChanged(): ISignal<this, boolean> {
+    return this._checkedChanged;
+  }
+
+  /**
+   * Toggles and checkbox value and emits
+   * a signal to add all unique values to
+   * the state
+   */
+  toggleCheckMark = () => {
+    this._checked = !this._checked;
+    this.renderCheckbox();
+    this._checkedChanged.emit(this._checked);
+  };
+
+  /**
+   * Rendering the actual tickmark inside the
+   * canvas box. This function is only called
+   * from within renderCheckbox() below
+   */
+  addCheckMark() {
+    const gc = this.canvas.getContext('2d')!;
+    const BOX_OFFSET = 8;
+    const x = 0;
+    const y = 0;
+    gc.lineWidth = 1;
+    gc.beginPath();
+    gc.strokeStyle = '#000000';
+    gc.moveTo(x + BOX_OFFSET + 3, y + BOX_OFFSET + 5);
+    gc.lineTo(x + BOX_OFFSET + 4, y + BOX_OFFSET + 8);
+    gc.lineTo(x + BOX_OFFSET + 8, y + BOX_OFFSET + 2);
+    gc.lineWidth = 2;
+    gc.stroke();
+  }
+
+  /**
+   * Renders the checkbox and tick mark. Tick mark
+   * rendering is conditional
+   */
+  renderCheckbox() {
+    const gc = this.canvas.getContext('2d')!;
+
+    // Needed to avoid blurring issue.
+    // Set display size (css pixels).
+    const size = 100;
+    this.canvas.style.width = size + 'px';
+    this.canvas.style.height = size + 'px';
+
+    // Set actual size in memory (scaled to account for extra pixel density)
+    const scale = window.devicePixelRatio;
+    this.canvas.width = Math.floor(size * scale);
+    this.canvas.height = Math.floor(size * scale);
+
+    // Normalize coordinate system to use css pixels.
+    gc.scale(scale, scale);
+
+    // Draw the checkmark rectangle
+    const BOX_OFFSET = 8;
+    const x = 0;
+    const y = 0;
+    gc.lineWidth = 1;
+    gc.fillStyle = '#ffffff';
+    gc.fillRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10);
+    gc.strokeStyle = 'black';
+    gc.strokeRect(x + BOX_OFFSET, y + BOX_OFFSET, 10, 10);
+
+    // Draw "Select all" text
+    gc.font = '12px sans-serif';
+    gc.fillStyle = Theme.getFontColor(0);
+    gc.fillText('(Select All)', x + 30, y + 17);
+
+    // Draw actual tickmark inside the checkmark rect
+    if (this._checked) {
+      this.addCheckMark();
+    }
+  }
+
+  /**
+   * Adding an event listener for clicks in the box
+   * area and rendering the checkbox
+   */
+  onAfterAttach() {
+    this.renderCheckbox();
+    this.canvas.addEventListener('click', this.toggleCheckMark, true);
+  }
+
+  /**
+   * Removing the event listener to declutter the
+   * DOM space
+   * @param msg lumino msg
+   */
+  protected onAfterDetach(msg: Message): void {
+    this.canvas.removeEventListener('click', this.toggleCheckMark, true);
+  }
+
+  private canvas: HTMLCanvasElement;
+  private _checked = false;
+  private _checkedChanged = new Signal<this, boolean>(this);
 }
 
 /**
@@ -1195,15 +1429,38 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
   //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
+
+    // Bail if hitting on an invalid area
+    if (hit.region === 'void') {
+      return;
+    }
     const row = hit.row;
     const colIndex = this._filterDialog.columnIndex;
     const region = this._filterDialog.region;
     const value = grid.dataModel!.data('body', row, 0);
 
-    if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
-      this._uniqueValuesSelectionState.remove(region, colIndex, value);
+    const updateCheckState = () => {
+      if (this._uniqueValuesSelectionState.has(region, colIndex, value)) {
+        this._uniqueValuesSelectionState.remove(region, colIndex, value);
+      } else {
+        this._uniqueValuesSelectionState.add(region, colIndex, value);
+      }
+
+      // Updating the "Select all" chexboox if needed
+      this._filterDialog.updateSelectAllCheckboxState();
+    };
+
+    // User is clicking for the first time when no filter is applied
+    if (
+      !this._filterDialog.hasFilter &&
+      !this._filterDialog.userInteractedWithDialog
+    ) {
+      this._filterDialog.addRemoveAllUniqueValuesToState(true).then(() => {
+        this._filterDialog.userInteractedWithDialog = true;
+        updateCheckState();
+      });
     } else {
-      this._uniqueValuesSelectionState.add(region, colIndex, value);
+      updateCheckState();
     }
   }
 
