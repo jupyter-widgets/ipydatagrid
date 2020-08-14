@@ -502,8 +502,6 @@ export class FeatherGrid extends Widget {
       });
     }
 
-    this.grid.cellRenderers.update({ 'row-header': this._rendererResolver.bind(this) });
-
     const scrollShadow = {
       size: 4,
       color1: Theme.getBorderColor(1, 1.0),
@@ -764,6 +762,7 @@ export class FeatherGrid extends Widget {
 
   private _updateGridRenderers() {
     this.grid.cellRenderers.update({ body: this._rendererResolver.bind(this) });
+    this.grid.cellRenderers.update({ 'row-header': this._rendererResolver.bind(this) });
   }
 
   private _updateColumnWidths() {
