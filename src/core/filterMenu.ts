@@ -135,7 +135,11 @@ export class InteractiveFilterDialog extends BoxPanel {
       return;
     }
 
-    if (!this.hasFilter && !this.userInteractedWithDialog) {
+    if (
+      !this.hasFilter &&
+      !this.userInteractedWithDialog &&
+      this._mode === 'value'
+    ) {
       this.close();
       return;
     }
