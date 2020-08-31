@@ -224,7 +224,7 @@ export class FeatherGrid extends Widget {
       textColor: Theme.getFontColor(1),
       backgroundColor: Theme.getBackgroundColor(2),
       horizontalAlignment: 'center',
-      verticalAlignment: 'center'
+      verticalAlignment: 'center',
     });
 
     const layout = (this.layout = new PanelLayout());
@@ -750,19 +750,21 @@ export class FeatherGrid extends Widget {
    *
    * @param config - CellConfig for the cell to be rendered.
    */
-    private _rendererResolver(config: CellRenderer.CellConfig): CellRenderer {
-      const columnName: string = config.metadata['name'];
-      const cellRegion: string = config['region'];
-      return this._renderers.hasOwnProperty(columnName)
-        ? this._renderers[columnName]
-        : cellRegion === 'row-header'
-          ? this._rowHeaderRenderer
-          : this._defaultRenderer;
-    }
+  private _rendererResolver(config: CellRenderer.CellConfig): CellRenderer {
+    const columnName: string = config.metadata['name'];
+    const cellRegion: string = config['region'];
+    return this._renderers.hasOwnProperty(columnName)
+      ? this._renderers[columnName]
+      : cellRegion === 'row-header'
+      ? this._rowHeaderRenderer
+      : this._defaultRenderer;
+  }
 
   private _updateGridRenderers() {
     this.grid.cellRenderers.update({ body: this._rendererResolver.bind(this) });
-    this.grid.cellRenderers.update({ 'row-header': this._rendererResolver.bind(this) });
+    this.grid.cellRenderers.update({
+      'row-header': this._rendererResolver.bind(this),
+    });
   }
 
   private _updateColumnWidths() {
