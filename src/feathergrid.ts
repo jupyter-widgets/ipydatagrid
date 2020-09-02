@@ -502,6 +502,13 @@ export class FeatherGrid extends Widget {
       });
     }
 
+    this._rowHeaderRenderer = new TextRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center',
+      verticalAlignment: 'center',
+    });
+
     const scrollShadow = {
       size: 4,
       color1: Theme.getBorderColor(1, 1.0),
