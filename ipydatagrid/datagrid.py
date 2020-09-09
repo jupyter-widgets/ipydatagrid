@@ -410,7 +410,8 @@ class DataGrid(DOMWidget):
         if self._visible_rows:
             data['data'] = [data['data'][i] for i in self._visible_rows]
 
-        return pd.DataFrame(data['data']).set_index(self._data['schema']['primaryKey'])
+        return_df = pd.DataFrame(data['data']).set_index(self._data['schema']['primaryKey'][:-1])
+        return return_df.loc[:, ~return_df.columns.isin(['ipydguuid'])]
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
