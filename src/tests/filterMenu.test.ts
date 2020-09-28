@@ -53,6 +53,54 @@ describe('Test .applyFilter()', () => {
     dialog.applyFilter();
     expect(mock).toBeCalledWith(transform);
   });
+  test('condition transform is added', () => {
+    const dialog = Private.createSimpleDialog();
+    const colIndex = 0;
+
+    const transform: Transform.TransformSpec = {
+      type: 'filter', 
+      columnIndex: colIndex + 1,
+      operator: '=',
+      value: 6
+    };
+
+    Private.setDialogState({
+      dialog: dialog,
+      columnIndex: colIndex,
+      mode: 'condition',
+      operator: transform.operator,
+      region: 'body',
+      value: transform.value
+    })
+
+    dialog.applyFilter();
+    const addedTransform = dialog.model.transformMetadata(colIndex + 1)!['filter'];
+    expect(addedTransform).toEqual(transform);
+  });
+  test('value transform is added', () => {
+    const dialog = Private.createSimpleDialog();
+    const colIndex = 0;
+
+    const transform: Transform.TransformSpec = {
+      type: 'filter', 
+      columnIndex: colIndex + 1,
+      operator: 'in',
+      value: []
+    };
+
+    Private.setDialogState({
+      dialog: dialog,
+      columnIndex: colIndex,
+      mode: 'value',
+      operator: transform.operator,
+      region: 'body',
+      value: transform.value
+    })
+    dialog.userInteractedWithDialog = true;
+    dialog.applyFilter();
+    const addedTransform = dialog.model.transformMetadata(colIndex + 1)!['filter'];
+    expect(addedTransform).toEqual(transform);
+  });
 });
 
 describe('Test .updateDialog()', () => {
