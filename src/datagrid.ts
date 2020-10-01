@@ -51,6 +51,7 @@ export class DataGridModel extends DOMWidgetModel {
       _data: {},
       renderers: {},
       default_renderer: null,
+      header_renderer: null,
       selection_mode: 'none',
       selections: [],
       editable: false,
@@ -221,6 +222,7 @@ export class DataGridModel extends DOMWidgetModel {
     transforms: { deserialize: unpack_models as any },
     renderers: { deserialize: unpack_models as any },
     default_renderer: { deserialize: unpack_models as any },
+    header_renderer: { deserialize: unpack_models as any },
     _data: { deserialize: unpack_data as any },
   };
 
@@ -366,7 +368,7 @@ export class DataGridView extends DOMWidgetView {
     });
 
     this.model.on_some_change(
-      ['default_renderer', 'renderers'],
+      ['header_renderer', 'default_renderer', 'renderers'],
       () => {
         this.updateRenderers().then(this.updateGridRenderers.bind(this));
       },
@@ -394,6 +396,9 @@ export class DataGridView extends DOMWidgetView {
     if (this.default_renderer) {
       this.stopListening(this.default_renderer, 'renderer-changed');
     }
+    if (this.header_renderer) {
+      this.stopListening(this.header_renderer, 'renderer-changed');
+    }
     for (const key in this.renderers) {
       this.stopListening(this.renderers[key], 'renderer-changed');
     }
@@ -415,6 +420,23 @@ export class DataGridView extends DOMWidgetView {
         },
       ),
     );
+
+    const header_renderer = this.model.get('header_renderer');
+    if (header_renderer) {
+      promises.push(
+        this.create_child_view(header_renderer).then(
+          (headerRendererView: any) => {
+            this.header_renderer = headerRendererView;
+
+            this.listenTo(
+              this.header_renderer,
+              'renderer-changed',
+              this.updateGridRenderers.bind(this),
+            );
+          },
+        ),
+      );
+    }
 
     const renderer_promises: Dict<Promise<any>> = {};
     _.each(
@@ -460,11 +482,21 @@ export class DataGridView extends DOMWidgetView {
 
   private updateGridRenderers() {
     const defaultRenderer = this.default_renderer.renderer;
+    let columnHeaderRenderer = null;
+    if (this.header_renderer) {
+      columnHeaderRenderer = this.header_renderer.renderer;
+    }
+
     const renderers: Dict<CellRenderer> = {};
     Object.entries(this.renderers).forEach(([name, rendererView]) => {
       renderers[name] = rendererView.renderer;
     });
+
     this.grid.defaultRenderer = defaultRenderer;
+    // Set column header renderer only if received from backend
+    if (columnHeaderRenderer) {
+      this.grid.columnHeaderRenderer = columnHeaderRenderer;
+    }
     this.grid.renderers = renderers;
   }
 
@@ -487,6 +519,7 @@ export class DataGridView extends DOMWidgetView {
 
   renderers: Dict<CellRendererView>;
   default_renderer: CellRendererView;
+  header_renderer: CellRendererView;
   grid: FeatherGrid;
   pWidget: JupyterPhosphorPanelWidget;
   model: DataGridModel;
