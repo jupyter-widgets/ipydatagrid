@@ -196,6 +196,8 @@ class DataGrid(DOMWidget):
         column name, and value specifies the renderer
     default_renderer : CellRenderer (default: TextRenderer)
         Default renderer to use for cell rendering
+    header_renderer : CellRenderer (default: TextRenderer)
+        Renderer to use for header cell rendering
     selection_mode : {'row', 'column', 'cell', 'none'} (default: 'none')
         Selection mode used when user clicks on grid or makes selections
         programmatically.
@@ -246,6 +248,7 @@ class DataGrid(DOMWidget):
 
     renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
     default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
+    header_renderer = Instance(CellRenderer, allow_none=True).tag(sync=True, **widget_serialization)
     selection_mode = Enum(default_value='none', values=['row', 'column', 'cell', 'none']).tag(sync=True)
     selections = List(Dict).tag(sync=True, **widget_serialization)
     editable = Bool(False).tag(sync=True)

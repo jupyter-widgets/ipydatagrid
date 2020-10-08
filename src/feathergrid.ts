@@ -216,7 +216,7 @@ export class FeatherGrid extends Widget {
       font: '12px sans-serif',
       textColor: Theme.getFontColor(),
       backgroundColor: Theme.getBackgroundColor(),
-      horizontalAlignment: 'left',
+      horizontalAlignment: 'center',
       verticalAlignment: 'center',
     });
 
@@ -270,7 +270,6 @@ export class FeatherGrid extends Widget {
     }
 
     this.grid.dataModel = this._dataModel;
-    this._updateHeaderRenderer();
     this._filterDialog.model = this._dataModel;
     this._updateColumnWidths();
   }
@@ -387,6 +386,20 @@ export class FeatherGrid extends Widget {
     return this._defaultRenderer;
   }
 
+  set columnHeaderRenderer(renderer: CellRenderer) {
+    this._columnHeaderRenderer = renderer;
+
+    if (!this.grid) {
+      return;
+    }
+
+    this._updateGridRenderers();
+  }
+
+  get columnHeaderRenderer(): CellRenderer {
+    return this._columnHeaderRenderer;
+  }
+
   set renderers(renderers: Dict<CellRenderer>) {
     this._renderers = renderers;
 
@@ -490,8 +503,6 @@ export class FeatherGrid extends Widget {
   }
 
   public updateGridStyle() {
-    this._updateHeaderRenderer();
-
     if (!this._defaultRendererSet) {
       this._defaultRenderer = new TextRenderer({
         font: '12px sans-serif',
@@ -506,6 +517,13 @@ export class FeatherGrid extends Widget {
       textColor: Theme.getFontColor(1),
       backgroundColor: Theme.getBackgroundColor(2),
       horizontalAlignment: 'center',
+      verticalAlignment: 'center',
+    });
+
+    this._columnHeaderRenderer = new TextRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'left',
       verticalAlignment: 'center',
     });
 
@@ -770,6 +788,13 @@ export class FeatherGrid extends Widget {
   private _updateGridRenderers() {
     this.grid.cellRenderers.update({ body: this._rendererResolver.bind(this) });
     this.grid.cellRenderers.update({
+      'column-header': this._columnHeaderRenderer,
+    });
+    // Treating corner header as column header for rendering purposes
+    this.grid.cellRenderers.update({
+      'corner-header': this._columnHeaderRenderer,
+    });
+    this.grid.cellRenderers.update({
       'row-header': this._rendererResolver.bind(this),
     });
   }
@@ -809,21 +834,6 @@ export class FeatherGrid extends Widget {
 
       this.grid.resizeColumn('body', i, colSize);
     }
-  }
-
-  private _updateHeaderRenderer() {
-    const headerRenderer = new HeaderRenderer({
-      textOptions: {
-        textColor: Theme.getFontColor(1),
-        backgroundColor: Theme.getBackgroundColor(2),
-        horizontalAlignment: 'center',
-      },
-      isLightTheme: this._isLightTheme,
-      grid: this.grid,
-    });
-
-    this.grid.cellRenderers.update({ 'column-header': headerRenderer });
-    this.grid.cellRenderers.update({ 'corner-header': headerRenderer });
   }
 
   private _createCommandRegistry(): CommandRegistry {
@@ -950,6 +960,7 @@ export class FeatherGrid extends Widget {
   private _editable: boolean;
   private _renderers: Dict<CellRenderer> = {};
   private _defaultRenderer: CellRenderer;
+  private _columnHeaderRenderer: CellRenderer;
   private _rowHeaderRenderer: CellRenderer;
   private _defaultRendererSet = false;
   private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
