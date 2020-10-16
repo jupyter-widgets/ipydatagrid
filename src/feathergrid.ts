@@ -270,6 +270,7 @@ export class FeatherGrid extends Widget {
     }
 
     this.grid.dataModel = this._dataModel;
+    this._updateHeaderRenderer();
     this._filterDialog.model = this._dataModel;
     this._updateColumnWidths();
   }
@@ -387,13 +388,28 @@ export class FeatherGrid extends Widget {
   }
 
   set columnHeaderRenderer(renderer: CellRenderer) {
-    this._columnHeaderRenderer = renderer;
+    const textRenderer = renderer as TextRenderer;
+
+    // Need to create a HeadeRenderer object as TextRenderer
+    // objects do not support merged cell rendering.
+    this._columnHeaderRenderer = new HeaderRenderer({
+      textOptions: {
+        font: textRenderer.font,
+        textColor: textRenderer.textColor,
+        backgroundColor: textRenderer.backgroundColor,
+        verticalAlignment: textRenderer.verticalAlignment,
+        horizontalAlignment: textRenderer.horizontalAlignment,
+        format: textRenderer.format,
+      },
+      isLightTheme: this._isLightTheme,
+      grid: this.grid,
+    });
 
     if (!this.grid) {
       return;
     }
 
-    this._updateGridRenderers();
+    this._updateHeaderRenderer();
   }
 
   get columnHeaderRenderer(): CellRenderer {
@@ -503,6 +519,8 @@ export class FeatherGrid extends Widget {
   }
 
   public updateGridStyle() {
+    this._updateHeaderRenderer();
+
     if (!this._defaultRendererSet) {
       this._defaultRenderer = new TextRenderer({
         font: '12px sans-serif',
@@ -520,11 +538,15 @@ export class FeatherGrid extends Widget {
       verticalAlignment: 'center',
     });
 
-    this._columnHeaderRenderer = new TextRenderer({
-      textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
-      horizontalAlignment: 'left',
-      verticalAlignment: 'center',
+    this._columnHeaderRenderer = new HeaderRenderer({
+      textOptions: {
+        textColor: Theme.getFontColor(1),
+        backgroundColor: Theme.getBackgroundColor(2),
+        horizontalAlignment: 'left',
+        verticalAlignment: 'center',
+      },
+      isLightTheme: this._isLightTheme,
+      grid: this.grid,
     });
 
     const scrollShadow = {
@@ -788,13 +810,6 @@ export class FeatherGrid extends Widget {
   private _updateGridRenderers() {
     this.grid.cellRenderers.update({ body: this._rendererResolver.bind(this) });
     this.grid.cellRenderers.update({
-      'column-header': this._columnHeaderRenderer,
-    });
-    // Treating corner header as column header for rendering purposes
-    this.grid.cellRenderers.update({
-      'corner-header': this._columnHeaderRenderer,
-    });
-    this.grid.cellRenderers.update({
       'row-header': this._rendererResolver.bind(this),
     });
   }
@@ -834,6 +849,16 @@ export class FeatherGrid extends Widget {
 
       this.grid.resizeColumn('body', i, colSize);
     }
+  }
+
+  private _updateHeaderRenderer() {
+    this.grid.cellRenderers.update({
+      'column-header': this._columnHeaderRenderer,
+    });
+    // Treating corner header as column header for rendering purposes
+    this.grid.cellRenderers.update({
+      'corner-header': this._columnHeaderRenderer,
+    });
   }
 
   private _createCommandRegistry(): CommandRegistry {
