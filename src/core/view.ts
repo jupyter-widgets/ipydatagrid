@@ -75,9 +75,9 @@ export class View {
     column: number,
   ): DataModel.Metadata {
     if (region === 'body' || region === 'column-header') {
-      return this._bodyFields[column];
+      return { row: row, column: column, ...this._bodyFields[column] };
     }
-    return this._headerFields[column];
+    return { row: row, column: column, ...this._headerFields[column] };
   }
 
   /**

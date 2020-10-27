@@ -46,8 +46,46 @@ export class VegaExprModel extends WidgetModel {
     return this._function(config, defaultValue, vegaFunctions.functionContext);
   }
 
+  /**
+   * Augments transpiled JS code output from vega with
+   * datamodel calls for condition validation.
+   * @param parsedValue JS code (string) generated from a vega expression
+   */
+  private _augmentExpression(parsedValue: ParsedVegaExpr): ParsedVegaExpr {
+    const codeToProcess = parsedValue.code;
+    if (codeToProcess.includes('cell.metadata.data')) {
+      const localRegex = /\[(.*?)\]/; // For "abc[1]" returns ["[1]", "1"];
+      const indices = parsedValue.code.match(/\[(.*?)\]/g)!;
+      const oldSuffix = indices.join('');
+      const stringToReplace = `cell.metadata.data${oldSuffix}`;
+      let row, column;
+      let newReplacement;
+
+      // Row and column passed - indexing based on given row and given column
+      if (indices.length === 2) {
+        [row, column] = indices;
+        newReplacement = `cell.metadata.data(${row.match(localRegex)![1]}, ${
+          column.match(localRegex)![1]
+        })`;
+      } else {
+        // Only column passed - indexing based on given column and sibling row
+        column = indices[0];
+        newReplacement = `cell.metadata.data(cell.row, ${
+          column.match(localRegex)![1]
+        })`;
+      }
+
+      parsedValue.code = codeToProcess.replace(stringToReplace, newReplacement);
+    }
+
+    return parsedValue;
+  }
+
   private updateFunction() {
-    const parsedValue = this._codegen(vegaExpressions.parse(this.get('value')));
+    let parsedValue: ParsedVegaExpr = this._codegen(
+      vegaExpressions.parse(this.get('value')),
+    );
+    parsedValue = this._augmentExpression(parsedValue);
 
     this._function = Function(
       'cell',
@@ -74,4 +112,12 @@ export class VegaExprView extends WidgetView {
   }
 
   model: VegaExprModel;
+}
+
+export interface ParsedVegaExpr {
+  /**
+   * A JavaScript soring literal describing
+   * the converted vega expression
+   */
+  code: string;
 }
