@@ -46,37 +46,33 @@ export class VegaExprModel extends WidgetModel {
     return this._function(config, defaultValue, vegaFunctions.functionContext);
   }
 
+  _processRegex(match: string): string {
+    const parsedMatch = match.match(/\[(.*?)\]/g)!;
+    const column = parsedMatch[0];
+
+    // Column inxexing for regular element.
+    if (parsedMatch.length === 1) {
+      return `(cell.row, ${column.match(/\[(.*?)\]/)![1]})`;
+    }
+
+    const rest = parsedMatch.splice(1);
+
+    // Column indexing for a compound element.
+    return `(cell.row, ${column.match(/\[(.*?)\]/)![1]})${rest.join('')}`;
+  }
+
   /**
    * Augments transpiled JS code output from vega with
    * datamodel calls for condition validation.
    * @param parsedValue JS code (string) generated from a vega expression
    */
   private _augmentExpression(parsedValue: ParsedVegaExpr): ParsedVegaExpr {
-    const codeToProcess = parsedValue.code;
-    if (codeToProcess.includes('cell.metadata.data')) {
-      const localRegex = /\[(.*?)\]/; // For "abc[1]" returns ["[1]", "1"];
-      const indices = parsedValue.code.match(/\[(.*?)\]/g)!;
-      const oldSuffix = indices.join('');
-      const stringToReplace = `cell.metadata.data${oldSuffix}`;
-      let row, column;
-      let newReplacement;
-
-      // Row and column passed - indexing based on given row and given column
-      if (indices.length === 2) {
-        [row, column] = indices;
-        newReplacement = `cell.metadata.data(${row.match(localRegex)![1]}, ${
-          column.match(localRegex)![1]
-        })`;
-      } else {
-        // Only column passed - indexing based on given column and sibling row
-        column = indices[0];
-        newReplacement = `cell.metadata.data(cell.row, ${
-          column.match(localRegex)![1]
-        })`;
-      }
-
-      parsedValue.code = codeToProcess.replace(stringToReplace, newReplacement);
-    }
+    let codeToProcess = parsedValue.code;
+    codeToProcess = codeToProcess.replace(
+      /(?<=cell.metadata.data)(\[(.*?)\])+(?=[==,>=,<=,!=,<,>])/g,
+      this._processRegex,
+    );
+    parsedValue.code = codeToProcess;
 
     return parsedValue;
   }
@@ -85,6 +81,7 @@ export class VegaExprModel extends WidgetModel {
     let parsedValue: ParsedVegaExpr = this._codegen(
       vegaExpressions.parse(this.get('value')),
     );
+
     parsedValue = this._augmentExpression(parsedValue);
 
     this._function = Function(

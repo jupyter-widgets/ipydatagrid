@@ -161,10 +161,9 @@ export class ViewBasedJSONModel extends MutableDataModel {
     if (region == 'body') {
       md.row = row;
       md.column = column;
-      md.formattingInfo = 4;
-      md.model = this;
       md.data = (row: number, column: number) => {
-        return this.data('body', row, column);
+        const columnIndex = this.columnNameToIndex(column.toString());
+        return this.data('body', row, columnIndex);
       };
     }
     return md;
