@@ -147,8 +147,8 @@ $RECYCLE.BIN/
 # ----
 
 **/node_modules/
-ipydatagrid/nbextension/static/index.*
-ipydatagrid/labextension/*.tgz
+ipydatagrid/nbextension/index.*
+ipydatagrid/labextension/
 
 # Coverage data
 # -------------

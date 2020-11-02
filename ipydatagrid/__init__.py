@@ -8,4 +8,16 @@ from .cellrenderer import CellRenderer, TextRenderer, BarRenderer, VegaExpr, Exp
 from .datagrid import DataGrid, SelectionHelper  # noqa
 from ._version import __version__, version_info  # noqa
 
-from .nbextension import _jupyter_nbextension_paths  # noqa
+def _jupyter_nbextension_paths():
+    return [{
+        'section': 'notebook',
+        'src': 'nbextension',
+        'dest': 'ipydatagrid',
+        'require': 'ipydatagrid/extension'
+    }]
+
+def _jupyter_labextension_paths():
+    return [{
+        'src': 'labextension',
+        'dest': 'ipydatagrid',
+    }]

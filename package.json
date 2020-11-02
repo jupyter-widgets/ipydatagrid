@@ -1,5 +1,5 @@
 {
-  "name": "jupyter-datagrid",
+  "name": "ipydatagrid",
   "version": "0.2.12",
   "description": "Fast Datagrid widget for the Jupyter Notebook and JupyterLab",
   "keywords": [
@@ -33,26 +33,29 @@
     "url": "https://github.com/QuantStack/ipydatagrid"
   },
   "scripts": {
-    "build": "npm run build:lib && npm run build:nbextension",
-    "build:labextension": "npm run clean:labextension && mkdirp datagrid/labextension && cd datagrid/labextension && npm pack ../..",
+    "build": "npm run build:lib && npm run build:nbextension && npm run build:labextension",
+    "build:dev": "npm run build:lib && npm run build:nbextension && npm run build:labextension:dev",
+    "build:labextension": "jupyter labextension build .",
+    "build:labextension:dev": "jupyter labextension build --development True .",
     "build:lib": "tsc",
     "build:nbextension": "webpack -p",
     "build:widget-examples": "cd widget-examples/basic && webpack -p",
     "build:all": "npm run build:labextension && npm run build:nbextension && npm run build:widget-examples",
-    "clean": "npm run clean:lib && npm run clean:nbextension",
+    "clean": "rimraf dist && npm run clean:lib && npm run clean:labextension && npm run clean:nbextension",
     "clean:lib": "rimraf lib",
-    "clean:labextension": "rimraf datagrid/labextension",
-    "clean:nbextension": "rimraf datagrid/nbextension/static/index.js",
+    "clean:labextension": "rimraf ipydatagrid/labextension",
+    "clean:nbextension": "rimraf ipydatagrid/nbextension/index.*",
     "lint": "eslint 'src/**/*.{js,ts}' --quiet --fix",
     "prepack": "npm run build:lib",
     "test": "jest",
     "watch": "npm-run-all -p watch:*",
     "watch:lib": "tsc -w",
-    "watch:nbextension": "webpack --watch"
+    "watch:nbextension": "webpack --watch",
+    "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^2 || ^3",
-    "@jupyterlab/apputils": "^2.1.1",
+    "@jupyter-widgets/base": "^2 || ^3 || ^4.0.0-beta.1",
+    "@jupyterlab/apputils": "^3.0.0-rc.5",
     "@lumino/algorithm": "^1.2.3",
     "@lumino/commands": "^1.10.1",
     "@lumino/coreutils": "^1.4.2",
@@ -73,6 +76,7 @@
     "vega-functions": "^5.3.0"
   },
   "devDependencies": {
+    "@jupyterlab/builder": "^3.0.0-rc.5",
     "@babel/cli": "^7.6.3",
     "@babel/core": "^7.6.3",
     "@babel/preset-env": "^7.6.3",
@@ -111,7 +115,14 @@
     "webpack-cli": "^3.1.2"
   },
   "jupyterlab": {
-    "extension": "lib/plugin"
+    "extension": "lib/plugin",
+    "outputDir": "./ipydatagrid/labextension",
+    "sharedPackages": {
+      "@jupyter-widgets/base": {
+        "bundled": false,
+        "singleton": true
+      }
+    }
   },
   "husky": {
     "hooks": {

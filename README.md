@@ -30,7 +30,7 @@ conda install ipydatagrid
 To enable `ipydatagrid` with JupyterLab:
 
 ```bash
-jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-datagrid
+jupyter labextension install @jupyter-widgets/jupyterlab-manager ipydatagrid
 ```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
@@ -46,7 +46,7 @@ NOTE: For examples using Scales from bqplot to work as intended, the bqplot note
 For a development installation:
 
 ```bash
-git clone https://github.com/bloomberg/ipydatagrid.git
+git clone https://github.com/QuantStack/ipydatagrid.git
 cd ipydatagrid
 pip install -v -e .
 ```
@@ -59,7 +59,7 @@ jupyter nbextension enable --py --sys-prefix ipydatagrid
 
 Enabling development install for JupyterLab:
 ```bash
-jupyter labextension install .
+jupyter labextension develop . --overwrite
 ```
 
 Note for developers: the `--symlink` argument on Linux or OS X allows one to modify the JavaScript code in-place. This feature is not available with Windows.

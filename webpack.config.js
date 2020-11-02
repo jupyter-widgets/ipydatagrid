@@ -7,27 +7,27 @@ const luminoThemeImages = /^.*@lumino\/default-theme.*.png$/;
 const rules = [
   { test: /\.ts$/, loader: 'ts-loader' },
   { test: /\.js$/, loader: 'source-map-loader' },
-  { test: /\.css$/, use: ['style-loader', 'css-loader']},
+  { test: /\.css$/, use: ['style-loader', 'css-loader'] },
   {
     test: luminoThemeImages,
     issuer: { test: /\.css$/ },
     use: {
-      loader: 'url-loader'
-    }
+      loader: 'url-loader',
+    },
   },
   {
     test: /\.(jpg|png|gif)$/,
     exclude: luminoThemeImages,
-    use: ['file-loader']
+    use: ['file-loader'],
   },
   {
     test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
     issuer: { test: /\.css$/ },
     use: {
       loader: 'svg-url-loader',
-      options: { encoding: 'none', limit: 10000 }
-    }
-  }
+      options: { encoding: 'none', limit: 10000 },
+    },
+  },
 ];
 
 // Packages that shouldn't be bundled but loaded at runtime
@@ -35,7 +35,7 @@ const externals = ['@jupyter-widgets/base'];
 
 const resolve = {
   // Add '.ts' and '.tsx' as resolvable extensions.
-  extensions: [".webpack.js", ".web.js", ".ts", ".js"]
+  extensions: ['.webpack.js', '.web.js', '.ts', '.js'],
 };
 
 module.exports = [
@@ -49,11 +49,11 @@ module.exports = [
     entry: './src/extension.ts',
     output: {
       filename: 'index.js',
-      path: path.resolve(__dirname, 'ipydatagrid', 'nbextension', 'static'),
-      libraryTarget: 'amd'
+      path: path.resolve(__dirname, 'ipydatagrid', 'nbextension'),
+      libraryTarget: 'amd',
     },
     module: {
-      rules: rules
+      rules: rules,
     },
     devtool: 'source-map',
     externals,
@@ -61,7 +61,7 @@ module.exports = [
   },
 
   /**
-   * Embeddable jupyter-datagrid bundle
+   * Embeddable ipydatagrid bundle
    *
    * This bundle is almost identical to the notebook extension bundle. The only
    * difference is in the configuration of the webpack public path for the
@@ -73,20 +73,19 @@ module.exports = [
   {
     entry: './src/index.ts',
     output: {
-        filename: 'index.js',
-        path: path.resolve(__dirname, 'dist'),
-        libraryTarget: 'amd',
-        library: "jupyter-datagrid",
-        publicPath: 'https://unpkg.com/jupyter-datagrid@' + version + '/dist/'
+      filename: 'index.js',
+      path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'amd',
+      library: 'ipydatagrid',
+      publicPath: 'https://unpkg.com/ipydatagrid@' + version + '/dist/',
     },
     devtool: 'source-map',
     module: {
-        rules: rules
+      rules: rules,
     },
     externals,
     resolve,
   },
-
 
   /**
    * Documentation widget bundle
@@ -98,15 +97,14 @@ module.exports = [
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),
-      library: "jupyter-datagrid",
-      libraryTarget: 'amd'
+      library: 'ipydatagrid',
+      libraryTarget: 'amd',
     },
     module: {
-      rules: rules
+      rules: rules,
     },
     devtool: 'source-map',
     externals,
     resolve,
-  }
-
+  },
 ];
