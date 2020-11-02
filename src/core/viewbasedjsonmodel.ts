@@ -157,7 +157,16 @@ export class ViewBasedJSONModel extends MutableDataModel {
     row: number,
     column: number,
   ): DataModel.Metadata {
-    return this.currentView.metadata(region, row, column);
+    const md = this.currentView.metadata(region, row, column);
+    if (region == 'body') {
+      md.row = row;
+      md.column = column;
+      md.data = (row: number, column: number) => {
+        const columnIndex = this.columnNameToIndex(column.toString());
+        return this.data('body', row, columnIndex);
+      };
+    }
+    return md;
   }
 
   /**

@@ -40,7 +40,7 @@ class Expr(VegaExpr):
 
     @validate('value')
     def _validate_value(self, proposal):
-        return py2vega(proposal['value'], [Variable('cell', ['value', 'row', 'column']), 'default_value'])
+        return py2vega(proposal['value'], [Variable('cell', ['value', 'row', 'column', 'metadata']), 'default_value'])
 
 
 class CellRenderer(Widget):
