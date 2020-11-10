@@ -9,6 +9,10 @@ import { CellRenderer } from '@lumino/datagrid';
 
 import { JSONExt } from '@lumino/coreutils';
 
+import { MessageLoop } from '@lumino/messaging';
+
+import { Widget } from '@lumino/widgets';
+
 import {
   DOMWidgetModel,
   DOMWidgetView,
@@ -284,8 +288,17 @@ export class DataGridView extends DOMWidgetView {
     this.el = this.pWidget.node;
   }
 
+  manageResizeEvent = () => {
+    MessageLoop.postMessage(this.pWidget, Widget.ResizeMessage.UnknownSize);
+  };
+
   render() {
     this.el.classList.add('datagrid-container');
+
+    window.addEventListener('resize', this.manageResizeEvent);
+    this.once('remove', () => {
+      window.removeEventListener('resize', this.manageResizeEvent);
+    });
 
     this.grid = new FeatherGrid({
       defaultSizes: {
