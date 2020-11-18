@@ -277,6 +277,17 @@ export class InteractiveFilterDialog extends BoxPanel {
         data: items,
       };
       this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
+
+      const sortTransform: Transform.Sort = {
+        type: 'sort',
+        columnIndex: this.model.getSchemaIndex(this._region, 0),
+        desc: false,
+      };
+
+      // Sort items in filter-by-value menu in ascending order
+      (<ViewBasedJSONModel>this._uniqueValueGrid.dataModel).addTransform(
+        sortTransform,
+      );
     });
   }
 
