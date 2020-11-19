@@ -130,6 +130,64 @@ export class InteractiveFilterDialog extends BoxPanel {
   }
 
   /**
+   * Handles applying flters on the main datagrid
+   * when the filter by value textbox has values
+   * and the apply button has been clicked.
+   */
+  applyTextInputFilter(): void {
+    const dataModel = this._uniqueValueGrid.dataModel as ViewBasedJSONModel;
+    const dataManager = this._uniqueValueStateManager;
+    const values = dataModel.uniqueValuesVisible(this._region, 0);
+
+    values.then((valuesVisibleInFilterMenu) => {
+      // Checkbox state empty although showing selected or no
+      // filter applied. Adding elements to selected state.
+      if (!this.userInteractedWithDialog && !this.hasFilter) {
+        for (const value of valuesVisibleInFilterMenu) {
+          dataManager.add(this._region, this._columnIndex, value);
+        }
+        this.userInteractedWithDialog = true;
+      } else {
+        // There is an existing filter applied or the
+        // user interacted with the dialog box. We
+        // remove from the main datagrid datamodel any
+        // selections which are not currently displayed
+        // in the filtered dialog box.
+        const currentValuesInCheckboxState = dataManager.getValues(
+          this._region,
+          this._columnIndex,
+        );
+
+        const valuesToRemoveFromSelectedState = currentValuesInCheckboxState.filter(
+          (val) => {
+            return !valuesVisibleInFilterMenu.includes(val);
+          },
+        );
+
+        for (const value of valuesToRemoveFromSelectedState) {
+          dataManager.remove(this._region, this._columnIndex, value);
+        }
+      }
+
+      const value = this._uniqueValueStateManager.getValues(
+        this.region,
+        this._columnIndex,
+      );
+
+      const transform: Transform.TransformSpec = {
+        type: 'filter',
+        columnIndex: this.model.getSchemaIndex(this._region, this._columnIndex),
+        operator: this._filterOperator,
+        value: value,
+      };
+
+      this._textInputFilterValue = undefined;
+      this._model.clearTransforms();
+      this._model.addTransform(transform);
+    });
+  }
+
+  /**
    * Applies the active transformation to the linked data model.
    */
   applyFilter(): void {
@@ -140,6 +198,17 @@ export class InteractiveFilterDialog extends BoxPanel {
       return;
     }
 
+    // Handling filtering based on typed
+    // text input in the filter-by-value
+    // dialog menu.
+    if (this._textInputFilterValue !== undefined) {
+      this.applyTextInputFilter();
+      this.close();
+      return;
+    }
+
+    // Handling normal filter by value
+    // logic (no text input).
     if (
       !this.hasFilter &&
       !this.userInteractedWithDialog &&
@@ -517,8 +586,8 @@ export class InteractiveFilterDialog extends BoxPanel {
           width: '200px',
           background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
         },
-        // Assigning a random key ensures that this element is always
-        // rerendered
+        // Assigning a random key ensures that this
+        // element is always rerendered.
         key: String(Math.random()),
         oninput: (evt) => {
           const elem = <HTMLInputElement>evt.srcElement;
@@ -527,18 +596,25 @@ export class InteractiveFilterDialog extends BoxPanel {
           // Empty input - remove all transforms and terminate.
           if (elem.value === '') {
             dataModel.clearTransforms();
+            this._textInputFilterValue = undefined;
+            this._selectAllCheckbox.setHidden(false);
             return;
           }
           this._textInputFilterValue = elem.value;
           const value = <Transform.FilterValue>this._textInputFilterValue;
           const transform: Transform.TransformSpec = {
             type: 'filter',
-            columnIndex: this.model.getSchemaIndex(this._region, 0),
-            operator: 'stringStartsWith',
+            // This is a separate data grid for the dialog box
+            // which will always have two columns.
+            columnIndex: 1,
+            operator: 'stringContains',
             value: value,
           };
+          // Disabling "select all" toggle when
+          // filtering with text input.
+          this._selectAllCheckbox.setHidden(true);
           // Removing any previously assigned transforms so we do
-          // not add additional transforms for each key stroke.
+          // not accumulate transforms with each key stroke.
           dataModel.clearTransforms();
           dataModel.addTransform(transform);
         },
