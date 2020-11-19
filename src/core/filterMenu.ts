@@ -83,10 +83,10 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
+    this.addWidget(this._textInputWidget);
     this.addWidget(this._selectAllCheckbox);
     this.addWidget(this._filterByConditionWidget);
     this.addWidget(this._uniqueValueGrid);
-    this.addWidget(this._textInputWidget);
     this.addWidget(this._applyWidget);
   }
 
