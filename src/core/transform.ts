@@ -71,6 +71,7 @@ export namespace Transform {
     | 'startswith'
     | 'stringStartsWith'
     | 'endswith'
+    | 'stringContains'
     | 'contains'
     | '!contains'
     | 'isOnSameDay';

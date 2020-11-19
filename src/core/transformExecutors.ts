@@ -162,6 +162,13 @@ export class FilterExecutor extends TransformExecutor {
           return item[this._options.field].endsWith(this._options.value);
         };
         break;
+      case 'stringContains':
+        filterFunc = (item: any) => {
+          return String(item[this._options.field])
+            .toLowerCase()
+            .includes(String(this._options.value).toLowerCase());
+        };
+        break;
       case 'contains':
         filterFunc = (item: any) => {
           return item[this._options.field].includes(this._options.value);
