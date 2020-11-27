@@ -72,6 +72,10 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._applyWidget = new Widget();
     this._applyWidget.addClass('ipydatagrid-filter-apply');
 
+    // Widget for the text search input box in the
+    // filter-by-value dialog box
+    this._textInputWidget = new TextInputWidget();
+
     // Create the "Select All" widget and connecting to
     // lumino signal
     this._selectAllCheckbox = new SelectCanvasWidget();
@@ -82,6 +86,7 @@ export class InteractiveFilterDialog extends BoxPanel {
     this.addWidget(this._selectAllCheckbox);
     this.addWidget(this._filterByConditionWidget);
     this.addWidget(this._uniqueValueGrid);
+    this.addWidget(this._textInputWidget);
     this.addWidget(this._applyWidget);
   }
 
@@ -200,6 +205,7 @@ export class InteractiveFilterDialog extends BoxPanel {
       this._applyWidget.node.style.minHeight = '65px';
       this._selectAllCheckbox.setHidden(true);
       this._uniqueValueGrid.setHidden(true);
+      this._textInputWidget.setHidden(true);
       this._filterByConditionWidget.setHidden(false);
 
       // selector
@@ -224,10 +230,17 @@ export class InteractiveFilterDialog extends BoxPanel {
       this._applyWidget.node.style.minHeight = '30px';
       this._selectAllCheckbox.setHidden(false);
       this._uniqueValueGrid.setHidden(false);
+      this._textInputWidget.setHidden(false);
       this._filterByConditionWidget.setHidden(true);
 
       // title
       VirtualDOM.render([this.createTitleNode()], this._titleWidget.node);
+
+      // text search box
+      VirtualDOM.render(
+        [this.createTextInputDialog()],
+        this._textInputWidget.node,
+      );
 
       // apply buttons
       VirtualDOM.render([this.createApplyButtonNode()], this._applyWidget.node);
@@ -475,6 +488,51 @@ export class InteractiveFilterDialog extends BoxPanel {
   protected onAfterDetach(msg: Message): void {
     document.removeEventListener('mousedown', this, true);
     document.removeEventListener('keydown', this, true);
+  }
+
+  /**
+   * Creates the input dialog box for the filter-by-value
+   * menu.
+   */
+  createTextInputDialog(): VirtualElement {
+    return h.div(
+      {
+        className: 'ipydatagrid-text-input-filter',
+      },
+      h.input({
+        type: 'text',
+        style: {
+          marginRight: '5px',
+          width: '200px',
+          background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
+        },
+        // Assigning a random key ensures that this element is always
+        // rerendered
+        key: String(Math.random()),
+        oninput: (evt) => {
+          const elem = <HTMLInputElement>evt.srcElement;
+          const dataModel = this._uniqueValueGrid
+            .dataModel as ViewBasedJSONModel;
+          // Empty input - remove all transforms and terminate.
+          if (elem.value === '') {
+            dataModel.clearTransforms();
+            return;
+          }
+          this._textInputFilterValue = elem.value;
+          const value = <Transform.FilterValue>this._textInputFilterValue;
+          const transform: Transform.TransformSpec = {
+            type: 'filter',
+            columnIndex: this.model.getSchemaIndex(this._region, 0),
+            operator: 'stringStartsWith',
+            value: value,
+          };
+          // Removing any previously assigned transforms so we do
+          // not add additional transforms for each key stroke.
+          dataModel.clearTransforms();
+          dataModel.addTransform(transform);
+        },
+      }),
+    );
   }
 
   /**
@@ -1157,11 +1215,13 @@ export class InteractiveFilterDialog extends BoxPanel {
   private _mode: 'condition' | 'value' = 'value';
   private _filterOperator: Transform.FilterOperator = '<';
   private _filterValue: InteractiveFilterDialog.FilterValue;
+  private _textInputFilterValue: InteractiveFilterDialog.FilterValue;
 
   // Phosphor widgets
   private _uniqueValueGrid: DataGrid;
   private _filterByConditionWidget: Widget;
   private _titleWidget: Widget;
+  private _textInputWidget: Widget;
   private _applyWidget: Widget;
 
   // Unique value state
@@ -1172,6 +1232,18 @@ export class InteractiveFilterDialog extends BoxPanel {
   userInteractedWithDialog = false;
 
   private _selectAllCheckbox: SelectCanvasWidget;
+}
+
+/**
+ * A lumino widget for the text search input box
+ * for the filter-by-value dialog
+ */
+class TextInputWidget extends Widget {
+  constructor() {
+    super();
+    this.node.style.minHeight = '16px';
+    this.node.style.overflow = 'visible';
+  }
 }
 
 /**

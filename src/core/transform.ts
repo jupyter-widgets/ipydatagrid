@@ -69,6 +69,7 @@ export namespace Transform {
     | 'in'
     | 'between'
     | 'startswith'
+    | 'stringStartsWith'
     | 'endswith'
     | 'contains'
     | '!contains'
