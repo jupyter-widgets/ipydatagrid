@@ -145,13 +145,6 @@ export class FilterExecutor extends TransformExecutor {
           );
         };
         break;
-      case 'stringStartsWith':
-        filterFunc = (item: any) => {
-          return String(item[this._options.field])
-            .toLowerCase()
-            .startsWith(String(this._options.value).toLowerCase());
-        };
-        break;
       case 'startswith':
         filterFunc = (item: any) => {
           return item[this._options.field].startsWith(this._options.value);
@@ -160,6 +153,13 @@ export class FilterExecutor extends TransformExecutor {
       case 'endswith':
         filterFunc = (item: any) => {
           return item[this._options.field].endsWith(this._options.value);
+        };
+        break;
+      case 'stringContains':
+        filterFunc = (item: any) => {
+          return String(item[this._options.field])
+            .toLowerCase()
+            .includes(String(this._options.value).toLowerCase());
         };
         break;
       case 'contains':

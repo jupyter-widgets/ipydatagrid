@@ -83,10 +83,10 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     // Add all widgets to the dock
     this.addWidget(this._titleWidget);
+    this.addWidget(this._textInputWidget);
     this.addWidget(this._selectAllCheckbox);
     this.addWidget(this._filterByConditionWidget);
     this.addWidget(this._uniqueValueGrid);
-    this.addWidget(this._textInputWidget);
     this.addWidget(this._applyWidget);
   }
 
@@ -517,8 +517,8 @@ export class InteractiveFilterDialog extends BoxPanel {
           width: '200px',
           background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
         },
-        // Assigning a random key ensures that this element is always
-        // rerendered
+        // Assigning a random key ensures that this
+        // element is always rerendered.
         key: String(Math.random()),
         oninput: (evt) => {
           const elem = <HTMLInputElement>evt.srcElement;
@@ -527,18 +527,25 @@ export class InteractiveFilterDialog extends BoxPanel {
           // Empty input - remove all transforms and terminate.
           if (elem.value === '') {
             dataModel.clearTransforms();
+            this._textInputFilterValue = undefined;
+            this._selectAllCheckbox.setHidden(false);
             return;
           }
           this._textInputFilterValue = elem.value;
           const value = <Transform.FilterValue>this._textInputFilterValue;
           const transform: Transform.TransformSpec = {
             type: 'filter',
-            columnIndex: this.model.getSchemaIndex(this._region, 0),
-            operator: 'stringStartsWith',
+            // This is a separate data grid for the dialog box
+            // which will always have two columns.
+            columnIndex: 1,
+            operator: 'stringContains',
             value: value,
           };
+          // Disabling "select all" toggle when
+          // filtering with text input.
+          this._selectAllCheckbox.setHidden(true);
           // Removing any previously assigned transforms so we do
-          // not add additional transforms for each key stroke.
+          // not accumulate transforms with each key stroke.
           dataModel.clearTransforms();
           dataModel.addTransform(transform);
         },
