@@ -256,24 +256,36 @@ export class SortExecutor extends TransformExecutor {
     // displayed values to maintain their original types but
     // be sorted as if they were all strings.
     const stringifyIfNeeded = (value: any) => {
-      if (typeof value != 'string' && columnDataType == 'string') {
+      if (typeof value != 'string') {
         return String(value);
       }
       return value;
     };
 
-    if (this._options.desc) {
-      sortFunc = (a: any, b: any): number => {
-        return stringifyIfNeeded(a[field]) < stringifyIfNeeded(b[field])
-          ? 1
-          : -1;
-      };
+    if (columnDataType == 'string') {
+      if (this._options.desc) {
+        sortFunc = (a: any, b: any): number => {
+          return stringifyIfNeeded(a[field]) < stringifyIfNeeded(b[field])
+            ? 1
+            : -1;
+        };
+      } else {
+        sortFunc = (a: any, b: any): number => {
+          return stringifyIfNeeded(a[field]) > stringifyIfNeeded(b[field])
+            ? 1
+            : -1;
+        };
+      }
     } else {
-      sortFunc = (a: any, b: any): number => {
-        return stringifyIfNeeded(a[field]) > stringifyIfNeeded(b[field])
-          ? 1
-          : -1;
-      };
+      if (this._options.desc) {
+        sortFunc = (a: any, b: any): number => {
+          return a[field] < b[field] ? 1 : -1;
+        };
+      } else {
+        sortFunc = (a: any, b: any): number => {
+          return a[field] > b[field] ? 1 : -1;
+        };
+      }
     }
 
     const data = input.data.slice(0);
