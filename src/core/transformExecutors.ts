@@ -248,15 +248,44 @@ export class SortExecutor extends TransformExecutor {
   public apply(input: TransformExecutor.IData): TransformExecutor.IData {
     let sortFunc: (a: any, b: any) => number;
     const field = this._options.field;
+    const columnDataType = this._options.dType;
 
-    if (this._options.desc) {
-      sortFunc = (a: any, b: any): number => {
-        return a[field] < b[field] ? 1 : -1;
-      };
+    // Adding string checks within the sort function so we do
+    // not have to mutate in-place the original types of the
+    // values of the column into strings. This allows the
+    // displayed values to maintain their original types but
+    // be sorted as if they were all strings.
+    const stringifyIfNeeded = (value: any) => {
+      if (typeof value != 'string') {
+        return String(value);
+      }
+      return value;
+    };
+
+    if (columnDataType == 'string') {
+      if (this._options.desc) {
+        sortFunc = (a: any, b: any): number => {
+          return stringifyIfNeeded(a[field]) < stringifyIfNeeded(b[field])
+            ? 1
+            : -1;
+        };
+      } else {
+        sortFunc = (a: any, b: any): number => {
+          return stringifyIfNeeded(a[field]) > stringifyIfNeeded(b[field])
+            ? 1
+            : -1;
+        };
+      }
     } else {
-      sortFunc = (a: any, b: any): number => {
-        return a[field] > b[field] ? 1 : -1;
-      };
+      if (this._options.desc) {
+        sortFunc = (a: any, b: any): number => {
+          return a[field] < b[field] ? 1 : -1;
+        };
+      } else {
+        sortFunc = (a: any, b: any): number => {
+          return a[field] > b[field] ? 1 : -1;
+        };
+      }
     }
 
     const data = input.data.slice(0);
