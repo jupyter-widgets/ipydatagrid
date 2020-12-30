@@ -69,7 +69,7 @@ export class VegaExprModel extends WidgetModel {
   private _augmentExpression(parsedValue: ParsedVegaExpr): ParsedVegaExpr {
     let codeToProcess = parsedValue.code;
     codeToProcess = codeToProcess.replace(
-      /(?<=cell.metadata.data)(\[(.*?)\])+(?!=[==,>=,<=,!=,<,>,\s])/g,
+      /(?<=cell.metadata.data)(\[(.*?)\])+(?=)/g,
       this._processRegex,
     );
     parsedValue.code = codeToProcess;
