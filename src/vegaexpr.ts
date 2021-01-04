@@ -50,7 +50,7 @@ export class VegaExprModel extends WidgetModel {
     const parsedMatch = match.match(/\[(.*?)\]/g)!;
     const column = parsedMatch[0];
 
-    // Column inxexing for regular element.
+    // Column indexing for regular element.
     if (parsedMatch.length === 1) {
       return `(cell.row, ${column.match(/\[(.*?)\]/)![1]})`;
     }
@@ -69,7 +69,7 @@ export class VegaExprModel extends WidgetModel {
   private _augmentExpression(parsedValue: ParsedVegaExpr): ParsedVegaExpr {
     let codeToProcess = parsedValue.code;
     codeToProcess = codeToProcess.replace(
-      /(?<=cell.metadata.data)(\[(.*?)\])+(?=[==,>=,<=,!=,<,>])/g,
+      /(?<=cell.metadata.data)(\[(.*?)\])+(?=)/g,
       this._processRegex,
     );
     parsedValue.code = codeToProcess;
