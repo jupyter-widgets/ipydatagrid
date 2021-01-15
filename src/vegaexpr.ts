@@ -3,6 +3,7 @@
 
 const vegaExpressions: any = require('vega-expression');
 const vegaFunctions: any = require('vega-functions');
+const d3Format: any = require('d3-format');
 
 import { WidgetModel, WidgetView } from '@jupyter-widgets/base';
 
@@ -27,8 +28,9 @@ export class VegaExprModel extends WidgetModel {
     const codegen_params = {
       whitelist: ['cell', 'default_value', 'functions'],
       globalvar: 'cell',
-      functions: function (codegen: any) {
+      functions: (codegen: any) => {
         const fn = vegaExpressions.functions(codegen);
+        fn.format = this.d3FormatFunc;
         for (const name in vegaFunctions.functionContext) {
           fn[name] = 'functions.' + name;
         }
@@ -40,6 +42,14 @@ export class VegaExprModel extends WidgetModel {
 
     this.updateFunction();
     this.on('change:value', this.updateFunction.bind(this));
+  }
+
+  // Newer versions of vega introduced a locale requirement, which we do
+  // not use (older vega dependency) in ipydatagrid. The .format() function
+  // specifically won't work without that context. Therefore, as that function
+  // uses d3-format, we're monkey patching any .format() calls to use d3 directly.
+  d3FormatFunc(value: any, spec: any) {
+    return d3Format.format(spec)(value);
   }
 
   process(config: CellRenderer.CellConfig, defaultValue: any) {
