@@ -39,14 +39,14 @@ package_data_spec = {
 }
 
 data_files_spec = [
-    ('share/jupyter/nbextensions/ipydatagrid', 'ipydatagrid/nbextension', '*.*'),
-    ('share/jupyter/labextensions/ipydatagrid', 'ipydatagrid/labextension', "*.*"),
+    ('share/jupyter/nbextensions/ipydatagrid', 'ipydatagrid/nbextension', '**'),
+    ('share/jupyter/labextensions/ipydatagrid', 'ipydatagrid/labextension', "**"),
     ('etc/jupyter/nbconfig/notebook.d', '.', 'ipydatagrid.json'),
 ]
 
 cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec, data_files_spec=data_files_spec)
 cmdclass['jsdeps'] = combine_commands(
-    install_npm(js_dir, build_cmd='build'), ensure_targets(jstargets),
+    install_npm(js_dir, build_cmd='build', npm=['npm', '--legacy-peer-deps']), ensure_targets(jstargets),
 )
 
 setup_args = dict(
@@ -57,7 +57,6 @@ setup_args = dict(
     license='BSD',
     include_package_data=True,
     install_requires=[
-        'jupyterlab_widgets>=1.0.0a6',
         'pandas>=0.25.0',
         'py2vega>=0.5.0',
         'ipywidgets>=7.5.0,<8',

@@ -10,7 +10,7 @@ const rules = [
   { test: /\.css$/, use: ['style-loader', 'css-loader'] },
   {
     test: luminoThemeImages,
-    issuer: { test: /\.css$/ },
+    issuer: /\.css$/,
     use: {
       loader: 'url-loader',
     },
@@ -22,7 +22,7 @@ const rules = [
   },
   {
     test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-    issuer: { test: /\.css$/ },
+    issuer: /\.css$/,
     use: {
       loader: 'svg-url-loader',
       options: { encoding: 'none', limit: 10000 },
