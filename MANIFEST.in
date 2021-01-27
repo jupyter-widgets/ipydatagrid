@@ -1,5 +1,5 @@
-recursive-include ipydatagrid/nbextension *.*
-recursive-include ipydatagrid/labextension *.*
+recursive-include ipydatagrid/nbextension *
+recursive-include ipydatagrid/labextension *
 
 include LICENSE.txt
 include README.md
