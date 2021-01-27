@@ -3,6 +3,7 @@
 
 const vegaExpressions: any = require('vega-expression');
 const vegaFunctions: any = require('vega-functions');
+const d3Format: any = require('d3-format');
 
 import { WidgetModel, WidgetView } from '@jupyter-widgets/base';
 
@@ -27,8 +28,9 @@ export class VegaExprModel extends WidgetModel {
     const codegen_params = {
       whitelist: ['cell', 'default_value', 'functions'],
       globalvar: 'cell',
-      functions: function (codegen: any) {
+      functions: (codegen: any) => {
         const fn = vegaExpressions.functions(codegen);
+        fn.format = this.d3FormatFunc;
         for (const name in vegaFunctions.functionContext) {
           fn[name] = 'functions.' + name;
         }
@@ -42,6 +44,14 @@ export class VegaExprModel extends WidgetModel {
     this.on('change:value', this.updateFunction.bind(this));
   }
 
+  // Newer versions of vega introduced a locale requirement, which we do
+  // not use (older vega dependency) in ipydatagrid. The .format() function
+  // specifically won't work without that context. Therefore, as that function
+  // uses d3-format, we're monkey patching any .format() calls to use d3 directly.
+  d3FormatFunc(value: any, spec: any) {
+    return d3Format.format(spec)(value);
+  }
+
   process(config: CellRenderer.CellConfig, defaultValue: any) {
     return this._function(config, defaultValue, vegaFunctions.functionContext);
   }
@@ -50,7 +60,7 @@ export class VegaExprModel extends WidgetModel {
     const parsedMatch = match.match(/\[(.*?)\]/g)!;
     const column = parsedMatch[0];
 
-    // Column inxexing for regular element.
+    // Column indexing for regular element.
     if (parsedMatch.length === 1) {
       return `(cell.row, ${column.match(/\[(.*?)\]/)![1]})`;
     }
@@ -69,7 +79,7 @@ export class VegaExprModel extends WidgetModel {
   private _augmentExpression(parsedValue: ParsedVegaExpr): ParsedVegaExpr {
     let codeToProcess = parsedValue.code;
     codeToProcess = codeToProcess.replace(
-      /(?<=cell.metadata.data)(\[(.*?)\])+(?=[==,>=,<=,!=,<,>])/g,
+      /(?<=cell.metadata.data)(\[(.*?)\])+(?=)/g,
       this._processRegex,
     );
     parsedValue.code = codeToProcess;

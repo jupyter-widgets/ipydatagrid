@@ -25,6 +25,10 @@ const sortTestCases: Private.SortTestCase[] = [
   { desc: false, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', '2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z'], expected: ['2019-09-07T18:38:47.431Z', '2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z'] },
   { desc: false, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', null, '2019-09-10T18:38:47.431Z'], expected: ['2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z', null] },
   { desc: false, dType: 'datetime', data: ['2019-09-12T18:38:47.431Z', INVALID_DATE, '2019-09-10T18:38:47.431Z'], expected: ['2019-09-10T18:38:47.431Z', '2019-09-12T18:38:47.431Z', INVALID_DATE] },
+  // Mixed types (treated as strings)
+  { desc: false, dType: 'string', 
+    data: [1, Number.NaN, 'B', '2019-09-10T18:38:47.431Z', 101.22, 1.1,Number.NaN, 1.21, 1.31, Number.NaN, Number.NaN, 1.11, 1.21, 1.91, 'A', 9.76], 
+    expected: [1, 1.1, 1.11, 1.21, 1.21, 1.31, 1.91, 101.22, '2019-09-10T18:38:47.431Z', 9.76, 'A', 'B', Number.NaN, Number.NaN, Number.NaN, Number.NaN] },
 ];
 
 // Run tests

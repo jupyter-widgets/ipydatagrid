@@ -70,6 +70,7 @@ export namespace Transform {
     | 'between'
     | 'startswith'
     | 'endswith'
+    | 'stringContains'
     | 'contains'
     | '!contains'
     | 'isOnSameDay';

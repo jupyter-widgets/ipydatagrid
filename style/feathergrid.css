@@ -103,7 +103,7 @@
 }
 
 .ipydatagrid-unique-value-grid {
-  min-height: 200px;
+  min-height: 165px;
   min-width: var(--ipydatagrid-filter-dialog-width);
   z-index: 1;
 }
@@ -114,7 +114,7 @@
 }
 
 .ipydatagrid-filter-apply {
-  min-height: 30px;
+  min-height: 20px;
 }
 
 .ipydatagrid-filter-condition-select {
@@ -135,4 +135,8 @@
 
 .ipydatagrid-context-menu .lm-Menu-item.lm-mod-active, .ipydatagrid-context-menu .p-Menu-item.p-mod-active {
   background-color: var(--ipydatagrid-layout-color2);
+}
+
+.ipydatagrid-text-input-filter {
+  transform: translate(5px, 0px);
 }
