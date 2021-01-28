@@ -13,7 +13,7 @@ import * as widgetExports from './datagrid';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
-const EXTENSION_ID = 'jupyter-datagrid:plugin';
+const EXTENSION_ID = 'ipydatagrid:plugin';
 
 /**
  * The datagrid plugin.
@@ -21,6 +21,7 @@ const EXTENSION_ID = 'jupyter-datagrid:plugin';
 const datagridPlugin: IPlugin<Application<Widget>, void> = {
   id: EXTENSION_ID,
   requires: [IJupyterWidgetRegistry],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   optional: [IThemeManager as any],
   activate: activateWidgetExtension,
   autoStart: true,

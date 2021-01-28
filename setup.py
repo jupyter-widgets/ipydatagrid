@@ -1,95 +1,66 @@
-#!/usr/bin/env python
-# coding: utf-8
+import os
+from distutils import log
+from setuptools import setup, find_packages
 
-# Copyright (c) Jupyter Development Team.
-# Distributed under the terms of the Modified BSD License.
-
-from __future__ import print_function
-from glob import glob
-from os.path import join as pjoin
-
-
-from setupbase import (
-    create_cmdclass, install_npm, ensure_targets,
-    find_packages, combine_commands, ensure_python,
-    get_version, HERE
+from jupyter_packaging import (
+    create_cmdclass,
+    install_npm,
+    ensure_targets,
+    combine_commands,
+    get_version,
 )
 
-from setuptools import setup
-
-
-# The name of the project
+# the name of the package
 name = 'ipydatagrid'
+long_description = 'Fast Datagrid widget for the Jupyter Notebook and JupyterLab'
 
-# Ensure a valid python version
-ensure_python('>=3.4')
+here = os.path.dirname(os.path.abspath(__file__))
+
+log.set_verbosity(log.DEBUG)
+log.info('setup.py entered')
+log.info('$PATH=%s' % os.environ['PATH'])
 
 # Get our version
-version = get_version(pjoin(name, '_version.py'))
+version = get_version(os.path.join(name, '_version.py'))
 
-nb_path = pjoin(HERE, name, 'nbextension', 'static')
-lab_path = pjoin(HERE, name, 'labextension')
+js_dir = here
 
 # Representative files that should exist after a successful build
 jstargets = [
-    pjoin(nb_path, 'index.js'),
-    pjoin(HERE, 'lib', 'plugin.js'),
+    os.path.join(js_dir, 'dist', 'index.js'),
 ]
+
 
 package_data_spec = {
     name: [
-        'nbextension/static/*.*js*',
-        'labextension/*.tgz'
+        'nbextension/*.*js*',
+        'labextension/*'
     ]
 }
 
 data_files_spec = [
-    ('share/jupyter/nbextensions/ipydatagrid',
-        nb_path, '*.js*'),
-    ('share/jupyter/lab/extensions', lab_path, '*.tgz'),
-    ('etc/jupyter/nbconfig/notebook.d' , HERE, 'ipydatagrid.json')
+    ('share/jupyter/nbextensions/ipydatagrid', 'ipydatagrid/nbextension', '**'),
+    ('share/jupyter/labextensions/ipydatagrid', 'ipydatagrid/labextension', "**"),
+    ('etc/jupyter/nbconfig/notebook.d', '.', 'ipydatagrid.json'),
 ]
 
-
-cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec,
-    data_files_spec=data_files_spec)
+cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec, data_files_spec=data_files_spec)
 cmdclass['jsdeps'] = combine_commands(
-    install_npm(HERE, build_cmd='build:all'),
-    ensure_targets(jstargets),
+    install_npm(js_dir, build_cmd='build', npm=['npm', '--legacy-peer-deps']), ensure_targets(jstargets),
 )
 
-
 setup_args = dict(
-    name            = name,
-    description     = 'Fast Datagrid widget for the Jupyter Notebook and JupyterLab',
-    version         = version,
-    scripts         = glob(pjoin('scripts', '*')),
-    cmdclass        = cmdclass,
-    packages        = find_packages(),
-    author          = 'QuantStack',
-    author_email    = '',
-    url             = 'https://github.com/QuantStack/ipydatagrid',
-    license         = 'BSD',
-    platforms       = "Linux, Mac OS X, Windows",
-    keywords        = ['Jupyter', 'Widgets', 'IPython'],
-    classifiers     = [
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Framework :: Jupyter',
-    ],
-    include_package_data = True,
-    install_requires = [
+    name=name,
+    version=version,
+    description=long_description,
+    long_description=long_description,
+    license='BSD',
+    include_package_data=True,
+    install_requires=[
         'pandas>=0.25.0',
         'py2vega>=0.5.0',
-        'ipywidgets>=7.0.0',
-        'bqplot>=0.11.6'  # This is temporary, this dependency will be removed when scales are extracted from bqplot
+        'ipywidgets>=7.5.0,<8',
+        'bqplot>=0.11.6' 
     ],
     extras_require = {
         'test': [
@@ -113,6 +84,25 @@ setup_args = dict(
     },
     entry_points = {
     },
+    packages=find_packages(),
+    zip_safe=False,
+    cmdclass=cmdclass,
+    author          = 'Bloomberg, QuantStack',
+    author_email    = '',
+    url             = 'https://github.com/QuantStack/ipydatagrid',
+    keywords        = ['Jupyter', 'Widgets', 'IPython'],
+    classifiers     = [
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Framework :: Jupyter',
+    ],
 )
 
 if __name__ == '__main__':
