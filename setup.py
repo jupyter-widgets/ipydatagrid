@@ -20,7 +20,7 @@ log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
-# Get ipyleaflet version
+# Get our version
 version = get_version(os.path.join(name, '_version.py'))
 
 js_dir = here
