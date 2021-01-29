@@ -110,7 +110,8 @@
     "ts-loader": "^6.0.4",
     "typescript": "~3.6.4",
     "url-loader": "^4.1.0",
-    "webpack": "^5"
+    "webpack": "^5",
+    "webpack-cli": "^4.4.0"
   },
   "jupyterlab": {
     "extension": "lib/plugin",
