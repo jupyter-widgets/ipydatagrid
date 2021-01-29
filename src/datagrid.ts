@@ -1,4 +1,4 @@
-// Copyright (c) QuantStack
+// Copyright (c) Bloomberg
 // Distributed under the terms of the Modified BSD License.
 
 import * as _ from 'underscore';

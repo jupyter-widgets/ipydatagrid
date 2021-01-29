@@ -17,20 +17,20 @@
     "dist/*.png",
     "style/**/*.*"
   ],
-  "homepage": "https://github.com/QuantStack/ipydatagrid",
+  "homepage": "https://github.com/Bloomberg/ipydatagrid",
   "bugs": {
-    "url": "https://github.com/QuantStack/ipydatagrid/issues"
+    "url": "https://github.com/Bloomberg/ipydatagrid/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
-    "name": "QuantStack",
+    "name": "Bloomberg",
     "email": ""
   },
   "main": "lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/QuantStack/ipydatagrid"
+    "url": "https://github.com/Bloomberg/ipydatagrid"
   },
   "scripts": {
     "build": "npm run build:lib && npm run build:nbextension && npm run build:labextension",

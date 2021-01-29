@@ -1,10 +1,9 @@
-
 # ipydatagrid
 
 Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 
-
 ## Menu
+
 - [Installation](#Installation)
 - [Development installation](#Development-installation)
 - [Usage and Examples](#Usage-and-Examples)
@@ -18,11 +17,13 @@ Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 You can install `ipydatagrid` using `pip` or `conda`:
 
 Using `pip`:
+
 ```bash
 pip install ipydatagrid
 ```
 
 Using `conda`:
+
 ```bash
 conda install ipydatagrid
 ```
@@ -35,6 +36,7 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager ipydatagrid
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
 the nbextension:
+
 ```bash
 jupyter nbextension enable --py [--sys-prefix|--user|--system] ipydatagrid
 ```
@@ -46,18 +48,20 @@ NOTE: For examples using Scales from bqplot to work as intended, the bqplot note
 For a development installation:
 
 ```bash
-git clone https://github.com/QuantStack/ipydatagrid.git
+git clone https://github.com/Bloomberg/ipydatagrid.git
 cd ipydatagrid
 pip install -v -e .
 ```
 
 Enabling development install for Jupyter notebook:
+
 ```bash
 jupyter nbextension install --py --symlink --sys-prefix ipydatagrid
 jupyter nbextension enable --py --sys-prefix ipydatagrid
 ```
 
 Enabling development install for JupyterLab:
+
 ```bash
 jupyter labextension develop . --overwrite
 ```
@@ -66,6 +70,7 @@ Note for developers: the `--symlink` argument on Linux or OS X allows one to mod
 `
 
 ## Usage and Examples
+
 Tutorial and example notebooks can be found in the `/examples` directory.
 
 ## Contributions

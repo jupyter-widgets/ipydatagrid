@@ -87,9 +87,9 @@ setup_args = dict(
     packages=find_packages(),
     zip_safe=False,
     cmdclass=cmdclass,
-    author          = 'Bloomberg, QuantStack',
+    author          = 'Bloomberg, Bloomberg',
     author_email    = '',
-    url             = 'https://github.com/QuantStack/ipydatagrid',
+    url             = 'https://github.com/Bloomberg/ipydatagrid',
     keywords        = ['Jupyter', 'Widgets', 'IPython'],
     classifiers     = [
         'Intended Audience :: Developers',
