@@ -1,12 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
-
-"""
-TODO: Add module docstring
-"""
 
 from traitlets import (
     Any, Bool, Enum, Float, Instance, Unicode, Union, validate
