@@ -1,12 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
-
-"""
-TODO: Add module docstring
-"""
 
 from traitlets import (
     Any, Bool, Dict, Enum, Instance, Int, List, Unicode, default, validate
@@ -21,7 +14,7 @@ import pandas as pd
 import numpy as np
 
 
-class SelectionHelper():
+class SelectionHelper:
 
     """A Helper Class for processing selections. Provides an iterator
     to traverse selected cells.
@@ -57,50 +50,27 @@ class SelectionHelper():
             return row_col
 
     def __len__(self):
-        length = 0
-        it = self.__iter__()
-
-        for _ in it:
-            length += 1
-
-        return length
+        return sum(1 for _ in self)
 
     def all(self):
         """
         Returns all selected cells as a list. Each cell is represented as a dictionary
         with keys 'r': row and 'c': column
         """
-        cells = []
-        it = self.__iter__()
-
-        for cell in it:
-            cells.append(cell)
-
-        return cells
+        return list(self)
 
     def all_values(self):
         """
         Returns values for all selected cells as a list.
         """
-        values = []
-        it = self.__iter__()
-
-        for cell in it:
-            value = self._grid._get_cell_value_by_numerical_index(cell['c'], cell['r'])
-            values.append(value)
-
-        return values
+        return [self._grid._get_cell_value_by_numerical_index(cell['c'], cell['r']) for c in self]
 
     def _cell_in_rect(self, cell, rect):
         return cell['r'] >= rect['r1'] and cell['r'] <= rect['r2'] and \
                cell['c'] >= rect['c1'] and cell['c'] <= rect['c2']
 
     def _cell_in_previous_selected_rects(self, cell):
-        for i in range(0, self._rect_index):
-            if self._cell_in_rect(cell, self._selections[i]):
-                return True
-        
-        return False
+        return any(self._cell_in_rect(cell, self._selections[i]) for i in range(0, self._rect_index))
 
     def _index_to_row_col(self, rect, index):
         num_rows = rect['r2'] - rect['r1'] + 1
