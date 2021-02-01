@@ -70,12 +70,7 @@ class SelectionHelper:
                cell['c'] >= rect['c1'] and cell['c'] <= rect['c2']
 
     def _cell_in_previous_selected_rects(self, cell):
-        for i in range(0, self._rect_index):
-            print(self._selections[i])
-            if self._cell_in_rect(cell, self._selections[i]):
-                return True
-        
-        return False
+        return any(self._cell_in_rect(cell, self._selections[i]) for i in range(0, self._rect_index))
 
     def _index_to_row_col(self, rect, index):
         num_rows = rect['r2'] - rect['r1'] + 1
