@@ -9,13 +9,13 @@ from jupyter_packaging import (
 )
 
 HERE = Path(__file__).absolute().parent
-JS_DIR = HERE / 'src'
+JS_DIR = HERE
 
 # Representative files that should exist after a successful build
 jstargets = [JS_DIR /  'dist' / 'index.js']
 
 package_data_spec = {
-    name: [
+    "name": [
         'nbextension/*.*js*',
         'labextension/*'
     ]
@@ -29,7 +29,7 @@ data_files_spec = [
 
 cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec, data_files_spec=data_files_spec)
 cmdclass['jsdeps'] = combine_commands(
-    install_npm(JS_DIR, build_cmd='build', npm=['npm', '--legacy-peer-deps'])
+    install_npm(JS_DIR, build_cmd='build', npm=['npm', '--legacy-peer-deps']),
     ensure_targets(jstargets)
 )
 
