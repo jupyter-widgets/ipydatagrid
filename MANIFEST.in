@@ -4,8 +4,6 @@ recursive-include ipydatagrid/labextension *
 include LICENSE.txt
 include README.md
 
-include setupbase.py
-
 include package.json
 include tsconfig.json
 include webpack.config.js
