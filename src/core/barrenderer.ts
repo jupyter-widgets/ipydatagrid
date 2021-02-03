@@ -37,16 +37,12 @@ export class BarRenderer extends TextRenderer {
   /**
    * The horizontal alignment of the bar, default is 'bottom'.
    */
-  readonly barVerticalAlignment: CellRenderer.ConfigOption<
-    TextRenderer.VerticalAlignment
-  >;
+  readonly barVerticalAlignment: CellRenderer.ConfigOption<TextRenderer.VerticalAlignment>;
 
   /**
    * The vertical alignment of the bar, default is 'left'.
    */
-  readonly barHorizontalAlignment: CellRenderer.ConfigOption<
-    TextRenderer.HorizontalAlignment
-  >;
+  readonly barHorizontalAlignment: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
 
   /**
    * Whether to draw the text on the bar or not, default is true.
@@ -212,18 +208,14 @@ export namespace BarRenderer {
      *
      * The default is `bottom`.
      */
-    barVerticalAlignment?: CellRenderer.ConfigOption<
-      TextRenderer.VerticalAlignment
-    >;
+    barVerticalAlignment?: CellRenderer.ConfigOption<TextRenderer.VerticalAlignment>;
 
     /**
      * The vertical alignment of the bar, can be left, center or right.
      *
      * The default is `left`.
      */
-    barHorizontalAlignment?: CellRenderer.ConfigOption<
-      TextRenderer.HorizontalAlignment
-    >;
+    barHorizontalAlignment?: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
 
     /**
      * Whether to draw the text on the bar or not.
