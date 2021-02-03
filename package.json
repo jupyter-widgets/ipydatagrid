@@ -96,7 +96,6 @@
     "eslint-plugin-prettier": "^3.1.4",
     "file-loader": "^4.0.0",
     "fs-extra": "^7.0.0",
-    "husky": "^4.2.5",
     "jest": "^24.9.0",
     "lint-staged": "^10.2.11",
     "mkdirp": "^0.5.1",
