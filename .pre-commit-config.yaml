@@ -8,6 +8,7 @@ repos:
     rev: 19.3b0
     hooks:
       - id: black
+        args: [--safe]
         files: \.py$ # Only .py files
         language_version: python3
   - repo: https://github.com/pre-commit/mirrors-eslint
