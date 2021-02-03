@@ -1,5 +1,5 @@
 // jsdom does not support HTML5 canvas, so we need to mock out this function
-HTMLCanvasElement.prototype.getContext = () => { 
+HTMLCanvasElement.prototype.getContext = () => {
   return {
     scale: () => {},
     fillRect: () => {},
@@ -8,6 +8,6 @@ HTMLCanvasElement.prototype.getContext = () => {
     beginPath: () => {},
     moveTo: () => {},
     lineTo: () => {},
-    stroke: () => {}
-  }
+    stroke: () => {},
+  };
 };

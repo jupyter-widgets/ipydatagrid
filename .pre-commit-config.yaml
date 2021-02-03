@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-yaml
+      - id: trailing-whitespace
+  - repo: https://github.com/psf/black
+    rev: 19.3b0
+    hooks:
+      - id: black
+        args: [--safe]
+        files: \.py$ # Only .py files
+        language_version: python3
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: 'v7.3.1'
+    hooks:
+      - id: eslint
+        files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
+        types: [file]
+        args: ['--fix']
+        additional_dependencies:
+          - eslint@7.3.1
+          - eslint-config-prettier@6.11.0 # prettier used with eslint directly
+          - eslint-plugin-prettier@3.1.4

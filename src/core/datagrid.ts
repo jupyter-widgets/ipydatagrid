@@ -698,7 +698,7 @@ class DataGrid extends Widget {
 
   /**
    * Whether the grid cells are editable.
-   * 
+   *
    * `editingEnabled` flag must be on and grid must have required
    * selection model, editor controller and data model properties.
    */
@@ -879,7 +879,7 @@ class DataGrid extends Widget {
   /**
    * Move cursor down/up/left/right while making sure it remains
    * within the bounds of selected rectangles
-   * 
+   *
    * @param direction - The direction of the movement.
    */
   moveCursor(direction: SelectionModel.CursorMoveDirection): void {
@@ -4447,7 +4447,7 @@ class DataGrid extends Widget {
 
     // Merged cell range indieces
     const model = this.dataModel as ViewBasedJSONModel;
- 
+
     // Compute the Y bounds for the vertical lines.
     const y1 = Math.max(rgn.yMin, rgn.y);
     const y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
