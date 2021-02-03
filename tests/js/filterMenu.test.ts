@@ -1,7 +1,7 @@
-import { InteractiveFilterDialog } from '../core/filterMenu';
-import { ViewBasedJSONModel } from '../core/viewbasedjsonmodel';
-import { DataGenerator } from './testUtils';
-import { Transform } from '../core/transform';
+import { InteractiveFilterDialog } from '/src/core/filterMenu';
+import { ViewBasedJSONModel } from 'src/core/viewbasedjsonmodel';
+import { DataGenerator } from 'tests/js/testUtils';
+import { Transform } from 'src/core/transform';
 import { DataModel } from '@lumino/datagrid';
 
 describe('Test .hasValidFilterValue()', () => {
@@ -34,10 +34,10 @@ describe('Test .applyFilter()', () => {
     const colIndex = 0;
 
     const transform: Transform.TransformSpec = {
-      type: 'filter', 
+      type: 'filter',
       columnIndex: colIndex + 1,
       operator: '=',
-      value: 6
+      value: 6,
     };
 
     Private.setDialogState({
@@ -46,8 +46,8 @@ describe('Test .applyFilter()', () => {
       mode: 'condition',
       operator: transform.operator,
       region: 'body',
-      value: transform.value
-    })
+      value: transform.value,
+    });
 
     const mock = jest.spyOn(dialog.model, 'addTransform');
     dialog.applyFilter();
@@ -58,10 +58,10 @@ describe('Test .applyFilter()', () => {
     const colIndex = 0;
 
     const transform: Transform.TransformSpec = {
-      type: 'filter', 
+      type: 'filter',
       columnIndex: colIndex + 1,
       operator: '=',
-      value: 6
+      value: 6,
     };
 
     Private.setDialogState({
@@ -70,11 +70,13 @@ describe('Test .applyFilter()', () => {
       mode: 'condition',
       operator: transform.operator,
       region: 'body',
-      value: transform.value
-    })
+      value: transform.value,
+    });
 
     dialog.applyFilter();
-    const addedTransform = dialog.model.transformMetadata(colIndex + 1)!['filter'];
+    const addedTransform = dialog.model.transformMetadata(colIndex + 1)![
+      'filter'
+    ];
     expect(addedTransform).toEqual(transform);
   });
   test('value transform is added', () => {
@@ -82,10 +84,10 @@ describe('Test .applyFilter()', () => {
     const colIndex = 0;
 
     const transform: Transform.TransformSpec = {
-      type: 'filter', 
+      type: 'filter',
       columnIndex: colIndex + 1,
       operator: 'in',
-      value: []
+      value: [],
     };
 
     Private.setDialogState({
@@ -94,11 +96,13 @@ describe('Test .applyFilter()', () => {
       mode: 'value',
       operator: transform.operator,
       region: 'body',
-      value: transform.value
-    })
+      value: transform.value,
+    });
     dialog.userInteractedWithDialog = true;
     dialog.applyFilter();
-    const addedTransform = dialog.model.transformMetadata(colIndex + 1)!['filter'];
+    const addedTransform = dialog.model.transformMetadata(colIndex + 1)![
+      'filter'
+    ];
     expect(addedTransform).toEqual(transform);
   });
 });
@@ -110,10 +114,10 @@ describe('Test .updateDialog()', () => {
     Private.setDialogState({
       dialog: dialog,
       region: 'body',
-      value: 6, 
-      columnIndex: 0, 
-      mode: 'value', 
-      operator: '<'
+      value: 6,
+      columnIndex: 0,
+      mode: 'value',
+      operator: '<',
     });
 
     dialog.updateDialog();
@@ -123,12 +127,15 @@ describe('Test .updateDialog()', () => {
     const dialog = Private.createSimpleDialog();
     const mock = jest.spyOn(dialog.model, 'transformMetadata');
     dialog.updateDialog();
-    expect(mock).toBeCalledTimes(1)
+    expect(mock).toBeCalledTimes(1);
   });
   test('Transform metadata updates state', () => {
     const dialog = Private.createSimpleDialog();
     const transform: Transform.TransformSpec = {
-      type: 'filter', columnIndex: 1, operator: '>=', value: 6
+      type: 'filter',
+      columnIndex: 1,
+      operator: '>=',
+      value: 6,
     };
     dialog.model.addTransform(transform);
     dialog.open({
@@ -138,11 +145,11 @@ describe('Test .updateDialog()', () => {
       x: 0,
       y: 0,
       forceY: false,
-      forceX: false
+      forceX: false,
     });
-    expect(dialog.operator).toBe('>=')
-    expect(dialog.value).toBe(6)
-  })
+    expect(dialog.operator).toBe('>=');
+    expect(dialog.value).toBe(6);
+  });
 });
 
 describe('.open()', () => {
@@ -155,27 +162,30 @@ describe('.open()', () => {
       mode: 'condition',
       region: 'body',
       x: 0,
-      y: 0
-    }
+      y: 0,
+    };
     dialog.open(openOptions);
     expect(dialog.columnIndex).toBe(openOptions.columnIndex);
-    expect(dialog.columnDType).toBe(dialog.model.metadata(
-      openOptions.region, 0, openOptions.columnIndex)['type']
-    )
-  })
-})
+    expect(dialog.columnDType).toBe(
+      dialog.model.metadata(openOptions.region, 0, openOptions.columnIndex)[
+        'type'
+      ],
+    );
+  });
+});
 
 /**
  * The namespace for the module implementation details.
  */
 namespace Private {
-
   /**
    * Returns a data model containing the provided data.
-   * 
-   * @param data 
+   *
+   * @param data
    */
-  export function createSimpleModel(data: DataGenerator.ISingleColOptions): ViewBasedJSONModel {
+  export function createSimpleModel(
+    data: DataGenerator.ISingleColOptions,
+  ): ViewBasedJSONModel {
     const model = new ViewBasedJSONModel(DataGenerator.singleCol(data));
     return model;
   }
@@ -185,14 +195,16 @@ namespace Private {
    */
   export function createSimpleDialog(): InteractiveFilterDialog {
     const model = Private.createSimpleModel({
-      name: 'test', type: 'number', data: [1, 2, 3]
+      name: 'test',
+      type: 'number',
+      data: [1, 2, 3],
     });
     return new InteractiveFilterDialog({ model: model });
   }
 
   /**
    * Sets the provided state on the provided `InteractiveFilterDialog` instance.
-   * 
+   *
    * @param options - The options for setting state.
    */
   export function setDialogState(options: Private.ISetDialogStateOptions) {
@@ -204,70 +216,68 @@ namespace Private {
     // @ts-ignore
     dialog._columnIndex = options.columnIndex;
     // @ts-ignore
-    dialog._mode = options.mode
+    dialog._mode = options.mode;
     // @ts-ignore
-    dialog._filterOperator = options.operator
+    dialog._filterOperator = options.operator;
   }
 
   /**
    * A type alias for a `.hasValidFilterValue()` test case.
    */
   export type ValidFilterValueTestCase = {
-
     /**
      * The dtype of the provided data.
      */
-    type: string
+    type: string;
 
     /**
      * The data to create a data model with.
      */
-    data: any[]
+    data: any[];
 
     /**
      * The value/s to test against.
      */
-    value: InteractiveFilterDialog.FilterValue
+    value: InteractiveFilterDialog.FilterValue;
 
     /**
      * The expected result of the test.
      */
-    expected: boolean
-  }
+    expected: boolean;
+  };
 
   /**
    * An options object for the `setDialogState()` function.
    */
   export interface ISetDialogStateOptions {
-
     /**
      * The `InteractiveFilterDialog` to operate on.
      */
-    dialog: InteractiveFilterDialog
+    dialog: InteractiveFilterDialog;
 
     /**
      * The active cell region to set.
      */
-    region: DataModel.CellRegion
+    region: DataModel.CellRegion;
 
     /**
      * The active filter value to set.
      */
-    value: InteractiveFilterDialog.FilterValue
+    value: InteractiveFilterDialog.FilterValue;
 
     /**
      * The active filter operator to set.
      */
-    operator: Transform.FilterOperator
+    operator: Transform.FilterOperator;
 
     /**
      * The active filter mode to set.
      */
-    mode: InteractiveFilterDialog.FilterMode
+    mode: InteractiveFilterDialog.FilterMode;
 
     /**
      * The active column index to set.
      */
-    columnIndex: number
+    columnIndex: number;
   }
 }

@@ -1,22 +1,22 @@
-import {
-  ViewBasedJSONModel
-} from '../core/viewbasedjsonmodel'
+import { ViewBasedJSONModel } from '/src/core/viewbasedjsonmodel';
 
 import {
-  IClassicComm, ICallbacks, WidgetView, WidgetModel
+  IClassicComm,
+  ICallbacks,
+  WidgetView,
+  WidgetModel,
 } from '@jupyter-widgets/base';
 
 import { JSONObject } from '@lumino/coreutils';
 
 /**
  * A namespace for functions that generate tables for testing.
- * 
+ *
  * #### Notes
  * This is based on the JSON Table Schema specification:
  * https://specs.frictionlessdata.io/table-schema/
  */
 export namespace DataGenerator {
-
   // Unique primary key identifier
   export const IPYDG_UUID = 'ipydguuid';
 
@@ -25,35 +25,39 @@ export namespace DataGenerator {
    *
    * @param options - The options for creating a table.
    */
-  export function singleCol(options: ISingleColOptions): ViewBasedJSONModel.IData {
+  export function singleCol(
+    options: ISingleColOptions,
+  ): ViewBasedJSONModel.IData {
     const data = options.data.map((val: any, i: number) => {
-      const row: { [key: string]: any } = { 'index': i, IPYDG_UUID: i };
+      const row: { [key: string]: any } = { index: i, IPYDG_UUID: i };
       row[options.name] = val;
       return row;
     });
     return {
-      'schema': {
-        'fields': [
-          { name: 'index', type: 'integer', rows:['index'] },
+      schema: {
+        fields: [
+          { name: 'index', type: 'integer', rows: ['index'] },
           { name: options.name, type: options.type, rows: [options.name] },
-          { name: IPYDG_UUID, type: 'integer', rows:[IPYDG_UUID] }
+          { name: IPYDG_UUID, type: 'integer', rows: [IPYDG_UUID] },
         ],
-        'primaryKey': ['index', IPYDG_UUID],
-        'primaryKeyUuid': IPYDG_UUID
+        primaryKey: ['index', IPYDG_UUID],
+        primaryKeyUuid: IPYDG_UUID,
       },
-      'data': data
-    }
+      data: data,
+    };
   }
 
-  export function multiCol(options: IMultiColOptions): ViewBasedJSONModel.IData {
-    const fields = options.data.map(val => {
-      return { name: val.name, type: val.type, rows:[val.name] }
+  export function multiCol(
+    options: IMultiColOptions,
+  ): ViewBasedJSONModel.IData {
+    const fields = options.data.map((val) => {
+      return { name: val.name, type: val.type, rows: [val.name] };
     });
     const rows = [];
 
     for (let i = 0; i < options.length; i++) {
       const row: { [key: string]: any } = {};
-      options.data.forEach(col => {
+      options.data.forEach((col) => {
         row[col.name] = col.data[i];
       });
       row[IPYDG_UUID] = i;
@@ -61,16 +65,16 @@ export namespace DataGenerator {
     }
 
     return {
-      'schema': {
-        'fields': [
+      schema: {
+        fields: [
           ...fields,
-          { name: IPYDG_UUID, type: 'integer', rows:[IPYDG_UUID] }
+          { name: IPYDG_UUID, type: 'integer', rows: [IPYDG_UUID] },
         ],
-        'primaryKey': ['index', IPYDG_UUID],
-        'primaryKeyUuid': IPYDG_UUID
+        primaryKey: ['index', IPYDG_UUID],
+        primaryKeyUuid: IPYDG_UUID,
       },
-      'data': rows
-    }
+      data: rows,
+    };
   }
 
   /**
@@ -78,20 +82,25 @@ export namespace DataGenerator {
    *
    * @param options - The options for creating a table.
    */
-  export function multiIndexCol(options: IMultiIndexColOptions, primaryKeyUuid: string): ViewBasedJSONModel.IData {
-
-    const fields = options.data.map(val => {
-      return { 
+  export function multiIndexCol(
+    options: IMultiIndexColOptions,
+    primaryKeyUuid: string,
+  ): ViewBasedJSONModel.IData {
+    const fields = options.data.map((val) => {
+      return {
         name: val.name,
-        type: val.type, 
-        rows: typeof val.name === 'number' ? [val.name] : val.name.replace(/[^\w\s]/gi, '').split(" ")
-      }
+        type: val.type,
+        rows:
+          typeof val.name === 'number'
+            ? [val.name]
+            : val.name.replace(/[^\w\s]/gi, '').split(' '),
+      };
     });
     const rows = [];
 
     for (let i = 0; i < options.length; i++) {
       const row: { [key: string]: any } = {};
-      options.data.forEach(col => {
+      options.data.forEach((col) => {
         row[col.name] = col.data[i];
       });
       row[primaryKeyUuid] = i;
@@ -99,46 +108,44 @@ export namespace DataGenerator {
     }
 
     return {
-      'schema': {
-        'fields': fields,
-        'primaryKey': options.primaryKeyData,
-        'primaryKeyUuid': primaryKeyUuid
+      schema: {
+        fields: fields,
+        primaryKey: options.primaryKeyData,
+        primaryKeyUuid: primaryKeyUuid,
       },
-      'data': rows
-    }
+      data: rows,
+    };
   }
-
 
   /**
    * An options object for initializing single column table for testing.
    */
   export interface ISingleColOptions {
-
     /**
      * The name of the column to be created.
      */
-    name: string
+    name: string;
 
     /**
      * The dtype of the column to be created.
      */
-    type: string
+    type: string;
 
     /**
      * The data to be added to the created column.
      */
-    data: any[]
+    data: any[];
   }
 
   export interface IMultiColOptions {
-    data: DataGenerator.ISingleColOptions[]
-    length: number
+    data: DataGenerator.ISingleColOptions[];
+    length: number;
   }
 
   export interface IMultiIndexColOptions {
-    data: DataGenerator.ISingleColOptions[]
-    length: number
-    primaryKeyData: any[]
+    data: DataGenerator.ISingleColOptions[];
+    length: number;
+    primaryKeyData: any[];
   }
 }
 
@@ -148,13 +155,13 @@ export namespace DataGenerator {
 export class MockWidgetManager {
   create_view(model: any) {
     return new Promise((resolve, reject) => {
-      resolve(jest.fn())
-    })
+      resolve(jest.fn());
+    });
   }
   display_view(model: any) {
     return new Promise((resolve, reject) => {
-      resolve(jest.fn())
-    })
+      resolve(jest.fn());
+    });
   }
 
   callbacks(view?: WidgetView): ICallbacks {
@@ -210,9 +217,11 @@ export class MockComm implements IClassicComm {
   private static numComms: number = 0;
 }
 
-
-export
-  function emulateCustomCommMessage(model: WidgetModel, channel: "iopub" | "shell", content: JSONObject) {
+export function emulateCustomCommMessage(
+  model: WidgetModel,
+  channel: 'iopub' | 'shell',
+  content: JSONObject,
+) {
   // @ts-ignore
   model._handle_comm_msg({
     channel: channel,
@@ -220,8 +229,8 @@ export
       comm_id: '',
       data: {
         method: 'custom',
-        content: content
-      }
-    }
+        content: content,
+      },
+    },
   });
 }

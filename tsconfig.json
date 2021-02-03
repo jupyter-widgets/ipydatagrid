@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "esModuleInterop":true,
+    "esModuleInterop": true,
     "lib": ["es2015", "dom"],
     "module": "commonjs",
     "moduleResolution": "node",
@@ -9,18 +9,17 @@
     "noUnusedLocals": true,
     "outDir": "lib",
     "resolveJsonModule": true,
-    "rootDir": "src",
+    "rootDir": "./",
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
     // This allows us to initialize members in the "initialize" method
     "strictPropertyInitialization": false,
-    "target": "es2015"
+    "target": "es2015",
+    "baseUrl": ".",
+    "paths": {
+      "/*": ["./*"]
+    }
   },
-  "include": [
-    "src/*.ts",
-    "src/*.tsx",
-    "src/core/*.ts",
-    "src/core/*.tsx"
-  ]
+  "include": ["src/*.ts", "src/*.tsx", "src/core/*.ts", "src/core/*.tsx"]
 }
