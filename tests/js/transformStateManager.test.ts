@@ -1,7 +1,7 @@
-import { TransformStateManager } from 'src/core/transformStateManager';
-import { Transform } from 'src/core/transform';
+import { TransformStateManager } from '../../src/core/transformStateManager';
+import { Transform } from '../../src/core/transform';
 import { DataGenerator } from './testUtils';
-import { View } from 'src/core/view';
+import { View } from '../../src/core/view';
 
 describe('Test .add()', () => {
   const testCases: Transform.TransformSpec[] = [

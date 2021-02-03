@@ -1,7 +1,7 @@
-import { InteractiveFilterDialog } from '/src/core/filterMenu';
-import { ViewBasedJSONModel } from 'src/core/viewbasedjsonmodel';
-import { DataGenerator } from 'tests/js/testUtils';
-import { Transform } from 'src/core/transform';
+import { InteractiveFilterDialog } from '../..//src/core/filterMenu';
+import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
+import { DataGenerator } from '../js/testUtils';
+import { Transform } from '../../src/core/transform';
 import { DataModel } from '@lumino/datagrid';
 
 describe('Test .hasValidFilterValue()', () => {
