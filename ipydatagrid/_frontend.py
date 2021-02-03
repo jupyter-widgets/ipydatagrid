@@ -11,4 +11,4 @@ Information about the frontend package of the widgets.
 from ._version import version_info
 
 module_name = "jupyter-datagrid"
-module_version = "^{0}.{1}.{2}".format(version_info[0], version_info[1], version_info[2])
+module_version = "^0.2.15"

@@ -8,6 +8,6 @@ def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
         'src': 'nbextension/static',
-        'dest': 'datagrid',
-        'require': 'datagrid/extension'
+        'dest': 'ipydatagrid',
+        'require': 'ipydatagrid/extension'
     }]
