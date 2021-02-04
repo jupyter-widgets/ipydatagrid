@@ -1,15 +1,15 @@
-import { DataGridModel, DataGridView } from 'src/';
+import { DataGridModel, DataGridView } from '../../src/';
 
 import {
   DataGenerator,
   MockWidgetManager,
   MockComm,
   emulateCustomCommMessage,
-} from '/tests/js/testUtils';
+} from '../js/testUtils';
 
-import { ViewBasedJSONModel } from '/src/core/viewbasedjsonmodel';
+import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
 
-import { Transform } from 'src/core/transform';
+import { Transform } from '../../src/core/transform';
 
 import { CellRenderer, DataModel } from '@lumino/datagrid';
 

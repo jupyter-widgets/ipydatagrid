@@ -1,8 +1,11 @@
-import { SortExecutor, FilterExecutor } from 'src/core/transformExecutors';
-import { DataGenerator } from 'tests/js/testUtils';
-import { ViewBasedJSONModel } from 'src/core/viewbasedjsonmodel';
+import {
+  SortExecutor,
+  FilterExecutor,
+} from '../../src/core/transformExecutors';
+import { DataGenerator } from '../js/testUtils';
+import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
 import { ReadonlyJSONValue } from '@lumino/coreutils';
-import { Transform } from 'src/core/transform';
+import { Transform } from '../../src/core/transform';
 
 const INVALID_DATE = new Date('INVALID');
 
