@@ -1,8 +1,8 @@
 import { Signal } from '@lumino/signaling';
-import { View } from '../../src/core/view';
-import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
-import { TransformStateManager } from '../../src/core/transformStateManager';
-import { Transform } from '../../src/core/transform';
+import { View } from '../../js/core/view';
+import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
+import { TransformStateManager } from '../../js/core/transformStateManager';
+import { Transform } from '../../js/core/transform';
 import { DataGenerator } from '../js/testUtils';
 
 describe('Test interactions with View', () => {

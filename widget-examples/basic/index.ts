@@ -1,4 +1,4 @@
-import { FeatherGrid } from '../../src/feathergrid';
+import { FeatherGrid } from '../../js/feathergrid';
 
 import { DockPanel, Widget, StackedPanel, BoxPanel } from '@lumino/widgets';
 
@@ -6,7 +6,7 @@ import { JSONModel, DataGrid, BasicSelectionModel } from '@lumino/datagrid';
 
 import { DataGenerator } from '../../tests/js/testUtils';
 
-import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
+import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
 
 import './index.css';
 
