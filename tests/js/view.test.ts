@@ -1,5 +1,5 @@
 import { DataGenerator } from './testUtils';
-import { View } from '../../src/core/view';
+import { View } from '../../js/core/view';
 import { DataModel } from '@lumino/datagrid';
 
 describe('Test .metadata()', () => {

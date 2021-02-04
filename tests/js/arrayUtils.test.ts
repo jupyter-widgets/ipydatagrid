@@ -1,6 +1,6 @@
 import { DataGenerator } from '../js/testUtils';
-import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
-import { ArrayUtils } from '../../src/utils';
+import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
+import { ArrayUtils } from '../../js/utils';
 
 describe('Test multi index array utilities', () => {
   const testData = DataGenerator.multiIndexCol(

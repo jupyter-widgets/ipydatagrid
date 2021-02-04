@@ -1,4 +1,4 @@
-import { ViewBasedJSONModel } from '../../src/core/viewbasedjsonmodel';
+import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
 
 import {
   IClassicComm,

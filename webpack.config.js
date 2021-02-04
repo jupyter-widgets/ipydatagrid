@@ -47,7 +47,7 @@ module.exports = [
    * the notebook.
    */
   {
-    entry: './src/extension.ts',
+    entry: './js/extension.ts',
     output: {
       filename: 'index.js',
       path: path.resolve(__dirname, 'ipydatagrid', 'nbextension'),
@@ -72,7 +72,7 @@ module.exports = [
    * the custom widget embedder.
    */
   {
-    entry: './src/index.ts',
+    entry: './js/index.ts',
     output: {
       filename: 'index.js',
       path: path.resolve(__dirname, 'dist'),
@@ -94,7 +94,7 @@ module.exports = [
    * This bundle is used to embed widgets in the package documentation.
    */
   {
-    entry: './src/index.ts',
+    entry: './js/index.ts',
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),

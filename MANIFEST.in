@@ -14,7 +14,7 @@ graft examples
 
 # Javascript files
 graft ipydatagrid/nbextension
-graft src
+graft js
 prune **/node_modules
 prune coverage
 prune lib
