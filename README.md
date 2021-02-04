@@ -52,7 +52,7 @@ For a development installation:
 ```bash
 git clone https://github.com/Bloomberg/ipydatagrid.git
 cd ipydatagrid
-pip install -v -e .
+pip install -e ".[dev]"
 ```
 
 Enabling development install for Jupyter notebook:
