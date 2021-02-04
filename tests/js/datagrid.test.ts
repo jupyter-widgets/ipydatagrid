@@ -48,7 +48,7 @@ describe('Test trait: data', () => {
     const value = 1.23;
     grid.model.set('_data', testData.set2);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       grid.model.on('msg:custom', (content) => {
         if (content.event_type === 'cell-changed') {
           expect(content.row).toBe(row);
@@ -75,7 +75,7 @@ describe('Test trait: data', () => {
     const value = 1.23;
     grid.model.set('_data', testData.set2);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       grid.model.data_model.changed.connect(
         (model: ViewBasedJSONModel, args: any) => {
           if (args.type === 'cells-changed') {
@@ -234,7 +234,11 @@ namespace Private {
       const comm = new MockComm();
       const gridModel = new DataGridModel(
         { ...options.modelAttributes, _data: options.data },
-        { model_id: 'testModel', comm: comm, widget_manager: widgetManager },
+        {
+          model_id: 'testModel',
+          comm: comm,
+          widget_manager: widgetManager,
+        } as any,
       );
       const gridView = new DataGridView({ model: gridModel });
       await gridView.render();
