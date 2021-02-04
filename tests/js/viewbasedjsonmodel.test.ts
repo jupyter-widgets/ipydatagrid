@@ -103,7 +103,7 @@ describe('Test mutable dataset', () => {
   });
 
   test('cell data changed signal received', async () => {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const model = Private.createSimpleModel();
       const row = 1,
         column = 0;
