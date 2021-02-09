@@ -2,14 +2,13 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
     hooks:
-      - id: check-yaml
       - id: trailing-whitespace
       - id: end-of-file-fixer
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.10.0
     hooks:
       - id: pyupgrade
-        args: [ "--py36-plus" ]
+        args: ['--py36-plus']
   - repo: https://github.com/psf/black
     rev: 20.8b1
     hooks:
@@ -28,18 +27,18 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - "flake8-bugbear == 20.11.1"
-          - "flake8-unused-arguments == 0.0.6"
-          - "flake8-comprehensions == 3.3.1"
+          - 'flake8-bugbear == 20.11.1'
+          - 'flake8-unused-arguments == 0.0.6'
+          - 'flake8-comprehensions == 3.3.1'
   - repo: https://github.com/asottile/setup-cfg-fmt
     rev: v1.16.0
     hooks:
       - id: setup-cfg-fmt
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "0.5.0"
+    rev: '0.5.0'
     hooks:
       - id: tox-ini-fmt
-        args: [ "-p", "fix_lint" ]
+        args: ['-p', 'fix_lint']
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: 'v7.19.0'
     hooks:
