@@ -30,7 +30,7 @@ disable = "C0330, C0326"
 max-line-length = "80"
 
 [tool.black]
-line-length = 80
+line-length = 88
 exclude = '''
 /(
     \.eggs
