@@ -17,18 +17,12 @@ package_data_spec = {"name": ["nbextension/*.*js*", "labextension/*"]}
 
 data_files_spec = [
     ("share/jupyter/nbextensions/ipydatagrid", "ipydatagrid/nbextension", "**"),
-    (
-        "share/jupyter/labextensions/ipydatagrid",
-        "ipydatagrid/labextension",
-        "**",
-    ),
+    ("share/jupyter/labextensions/ipydatagrid", "ipydatagrid/labextension", "**"),
     ("etc/jupyter/nbconfig/notebook.d", ".", "ipydatagrid.json"),
 ]
 
 cmdclass = create_cmdclass(
-    "jsdeps",
-    package_data_spec=package_data_spec,
-    data_files_spec=data_files_spec,
+    "jsdeps", package_data_spec=package_data_spec, data_files_spec=data_files_spec
 )
 cmdclass["jsdeps"] = combine_commands(
     install_npm(JS_DIR, build_cmd="build", npm=["npm", "--legacy-peer-deps"]),
