@@ -9,6 +9,7 @@ build-backend = "setuptools.build_meta"
 [tool.isort]
 profile = "black"
 known_first_party = ["ipydatagrid", "tests"]
+line_length = 80
 
 [tool.pylint.messages_control]
 disable = "C0330, C0326"
