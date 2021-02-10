@@ -1,8 +1,13 @@
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
 
+from copy import deepcopy
+from math import floor
+
+import numpy as np
+import pandas as pd
+from ipywidgets import CallbackDispatcher, DOMWidget, widget_serialization
 from traitlets import (
-    Any,
     Bool,
     Dict,
     Enum,
@@ -13,14 +18,9 @@ from traitlets import (
     default,
     validate,
 )
-from copy import deepcopy
-from ipywidgets import DOMWidget, widget_serialization, CallbackDispatcher
 
 from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
-from math import floor
-import pandas as pd
-import numpy as np
 
 
 class SelectionHelper:
@@ -66,7 +66,8 @@ class SelectionHelper:
 
     def all(self):
         """
-        Returns all selected cells as a list. Each cell is represented as a dictionary
+        Returns all selected cells as a list. Each cell is
+        represented as a dictionary
         with keys 'r': row and 'c': column
         """
         return list(self)
@@ -77,7 +78,7 @@ class SelectionHelper:
         """
         return [
             self._grid._get_cell_value_by_numerical_index(cell["c"], cell["r"])
-            for c in self
+            for cell in self
         ]
 
     def _cell_in_rect(self, cell, rect):
@@ -362,7 +363,7 @@ class DataGrid(DOMWidget):
     def get_cell_value(self, column_name, primary_key_value):
         """Gets the value for a single or multiple cells by column name and index name.
 
-           Tuples should be used to index into multi-index columns."""
+        Tuples should be used to index into multi-index columns."""
 
         row_indices = self._get_row_index_of_primary_key(primary_key_value)
 
@@ -495,7 +496,8 @@ class DataGrid(DOMWidget):
             End row index for rectangular region selection.
         column2 : int or None, optional (default: None)
             End column index for rectangular region selection.
-        clear_mode : string, optional, {'all', 'current', 'none'} (default: 'none')
+        clear_mode : string, optional, {'all', 'current', 'none'}
+                    (default: 'none')
             Clear mode to use when there are pre-existing selections.
             'all' removes all pre-existing selections
             'current' removes last pre-existing selection
@@ -671,7 +673,8 @@ class DataGrid(DOMWidget):
         ]  # Omitting ipydguuid
         if len(value) != len(primary_key):
             raise ValueError(
-                "The provided primary key value must be the same length as the primary key."
+                "The provided primary key value must be the same \
+                 length as the primary key."
             )
         row_indices = []
 

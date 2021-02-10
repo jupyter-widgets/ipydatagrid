@@ -1,12 +1,12 @@
 from pathlib import Path
-from setuptools import setup
 
 from jupyter_packaging import (
-    create_cmdclass,
-    install_npm,
-    ensure_targets,
     combine_commands,
+    create_cmdclass,
+    ensure_targets,
+    install_npm,
 )
+from setuptools import setup
 
 HERE = Path(__file__).absolute().parent
 JS_DIR = HERE

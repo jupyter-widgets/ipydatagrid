@@ -1,15 +1,8 @@
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
 
-from .cellrenderer import (
-    CellRenderer,
-    TextRenderer,
-    BarRenderer,
-    VegaExpr,
-    Expr,
-)  # noqa
-from .datagrid import DataGrid, SelectionHelper  # noqa
 from ._version import __version__  # noqa
+from .datagrid import DataGrid, SelectionHelper  # noqa
 
 
 def _jupyter_nbextension_paths():

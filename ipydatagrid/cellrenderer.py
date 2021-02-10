@@ -1,15 +1,14 @@
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
 
+# Dependency to bqplot is temporary, we should remove this
+# dependency once scales are extracted from bqplot
+from bqplot import ColorScale, Scale
+from ipywidgets import Color, Widget, widget_serialization
+from py2vega import Variable, py2vega
 from traitlets import Any, Bool, Enum, Float, Instance, Unicode, Union, validate
 
-from ipywidgets import Widget, widget_serialization, Color
-
-# Dependency to bqplot is temporary, we should remove this dependency once scales are extracted from bqplot
-from bqplot import Scale, ColorScale
-
 from ._frontend import module_name, module_version
-from py2vega import py2vega, Variable
 
 
 class VegaExpr(Widget):
