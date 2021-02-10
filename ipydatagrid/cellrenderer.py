@@ -32,7 +32,10 @@ class Expr(VegaExpr):
     def _validate_value(self, proposal):
         return py2vega(
             proposal["value"],
-            [Variable("cell", ["value", "row", "column", "metadata"]), "default_value"],
+            [
+                Variable("cell", ["value", "row", "column", "metadata"]),
+                "default_value",
+            ],
         )
 
 
@@ -67,17 +70,27 @@ class TextRenderer(CellRenderer):
         default_value=Expr("default_value"),
     ).tag(sync=True, **widget_serialization)
     vertical_alignment = Union(
-        (Enum(values=["top", "center", "bottom"]), Instance(VegaExpr), Instance(Scale)),
+        (
+            Enum(values=["top", "center", "bottom"]),
+            Instance(VegaExpr),
+            Instance(Scale),
+        ),
         default_value="center",
     ).tag(sync=True, **widget_serialization)
     horizontal_alignment = Union(
-        (Enum(values=["left", "center", "right"]), Instance(VegaExpr), Instance(Scale)),
+        (
+            Enum(values=["left", "center", "right"]),
+            Instance(VegaExpr),
+            Instance(Scale),
+        ),
         default_value="left",
     ).tag(sync=True, **widget_serialization)
     format = Union(
         (Unicode(), Instance(VegaExpr)), allow_none=True, default_value=None
     ).tag(sync=True, **widget_serialization)
-    format_type = Enum(values=["number", "time"], default_value="number").tag(sync=True)
+    format_type = Enum(values=["number", "time"], default_value="number").tag(
+        sync=True
+    )
     missing = Unicode("").tag(sync=True)
 
 
@@ -89,17 +102,27 @@ class BarRenderer(TextRenderer):
         (Float(), Instance(VegaExpr), Instance(Scale)), default_value=0.0
     ).tag(sync=True, **widget_serialization)
     bar_color = Union(
-        (Color(), Instance(VegaExpr), Instance(ColorScale)), default_value="#4682b4"
+        (Color(), Instance(VegaExpr), Instance(ColorScale)),
+        default_value="#4682b4",
     ).tag(sync=True, **widget_serialization)
     orientation = Union(
-        (Unicode(), Instance(VegaExpr), Instance(Scale)), default_value="horizontal"
+        (Unicode(), Instance(VegaExpr), Instance(Scale)),
+        default_value="horizontal",
     ).tag(sync=True, **widget_serialization)
     bar_vertical_alignment = Union(
-        (Enum(values=["top", "center", "bottom"]), Instance(VegaExpr), Instance(Scale)),
+        (
+            Enum(values=["top", "center", "bottom"]),
+            Instance(VegaExpr),
+            Instance(Scale),
+        ),
         default_value="bottom",
     ).tag(sync=True, **widget_serialization)
     bar_horizontal_alignment = Union(
-        (Enum(values=["left", "center", "right"]), Instance(VegaExpr), Instance(Scale)),
+        (
+            Enum(values=["left", "center", "right"]),
+            Instance(VegaExpr),
+            Instance(Scale),
+        ),
         default_value="left",
     ).tag(sync=True, **widget_serialization)
     show_text = Union((Bool(), Instance(VegaExpr)), default_value=True).tag(

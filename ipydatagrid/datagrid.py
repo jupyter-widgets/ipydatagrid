@@ -131,7 +131,9 @@ class SelectionHelper:
 
         data = self._grid._data
         primary_keys = (
-            [] if "primaryKey" not in data["schema"] else data["schema"]["primaryKey"]
+            []
+            if "primaryKey" not in data["schema"]
+            else data["schema"]["primaryKey"]
         )
         col_headers = [
             field["name"]
@@ -254,8 +256,12 @@ class DataGrid(DOMWidget):
     _visible_rows = List(Int).tag(sync=True)
     _data = Dict().tag(sync=True, **_data_serialization)
 
-    renderers = Dict(Instance(CellRenderer)).tag(sync=True, **widget_serialization)
-    default_renderer = Instance(CellRenderer).tag(sync=True, **widget_serialization)
+    renderers = Dict(Instance(CellRenderer)).tag(
+        sync=True, **widget_serialization
+    )
+    default_renderer = Instance(CellRenderer).tag(
+        sync=True, **widget_serialization
+    )
     header_renderer = Instance(CellRenderer, allow_none=True).tag(
         sync=True, **widget_serialization
     )
@@ -403,7 +409,12 @@ class DataGrid(DOMWidget):
         column_index = self._column_name_to_index(column)
         # notify python listeners
         self._cell_change_handlers(
-            {"row": row, "column": column, "column_index": column_index, "value": value}
+            {
+                "row": row,
+                "column": column,
+                "column_index": column_index,
+                "value": value,
+            }
         )
         # notify front-end
         self.comm.send(
