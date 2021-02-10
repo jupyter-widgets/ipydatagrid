@@ -30,7 +30,7 @@ class SelectionHelper:
     """
 
     def __init__(self, grid, **kwargs):
-        super(SelectionHelper, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._grid = grid
         self._num_columns = -1
         self._num_rows = -1
@@ -81,12 +81,11 @@ class SelectionHelper:
             for cell in self
         ]
 
-    def _cell_in_rect(self, cell, rect):
+    @staticmethod
+    def _cell_in_rect(cell, rect):
         return (
-            cell["r"] >= rect["r1"]
-            and cell["r"] <= rect["r2"]
-            and cell["c"] >= rect["c1"]
-            and cell["c"] <= rect["c2"]
+            rect["r1"] <= cell["r"] <= rect["r2"]
+            and rect["c1"] <= cell["c"] <= rect["c2"]
         )
 
     def _cell_in_previous_selected_rects(self, cell):
@@ -95,7 +94,8 @@ class SelectionHelper:
             for i in range(0, self._rect_index)
         )
 
-    def _index_to_row_col(self, rect, index):
+    @staticmethod
+    def _index_to_row_col(rect, index):
         num_rows = rect["r2"] - rect["r1"] + 1
         num_cols = rect["c2"] - rect["c1"] + 1
         if index > (num_rows * num_cols - 1):
@@ -274,12 +274,12 @@ class DataGrid(DOMWidget):
 
     def __init__(self, dataframe, **kwargs):
         self.data = dataframe
-        super(DataGrid, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._cell_click_handlers = CallbackDispatcher()
         self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
 
-    def __handle_custom_msg(self, _, content, buffers):
+    def __handle_custom_msg(self, _, content, buffers):  # noqa: U101
         if content["event_type"] == "cell-changed":
             row = content["row"]
             column = self._column_index_to_name(content["column_index"])
@@ -310,18 +310,17 @@ class DataGrid(DOMWidget):
 
     @property
     def data(self):
-        trimmed_primarykey = self._data["schema"]["primaryKey"][:-1]
-        final_df = pd.DataFrame(self._data["data"]).set_index(
-            trimmed_primarykey
-        )
+        trimmed_primary_key = self._data["schema"]["primaryKey"][:-1]
+        df = pd.DataFrame(self._data["data"])
+        final_df = df.set_index(trimmed_primary_key)
         final_df = final_df[final_df.columns[:-1]]
         return final_df
 
     @data.setter
     def data(self, dataframe):
-        IPYDG_UUID = "ipydguuid"
+        guid_key = "ipydguuid"
         dataframe = dataframe.copy()
-        dataframe[IPYDG_UUID] = pd.RangeIndex(0, dataframe.shape[0])
+        dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
         data = reset_index_dataframe.to_dict(orient="records")
@@ -345,14 +344,14 @@ class DataGrid(DOMWidget):
 
             schema["primaryKey"] = primary_key
             uuid_pk = list(key[-1])
-            uuid_pk[0] = IPYDG_UUID
+            uuid_pk[0] = guid_key
             schema["primaryKey"].append(tuple(uuid_pk))
 
         else:
             schema["primaryKey"] = key
-            schema["primaryKey"].append(IPYDG_UUID)
+            schema["primaryKey"].append(guid_key)
 
-        schema["primaryKeyUuid"] = IPYDG_UUID
+        schema["primaryKeyUuid"] = guid_key
 
         self._data = {
             "data": data,
@@ -364,9 +363,7 @@ class DataGrid(DOMWidget):
         """Gets the value for a single or multiple cells by column name and index name.
 
         Tuples should be used to index into multi-index columns."""
-
         row_indices = self._get_row_index_of_primary_key(primary_key_value)
-
         return [self._data["data"][row][column_name] for row in row_indices]
 
     def set_cell_value(self, column_name, primary_key_value, new_value):
@@ -375,34 +372,24 @@ class DataGrid(DOMWidget):
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
-
         row_indices = self._get_row_index_of_primary_key(primary_key_value)
-
         # Bail early if key could not be found
         if not row_indices:
             return False
 
         # Iterate over all indices
-        else:
-            op_success = []
-            for row_index in row_indices:
-                if (
-                    column_name in self._data["data"][row_index]
-                    and row_index is not None
-                ):
-                    self._data["data"][row_index][column_name] = new_value
-                    self._notify_cell_change(row_index, column_name, new_value)
-                    op_success.append(True)
-                else:
-                    op_success.append(False)
-
-            return all(op_success)
-
-        return False
+        outcome = True
+        for row_index in row_indices:
+            has_column = column_name in self._data["data"][row_index]
+            if has_column and row_index is not None:
+                self._data["data"][row_index][column_name] = new_value
+                self._notify_cell_change(row_index, column_name, new_value)
+            else:
+                outcome = False
+        return outcome
 
     def get_cell_value_by_index(self, column_name, row_index):
         """Gets the value for a single cell by column name and row index."""
-
         return self._data["data"][row_index][column_name]
 
     def set_cell_value_by_index(self, column_name, row_index, new_value):
@@ -411,16 +398,11 @@ class DataGrid(DOMWidget):
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
-
-        if (
-            column_name in self._data["data"][row_index]
-            and row_index >= 0
-            and row_index < len(self._data["data"])
-        ):
+        has_column = column_name in self._data["data"][row_index]
+        if has_column and 0 <= row_index < len(self._data["data"]):
             self._data["data"][row_index][column_name] = new_value
             self._notify_cell_change(row_index, column_name, new_value)
             return True
-
         return False
 
     def _notify_cell_change(self, row, column, value):
@@ -450,26 +432,22 @@ class DataGrid(DOMWidget):
 
     def get_visible_data(self):
         """Returns a dataframe of the current View."""
-
         data = deepcopy(self._data)
         if self._visible_rows:
             data["data"] = [data["data"][i] for i in self._visible_rows]
 
-        return_df = pd.DataFrame(data["data"]).set_index(
-            self._data["schema"]["primaryKey"]
-        )
+        at = self._data["schema"]["primaryKey"]
+        return_df = pd.DataFrame(data["data"]).set_index(at)
         return_df.index = return_df.index.droplevel(return_df.index.nlevels - 1)
         return return_df
 
     def transform(self, transforms):
         """Apply a list of transformation to this DataGrid."""
-
         # TODO: Validate this input, or let it fail on view side?
         self._transforms = transforms
 
     def revert(self):
         """Revert all transformations."""
-
         self._transforms = []
 
     @default("default_renderer")
@@ -504,14 +482,12 @@ class DataGrid(DOMWidget):
             'none' keeps pre-existing selections
         """
         if row2 is None or column2 is None:
-            row2 = row1
-            column2 = column1
+            row2, column2 = row1, column1
 
         if clear_mode == "all":
             self.selections.clear()
-        elif clear_mode == "current":
-            if len(self.selections) > 0:
-                self.selections.pop()
+        elif clear_mode == "current" and len(self.selections) > 0:
+            self.selections.pop()
 
         self.selections.append(
             {
@@ -564,36 +540,26 @@ class DataGrid(DOMWidget):
     @validate("editable")
     def _validate_editable(self, proposal):
         value = proposal["value"]
-
         if value and self.selection_mode == "none":
             self.selection_mode = "cell"
-
         return value
 
     @validate("_transforms")
     def _validate_transforms(self, proposal):
         transforms = proposal["value"]
-
+        field_len = len(self._data["schema"]["fields"])
         for transform in transforms:
-            if (
-                transform["columnIndex"]
-                > len(self._data["schema"]["fields"]) - 2
-            ):
+            if transform["columnIndex"] > field_len:
                 raise ValueError("Column index is out of bounds.")
-
         return transforms
 
     @validate("_data")
     def _validate_data(self, proposal):
         table_schema = proposal["value"]
-        column_list = [
-            field["name"] for field in table_schema["schema"]["fields"]
-        ]
+        column_list = [f["name"] for f in table_schema["schema"]["fields"]]
         if len(column_list) != len(set(column_list)):
-            raise ValueError(
-                "The dataframe must not contain duplicate column names."
-            )
-
+            msg = "The dataframe must not contain duplicate column names."
+            raise ValueError(msg)
         return table_schema
 
     def on_cell_change(self, callback, remove=False):
@@ -628,28 +594,14 @@ class DataGrid(DOMWidget):
     def _column_index_to_name(self, column_index):
         if "schema" not in self._data or "fields" not in self._data["schema"]:
             return None
-
-        primary_keys = (
-            []
-            if "primaryKey" not in self._data["schema"]
-            else self._data["schema"]["primaryKey"]
-        )
-        col_headers = [
-            field["name"]
-            for field in self._data["schema"]["fields"]
-            if field["name"] not in primary_keys
-        ]
-
+        col_headers = self._get_col_headers()
         return (
             None
             if len(col_headers) <= column_index
             else col_headers[column_index]
         )
 
-    def _column_name_to_index(self, column_name):
-        if "schema" not in self._data or "fields" not in self._data["schema"]:
-            return None
-
+    def _get_col_headers(self):
         primary_keys = (
             []
             if "primaryKey" not in self._data["schema"]
@@ -660,40 +612,37 @@ class DataGrid(DOMWidget):
             for field in self._data["schema"]["fields"]
             if field["name"] not in primary_keys
         ]
+        return col_headers
 
+    def _column_name_to_index(self, column_name):
+        if "schema" not in self._data or "fields" not in self._data["schema"]:
+            return None
+        col_headers = self._get_col_headers()
         try:
             return col_headers.index(column_name)
         except ValueError:
-            return None
+            pass
 
     def _get_row_index_of_primary_key(self, value):
         value = value if isinstance(value, list) else [value]
-        primary_key = self._data["schema"]["primaryKey"][
-            :-1
-        ]  # Omitting ipydguuid
-        if len(value) != len(primary_key):
+        schema = self._data["schema"]
+        key = schema["primaryKey"][:-1]  # Omitting ipydguuid
+        if len(value) != len(key):
             raise ValueError(
-                "The provided primary key value must be the same \
-                 length as the primary key."
+                "The provided primary key value must be the same length "
+                "as the primary key."
             )
-        row_indices = []
 
-        for i, row in enumerate(self._data["data"]):
-            if all(
-                [
-                    row[primary_key[j]] == value[j]
-                    for j in range(len(primary_key))
-                ]
-            ):
-                row_indices.append(i)
-
+        row_indices = [
+            at
+            for at, row in enumerate(self._data["data"])
+            if all(row[key[j]] == value[j] for j in range(len(key)))
+        ]
         return row_indices
 
     def _get_cell_value_by_numerical_index(self, column_index, row_index):
         """Gets the value for a single cell by column index and row index."""
-
         column = self._column_index_to_name(column_index)
-        if column is not None:
-            return self._data["data"][row_index][column]
-
-        return None
+        if column is None:
+            return None
+        return self._data["data"][row_index][column]

@@ -22,7 +22,7 @@ class VegaExpr(Widget):
     value = Unicode("default_value").tag(sync=True)
 
     def __init__(self, value="", **kwargs):
-        super(VegaExpr, self).__init__(value=value, **kwargs)
+        super().__init__(value=value, **kwargs)
 
 
 class Expr(VegaExpr):
