@@ -7,17 +7,7 @@ from math import floor
 import numpy as np
 import pandas as pd
 from ipywidgets import CallbackDispatcher, DOMWidget, widget_serialization
-from traitlets import (
-    Bool,
-    Dict,
-    Enum,
-    Instance,
-    Int,
-    List,
-    Unicode,
-    default,
-    validate,
-)
+from traitlets import Bool, Dict, Enum, Instance, Int, List, Unicode, default, validate
 
 from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
