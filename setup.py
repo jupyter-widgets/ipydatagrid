@@ -8,8 +8,7 @@ from jupyter_packaging import (
 )
 from setuptools import setup
 
-HERE = Path(__file__).absolute().parent
-JS_DIR = HERE
+JS_DIR = Path(__file__).absolute().parent
 
 # Representative files that should exist after a successful build
 jstargets = [JS_DIR / "dist" / "index.js"]
