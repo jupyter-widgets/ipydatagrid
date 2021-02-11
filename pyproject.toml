@@ -13,16 +13,6 @@ profile = "black"
 known_first_party = ["ipydatagrid", "tests"]
 line_length = 80
 
-[tool.setuptools_scm]
-write_to = "ipydatagrid/_version.py"
-write_to_template = """
-# Copyright (c) Bloomberg.
-# Distributed under the terms of the Modified BSD License.
-
-\"\"\" Version information \"\"\"
-__version__ = "{version}"
-"""
-
 [tool.pylint.messages_control]
 disable = "C0330, C0326"
 
