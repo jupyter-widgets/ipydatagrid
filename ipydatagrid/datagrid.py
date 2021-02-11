@@ -279,7 +279,7 @@ class DataGrid(DOMWidget):
         self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
 
-    def __handle_custom_msg(self, _, content, buffers):  # noqa: U101
+    def __handle_custom_msg(self, _, content):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
             row = content["row"]
             column = self._column_index_to_name(content["column_index"])
