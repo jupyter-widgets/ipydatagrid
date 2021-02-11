@@ -252,8 +252,8 @@ class DataGrid(DOMWidget):
         default_value="all", values=["all", "row", "column", "none"]
     ).tag(sync=True)
 
-    _transforms = List(Dict).tag(sync=True, **widget_serialization)
-    _visible_rows = List(Int).tag(sync=True)
+    _transforms = List(Dict()).tag(sync=True, **widget_serialization)
+    _visible_rows = List(Int()).tag(sync=True)
     _data = Dict().tag(sync=True, **_data_serialization)
 
     renderers = Dict(Instance(CellRenderer)).tag(
@@ -268,7 +268,7 @@ class DataGrid(DOMWidget):
     selection_mode = Enum(
         default_value="none", values=["row", "column", "cell", "none"]
     ).tag(sync=True)
-    selections = List(Dict).tag(sync=True, **widget_serialization)
+    selections = List(Dict()).tag(sync=True, **widget_serialization)
     editable = Bool(False).tag(sync=True)
     column_widths = Dict({}).tag(sync=True)
 
