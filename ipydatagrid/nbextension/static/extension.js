@@ -6,7 +6,7 @@ define(function() {
     window['requirejs'].config({
         map: {
             '*': {
-                'jupyter-datagrid': 'nbextensions/datagrid/index',
+                'jupyter-datagrid': 'nbextensions/ipydatagrid/index',
             },
         }
     });
