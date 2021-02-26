@@ -7,5 +7,6 @@ dependencies:
 - numpy
 - nodejs
 - pandas
+- pip
 - pip:
-  - ipydatagrid==1.0.0
+  - ..
