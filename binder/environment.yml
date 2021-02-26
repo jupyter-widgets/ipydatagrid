@@ -1,0 +1,11 @@
+name: ipydatagrid
+channels:
+- conda-forge
+dependencies:
+- ipywidgets=7.6
+- jupyterlab=3
+- numpy
+- nodejs
+- pandas
+- pip:
+  - ipydatagrid==1.0.0
