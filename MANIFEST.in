@@ -12,9 +12,10 @@ include ipydatagrid/labextension/*.tgz
 # Examples
 graft examples
 
-# Javascript files
+# Widget source files
 graft ipydatagrid/nbextension
 graft js
+graft style
 prune **/node_modules
 prune coverage
 prune lib
