@@ -2,8 +2,14 @@
 # Distributed under the terms of the Modified BSD License.
 
 from ._version import __version__  # noqa
+from .cellrenderer import (  # noqa
+    BarRenderer,
+    CellRenderer,
+    Expr,
+    TextRenderer,
+    VegaExpr,
+)
 from .datagrid import DataGrid, SelectionHelper  # noqa
-from .cellrenderer import CellRenderer, TextRenderer, BarRenderer, VegaExpr, Expr  # noqa
 
 
 def _jupyter_nbextension_paths():
