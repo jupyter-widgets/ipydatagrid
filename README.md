@@ -19,6 +19,8 @@ Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 
 ## Installation
 
+If using JupyterLab, `ipydatagrid` requires JupyterLab version 3 or higher.
+
 You can install `ipydatagrid` using `pip` or `conda`:
 
 Using `pip`:
@@ -27,17 +29,7 @@ Using `pip`:
 pip install ipydatagrid
 ```
 
-Using `conda`:
-
-```bash
-conda install ipydatagrid
-```
-
-To enable `ipydatagrid` with JupyterLab:
-
-```bash
-jupyter labextension install @jupyter-widgets/jupyterlab-manager ipydatagrid
-```
+Using `conda`: coming soon!
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
 the nbextension:
