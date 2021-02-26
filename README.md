@@ -29,11 +29,7 @@ Using `pip`:
 pip install ipydatagrid
 ```
 
-Using `conda`:
-
-```bash
-conda install -c conda-forge ipydatagrid
-```
+Using `conda`: coming soon!
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
 the nbextension:
