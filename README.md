@@ -30,7 +30,7 @@ pip install ipydatagrid
 Using `conda`:
 
 ```bash
-conda install ipydatagrid
+conda install -c conda-forge ipydatagrid
 ```
 
 To enable `ipydatagrid` with JupyterLab:
