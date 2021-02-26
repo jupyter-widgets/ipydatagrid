@@ -3,6 +3,7 @@
 
 from ._version import __version__  # noqa
 from .datagrid import DataGrid, SelectionHelper  # noqa
+from .cellrenderer import CellRenderer, TextRenderer, BarRenderer, VegaExpr, Expr  # noqa
 
 
 def _jupyter_nbextension_paths():
