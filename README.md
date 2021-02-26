@@ -19,7 +19,7 @@ Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 
 ## Installation
 
-If using JupyterLab, `ipydatagrid` requires version 3 or higher.
+If using JupyterLab, `ipydatagrid` requires JupyterLab version 3 or higher.
 
 You can install `ipydatagrid` using `pip` or `conda`:
 
