@@ -9,13 +9,32 @@ Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 
 ## Menu
 
+- [Usage and Examples](#Usage-and-Examples)
 - [Installation](#Installation)
 - [Development installation](#Development-installation)
-- [Usage and Examples](#Usage-and-Examples)
 - [Contributions](#Contributions)
 - [License](#License)
 - [Code of Conduct](#Code-of-Conduct)
 - [Security Vulnerability reporting](#Security-Vulnerability-reporting)
+
+## Usage and Examples
+
+A fully-featured DataGrid interface
+[![DataGrid](./static/ipydatagrid_1.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/DataGrid.ipynb)
+
+Highly performant and fully integrated with ipywidgets
+[![DataGrid](./static/ipydatagrid_2.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/DataGrid.ipynb)
+
+Customize the way data is represented in your grid using a variety of renderers
+[![DataGrid](./static/ipydatagrid_3.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/DataGrid.ipynb)
+
+Enjoy a sophisticated selections model with two-way data binding
+[![DataGrid](./static/ipydatagrid_4.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/Selections.ipynb)
+
+Conditional formatting powered by Vega Expressions
+[![DataGrid](./static/ipydatagrid_5.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/ConditionalFormatting.ipynb)
+
+Tutorial and example notebooks can be found in the `/examples` directory.
 
 ## Installation
 
@@ -29,7 +48,11 @@ Using `pip`:
 pip install ipydatagrid
 ```
 
-Using `conda`: coming soon!
+Using `conda`:
+
+```bash
+conda install -c conda-forge ipydatagrid
+```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
 the nbextension:
@@ -65,10 +88,6 @@ jupyter labextension develop . --overwrite
 
 Note for developers: the `--symlink` argument on Linux or OS X allows one to modify the JavaScript code in-place. This feature is not available with Windows.
 `
-
-## Usage and Examples
-
-Tutorial and example notebooks can be found in the `/examples` directory.
 
 ## Contributions
 
