@@ -1,6 +1,6 @@
 {
   "name": "ipydatagrid",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Fast Datagrid widget for the Jupyter Notebook and JupyterLab",
   "keywords": [
     "jupyter",
