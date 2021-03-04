@@ -70,7 +70,7 @@ class SelectionHelper:
         represented as a dictionary
         with keys 'r': row and 'c': column
         """
-        return [cell for cell in self]
+        return [cell for cell in self]  # noqa: C416
 
     def all_values(self):
         """
