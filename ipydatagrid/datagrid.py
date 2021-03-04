@@ -1,6 +1,7 @@
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
 
+from collections.abc import Iterator
 from copy import deepcopy
 from math import floor
 
@@ -23,26 +24,11 @@ from ._frontend import module_name, module_version
 from .cellrenderer import CellRenderer, TextRenderer
 
 
-class SelectionHelper:
-
-    """A Helper Class for processing selections. Provides an iterator
-    to traverse selected cells.
-    """
-
-    def __init__(self, grid, **kwargs):
-        super().__init__(**kwargs)
-        self._grid = grid
-        self._num_columns = -1
-        self._num_rows = -1
-
-    def __iter__(self):
+class SelectionIterator(Iterator):
+    def __init__(self, selections):
         self._rect_index = 0
         self._cell_index = 0
-        self._selections = [
-            self._transform_rect_for_selection_mode(rect)
-            for rect in self._grid.selections
-        ]
-        return self
+        self._selections = selections
 
     def __next__(self):
         if self._rect_index >= len(self._selections):
@@ -61,39 +47,6 @@ class SelectionHelper:
         else:
             return row_col
 
-    def __len__(self):
-        return sum(1 for _ in self)
-
-    def all(self):
-        """
-        Returns all selected cells as a list. Each cell is
-        represented as a dictionary
-        with keys 'r': row and 'c': column
-        """
-        return [cell for cell in self]  # noqa: C416
-
-    def all_values(self):
-        """
-        Returns values for all selected cells as a list.
-        """
-        return [
-            self._grid._get_cell_value_by_numerical_index(cell["c"], cell["r"])
-            for cell in self
-        ]
-
-    @staticmethod
-    def _cell_in_rect(cell, rect):
-        return (
-            rect["r1"] <= cell["r"] <= rect["r2"]
-            and rect["c1"] <= cell["c"] <= rect["c2"]
-        )
-
-    def _cell_in_previous_selected_rects(self, cell):
-        return any(
-            self._cell_in_rect(cell, self._selections[i])
-            for i in range(0, self._rect_index)
-        )
-
     @staticmethod
     def _index_to_row_col(rect, index):
         num_rows = rect["r2"] - rect["r1"] + 1
@@ -105,6 +58,59 @@ class SelectionHelper:
             "r": rect["r1"] + floor(index / num_cols),
             "c": rect["c1"] + index % num_cols,
         }
+
+    def _cell_in_previous_selected_rects(self, cell):
+        return any(
+            self._cell_in_rect(cell, self._selections[i])
+            for i in range(0, self._rect_index)
+        )
+
+    @staticmethod
+    def _cell_in_rect(cell, rect):
+        return (
+            rect["r1"] <= cell["r"] <= rect["r2"]
+            and rect["c1"] <= cell["c"] <= rect["c2"]
+        )
+
+
+class SelectionHelper:
+
+    """A Helper Class for processing selections. Provides an iterator
+    to traverse selected cells.
+    """
+
+    def __init__(self, grid, **kwargs):
+        super().__init__(**kwargs)
+        self._grid = grid
+        self._num_columns = -1
+        self._num_rows = -1
+
+    def __iter__(self):
+        selections = [
+            self._transform_rect_for_selection_mode(rect)
+            for rect in self._grid.selections
+        ]
+        return SelectionIterator(selections)
+
+    def __len__(self):
+        return sum(1 for _ in self)
+
+    def all(self):
+        """
+        Returns all selected cells as a list. Each cell is
+        represented as a dictionary
+        with keys 'r': row and 'c': column
+        """
+        return list(self)
+
+    def all_values(self):
+        """
+        Returns values for all selected cells as a list.
+        """
+        return [
+            self._grid._get_cell_value_by_numerical_index(cell["c"], cell["r"])
+            for cell in self
+        ]
 
     def _transform_rect_for_selection_mode(self, rect):
         selection_mode = self._grid.selection_mode
