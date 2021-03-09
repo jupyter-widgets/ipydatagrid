@@ -2,7 +2,6 @@ import { PanelLayout, Widget } from '@lumino/widgets';
 import { Message, IMessageHandler, MessageLoop } from '@lumino/messaging';
 import {
   BasicMouseHandler,
-  BasicKeyHandler,
   TextRenderer,
   DataModel,
   BasicSelectionModel,
@@ -19,6 +18,7 @@ import { FeatherGridContextMenu } from './core/gridContextMenu';
 import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
 import { Transform } from './core/transform';
 import { Theme } from './utils';
+import { KeyHandler } from './keyhandler';
 
 import '@lumino/default-theme/style/datagrid.css';
 import '../style/feathergrid.css';
@@ -489,7 +489,7 @@ export class FeatherGrid extends Widget {
 
     this.grid.dataModel = this._dataModel;
     //@ts-ignore **added so we can remove basickeyhandler.ts from fork
-    this.grid.keyHandler = new BasicKeyHandler();
+    this.grid.keyHandler = new KeyHandler();
     const mouseHandler = new FeatherGridMouseHandler(this);
     mouseHandler.cellClicked.connect(
       (sender: FeatherGridMouseHandler, hit: DataGrid.HitTestResult) => {
