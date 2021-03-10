@@ -52,6 +52,16 @@ jobs:
       - name: run test suite for ${{ matrix.py }}
         run: tox --skip-pkg-install
 
+  test:
+    name: JS
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install modules
+      run: npm install
+    - name: run tests
+      run: npm run test
+
   check:
     name: check ${{ matrix.tox_env }}
     runs-on: Ubuntu-latest
