@@ -325,6 +325,11 @@ class DataGrid(DOMWidget):
     @data.setter
     def data(self, dataframe):
         guid_key = "ipydguuid"
+        # Reference for the original frame column and index names
+        # This is used to when returning the view data model
+        self.__dataframe_reference_index_names = dataframe.index.names
+        self.__dataframe_reference_columns = dataframe.columns
+
         dataframe = dataframe.copy()
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
@@ -445,6 +450,8 @@ class DataGrid(DOMWidget):
         at = self._data["schema"]["primaryKey"]
         return_df = pd.DataFrame(data["data"]).set_index(at)
         return_df.index = return_df.index.droplevel(return_df.index.nlevels - 1)
+        return_df.index.names = self.__dataframe_reference_index_names
+        return_df.columns = self.__dataframe_reference_columns
         return return_df
 
     def transform(self, transforms):
