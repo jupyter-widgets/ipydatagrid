@@ -535,7 +535,7 @@ class DataGrid(DOMWidget):
         # Copying over selections/mode from main grid
         selections_grid.selections = self.selections
         selections_grid.selection_mode = self.selection_mode
-        
+
         return SelectionHelper(grid=selections_grid).all_values()
 
     @property
