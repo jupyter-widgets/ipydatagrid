@@ -525,7 +525,16 @@ class DataGrid(DOMWidget):
         """
         List of values for all selected cells.
         """
-        return SelectionHelper(grid=self).all_values()
+        # Copy of the front-end data model
+        view_data = self.get_visible_data()
+
+        # New DataGrid instance with data from
+        # the front-end data model
+        selections_grid = DataGrid(view_data)
+
+        # Copying over selections from main grid
+        selections_grid.selections = self.selections
+        return SelectionHelper(grid=selections_grid).all_values()
 
     @property
     def selected_cell_iterator(self):
