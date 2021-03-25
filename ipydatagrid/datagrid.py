@@ -292,7 +292,7 @@ class DataGrid(DOMWidget):
     def __handle_custom_msg(self, _, content, buffers):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
             row = content["row"]
-            column = DataGrid._column_index_to_name(
+            column = self._column_index_to_name(
                 self._data, content["column_index"]
             )
             value = content["value"]
@@ -377,7 +377,7 @@ class DataGrid(DOMWidget):
         self.__dataframe_reference_columns = dataframe.columns
         dataframe = dataframe.copy()
 
-        self._data = DataGrid.generate_data_object(dataframe, "ipydguuid")
+        self._data = self.generate_data_object(dataframe, "ipydguuid")
 
     def get_cell_value(self, column_name, primary_key_value):
         """Gets the value for a single or multiple cells by column name and index name.
@@ -540,7 +540,7 @@ class DataGrid(DOMWidget):
         view_data = self.get_visible_data()
 
         # Serielize to JSON table schema
-        view_data_object = DataGrid.generate_data_object(view_data, "ipydguuid")
+        view_data_object = self.generate_data_object(view_data, "ipydguuid")
 
         return SelectionHelper(
             view_data_object, self.selections, self.selection_mode
@@ -651,7 +651,7 @@ class DataGrid(DOMWidget):
     def _column_name_to_index(self, column_name):
         if "schema" not in self._data or "fields" not in self._data["schema"]:
             return None
-        col_headers = DataGrid._get_col_headers(self._data)
+        col_headers = self._get_col_headers(self._data)
         try:
             return col_headers.index(column_name)
         except ValueError:
