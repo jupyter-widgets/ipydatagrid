@@ -15,6 +15,7 @@ def dataframe() -> None:
 def datagrid(dataframe) -> None:
     return DataGrid(dataframe)
 
+
 @pytest.fixture
 def data_object(dataframe) -> None:
     return DataGrid.generate_data_object(dataframe, "ipydguuid")
@@ -103,32 +104,51 @@ def test_get_cell_value_by_numerical_index(
     invalid_coords: bool, data_object: dict
 ) -> None:
     if invalid_coords:
-        assert DataGrid._get_cell_value_by_numerical_index(data_object, 2, 2) is None
+        assert (
+            DataGrid._get_cell_value_by_numerical_index(data_object, 2, 2)
+            is None
+        )
     else:
-        assert DataGrid._get_cell_value_by_numerical_index(data_object, 1, 0) == 4
+        assert (
+            DataGrid._get_cell_value_by_numerical_index(data_object, 1, 0) == 4
+        )
+
 
 def test_data_object_generation(dataframe: pd.DataFrame) -> None:
     data_object = DataGrid.generate_data_object(dataframe, "ipydguuid")
     expected_output = {
-        'data': [{'index': 'One', 'A': 1, 'B': 4, 'ipydguuid': 0},
-                {'index': 'Two', 'A': 2, 'B': 5, 'ipydguuid': 1},
-                {'index': 'Three', 'A': 3, 'B': 6, 'ipydguuid': 2}],
-        'schema': {'fields': [{'name': 'index', 'type': 'string'},
-                  {'name': 'A', 'type': 'integer'},
-                  {'name': 'B', 'type': 'integer'},
-                  {'name': 'ipydguuid', 'type': 'integer'}],
-                  'primaryKey': ['index', 'ipydguuid'],
-                  'pandas_version': '0.20.0',
-                  'primaryKeyUuid': 'ipydguuid'},
-        'fields': [{'index': None}, {'A': None}, {'B': None}, {'ipydguuid': None}]}
+        "data": [
+            {"index": "One", "A": 1, "B": 4, "ipydguuid": 0},
+            {"index": "Two", "A": 2, "B": 5, "ipydguuid": 1},
+            {"index": "Three", "A": 3, "B": 6, "ipydguuid": 2},
+        ],
+        "schema": {
+            "fields": [
+                {"name": "index", "type": "string"},
+                {"name": "A", "type": "integer"},
+                {"name": "B", "type": "integer"},
+                {"name": "ipydguuid", "type": "integer"},
+            ],
+            "primaryKey": ["index", "ipydguuid"],
+            "pandas_version": "0.20.0",
+            "primaryKeyUuid": "ipydguuid",
+        },
+        "fields": [
+            {"index": None},
+            {"A": None},
+            {"B": None},
+            {"ipydguuid": None},
+        ],
+    }
 
     assert data_object == expected_output
+
 
 def test_selected_cell_values(monkeypatch, datagrid, dataframe):
     # Mocking data returned from front-end
     def mock_get_visible_data():
         return dataframe
-    
+
     monkeypatch.setattr(datagrid, "get_visible_data", mock_get_visible_data)
     datagrid.select(1, 0, 2, 1)  # Select 1A to 2B
 
