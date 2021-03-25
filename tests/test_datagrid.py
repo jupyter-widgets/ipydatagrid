@@ -106,3 +106,20 @@ def test_get_cell_value_by_numerical_index(
         assert DataGrid._get_cell_value_by_numerical_index(data_object, 2, 2) is None
     else:
         assert DataGrid._get_cell_value_by_numerical_index(data_object, 1, 0) == 4
+
+def test_data_object_generation(dataframe: pd.DataFrame) -> None:
+    data_object = DataGrid.generate_data_object(dataframe, "ipydguuid")
+    expected_output = {
+        'data': [{'index': 'One', 'A': 1, 'B': 4, 'ipydguuid': 0},
+                {'index': 'Two', 'A': 2, 'B': 5, 'ipydguuid': 1},
+                {'index': 'Three', 'A': 3, 'B': 6, 'ipydguuid': 2}],
+        'schema': {'fields': [{'name': 'index', 'type': 'string'},
+                  {'name': 'A', 'type': 'integer'},
+                  {'name': 'B', 'type': 'integer'},
+                  {'name': 'ipydguuid', 'type': 'integer'}],
+                  'primaryKey': ['index', 'ipydguuid'],
+                  'pandas_version': '0.20.0',
+                  'primaryKeyUuid': 'ipydguuid'},
+        'fields': [{'index': None}, {'A': None}, {'B': None}, {'ipydguuid': None}]}
+
+    assert data_object == expected_output
