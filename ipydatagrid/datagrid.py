@@ -79,16 +79,18 @@ class SelectionHelper:
     to traverse selected cells.
     """
 
-    def __init__(self, grid, **kwargs):
+    def __init__(self, data, selections, selection_mode, **kwargs):
         super().__init__(**kwargs)
-        self._grid = grid
+        self._data = data
+        self._selections = selections
+        self._selection_mode = selection_mode
         self._num_columns = -1
         self._num_rows = -1
 
     def __iter__(self):
         selections = [
             self._transform_rect_for_selection_mode(rect)
-            for rect in self._grid.selections
+            for rect in self._selections
         ]
         return SelectionIterator(selections)
 
@@ -108,12 +110,12 @@ class SelectionHelper:
         Returns values for all selected cells as a list.
         """
         return [
-            self._grid._get_cell_value_by_numerical_index(cell["c"], cell["r"])
+            DataGrid._get_cell_value_by_numerical_index(self._data, cell["c"], cell["r"])
             for cell in self
         ]
 
     def _transform_rect_for_selection_mode(self, rect):
-        selection_mode = self._grid.selection_mode
+        selection_mode = self._selection_mode
         if selection_mode == "row":
             return {
                 "r1": rect["r1"],
@@ -135,7 +137,7 @@ class SelectionHelper:
         if self._num_columns != -1:
             return self._num_columns
 
-        data = self._grid._data
+        data = self._data
         primary_keys = (
             []
             if "primaryKey" not in data["schema"]
@@ -153,7 +155,7 @@ class SelectionHelper:
         if self._num_rows != -1:
             return self._num_rows
 
-        data = self._grid._data
+        data = self._data
         self._num_rows = 0 if "data" not in data else len(data["data"])
         return self._num_rows
 
@@ -288,7 +290,7 @@ class DataGrid(DOMWidget):
     def __handle_custom_msg(self, _, content, buffers):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
             row = content["row"]
-            column = self._column_index_to_name(content["column_index"])
+            column = DataGrid._column_index_to_name(self._data, content["column_index"])
             value = content["value"]
             # update data on kernel
             self._data["data"][row][column] = value
@@ -322,15 +324,8 @@ class DataGrid(DOMWidget):
         final_df = final_df[final_df.columns[:-1]]
         return final_df
 
-    @data.setter
-    def data(self, dataframe):
-        guid_key = "ipydguuid"
-        # Reference for the original frame column and index names
-        # This is used to when returning the view data model
-        self.__dataframe_reference_index_names = dataframe.index.names
-        self.__dataframe_reference_columns = dataframe.columns
-
-        dataframe = dataframe.copy()
+    @staticmethod
+    def generate_data_object(dataframe, guid_key):
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
@@ -364,11 +359,22 @@ class DataGrid(DOMWidget):
 
         schema["primaryKeyUuid"] = guid_key
 
-        self._data = {
+
+        return {
             "data": data,
             "schema": schema,
             "fields": [{field["name"]: None} for field in schema["fields"]],
         }
+
+    @data.setter
+    def data(self, dataframe):
+        # Reference for the original frame column and index names
+        # This is used to when returning the view data model
+        self.__dataframe_reference_index_names = dataframe.index.names
+        self.__dataframe_reference_columns = dataframe.columns
+        dataframe = dataframe.copy()
+
+        self._data = DataGrid.generate_data_object(dataframe, "ipydguuid")
 
     def get_cell_value(self, column_name, primary_key_value):
         """Gets the value for a single or multiple cells by column name and index name.
@@ -518,7 +524,7 @@ class DataGrid(DOMWidget):
         List of selected cells. Each cell is represented as a dictionary
         with keys 'r': row and 'c': column
         """
-        return SelectionHelper(grid=self).all()
+        return SelectionHelper(self._data, self.selections, self.selection_mode).all()
 
     @property
     def selected_cell_values(self):
@@ -543,7 +549,7 @@ class DataGrid(DOMWidget):
         """
         An iterator to traverse selected cells one by one.
         """
-        return SelectionHelper(grid=self)
+        return SelectionHelper(self._data, self.selections, self.selection_mode)
 
     @validate("selections")
     def _validate_selections(self, proposal):
@@ -615,25 +621,27 @@ class DataGrid(DOMWidget):
         """
         self._cell_click_handlers.register_callback(callback, remove=remove)
 
-    def _column_index_to_name(self, column_index):
-        if "schema" not in self._data or "fields" not in self._data["schema"]:
+    @staticmethod
+    def _column_index_to_name(data, column_index):
+        if "schema" not in data or "fields" not in data["schema"]:
             return None
-        col_headers = self._get_col_headers()
+        col_headers = DataGrid._get_col_headers(data)
         return (
             None
             if len(col_headers) <= column_index
             else col_headers[column_index]
         )
 
-    def _get_col_headers(self):
+    @staticmethod
+    def _get_col_headers(data):
         primary_keys = (
             []
-            if "primaryKey" not in self._data["schema"]
-            else self._data["schema"]["primaryKey"]
+            if "primaryKey" not in data["schema"]
+            else data["schema"]["primaryKey"]
         )
         col_headers = [
             field["name"]
-            for field in self._data["schema"]["fields"]
+            for field in data["schema"]["fields"]
             if field["name"] not in primary_keys
         ]
         return col_headers
@@ -641,7 +649,7 @@ class DataGrid(DOMWidget):
     def _column_name_to_index(self, column_name):
         if "schema" not in self._data or "fields" not in self._data["schema"]:
             return None
-        col_headers = self._get_col_headers()
+        col_headers = DataGrid._get_col_headers(self._data)
         try:
             return col_headers.index(column_name)
         except ValueError:
@@ -664,9 +672,10 @@ class DataGrid(DOMWidget):
         ]
         return row_indices
 
-    def _get_cell_value_by_numerical_index(self, column_index, row_index):
+    @staticmethod
+    def _get_cell_value_by_numerical_index(data, column_index, row_index):
         """Gets the value for a single cell by column index and row index."""
-        column = self._column_index_to_name(column_index)
+        column = DataGrid._column_index_to_name(data, column_index)
         if column is None:
             return None
-        return self._data["data"][row_index][column]
+        return data["data"][row_index][column]
