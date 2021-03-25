@@ -15,6 +15,10 @@ def dataframe() -> None:
 def datagrid(dataframe) -> None:
     return DataGrid(dataframe)
 
+@pytest.fixture
+def data_object(dataframe) -> None:
+    return DataGrid.generate_data_object(dataframe, "ipydguuid")
+
 
 @pytest.mark.parametrize("clear", [True, False])
 def test_selections(clear: bool, dataframe: pd.DataFrame) -> None:
@@ -73,15 +77,15 @@ def test_column_name_to_index(invalid_index: bool, datagrid: DataGrid) -> None:
 
 
 @pytest.mark.parametrize("invalid_index", [True, False])
-def test_column_index_to_name(invalid_index: bool, datagrid: DataGrid) -> None:
+def test_column_index_to_name(invalid_index: bool, data_object: dict) -> None:
     if invalid_index:
-        assert datagrid._column_index_to_name(4) is None
+        assert DataGrid._column_index_to_name(data_object, 4) is None
     else:
-        assert datagrid._column_index_to_name(1) == "B"
+        assert DataGrid._column_index_to_name(data_object, 1) == "B"
 
 
-def test_get_col_headers(datagrid) -> None:
-    assert datagrid._get_col_headers() == ["A", "B"]
+def test_get_col_headers(data_object) -> None:
+    assert DataGrid._get_col_headers(data_object) == ["A", "B"]
 
 
 @pytest.mark.parametrize("invalid_prim_key", [True, False])
@@ -96,9 +100,9 @@ def test_get_row_index_of_primary_key(
 
 @pytest.mark.parametrize("invalid_coords", [True, False])
 def test_get_cell_value_by_numerical_index(
-    invalid_coords: bool, datagrid: DataGrid
+    invalid_coords: bool, data_object: dict
 ) -> None:
     if invalid_coords:
-        assert datagrid._get_cell_value_by_numerical_index(2, 2) is None
+        assert DataGrid._get_cell_value_by_numerical_index(data_object, 2, 2) is None
     else:
-        assert datagrid._get_cell_value_by_numerical_index(1, 0) == 4
+        assert DataGrid._get_cell_value_by_numerical_index(data_object, 1, 0) == 4
