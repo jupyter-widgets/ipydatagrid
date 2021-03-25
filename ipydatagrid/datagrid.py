@@ -325,7 +325,7 @@ class DataGrid(DOMWidget):
         return final_df
 
     @staticmethod
-    def generate_data_object(dataframe, guid_key):
+    def generate_data_object(dataframe, guid_key="ipydguuid"):
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
@@ -534,15 +534,10 @@ class DataGrid(DOMWidget):
         # Copy of the front-end data model
         view_data = self.get_visible_data()
 
-        # New DataGrid instance with data from
-        # the front-end data model
-        selections_grid = DataGrid(view_data)
+        # Serielize to JSON table schema
+        view_data_object = DataGrid.generate_data_object(view_data, "ipydguuid")
 
-        # Copying over selections/mode from main grid
-        selections_grid.selections = self.selections
-        selections_grid.selection_mode = self.selection_mode
-
-        return SelectionHelper(grid=selections_grid).all_values()
+        return SelectionHelper(view_data_object, self.selections, self.selection_mode).all_values()
 
     @property
     def selected_cell_iterator(self):
