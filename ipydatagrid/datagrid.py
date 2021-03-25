@@ -110,7 +110,9 @@ class SelectionHelper:
         Returns values for all selected cells as a list.
         """
         return [
-            DataGrid._get_cell_value_by_numerical_index(self._data, cell["c"], cell["r"])
+            DataGrid._get_cell_value_by_numerical_index(
+                self._data, cell["c"], cell["r"]
+            )
             for cell in self
         ]
 
@@ -290,7 +292,9 @@ class DataGrid(DOMWidget):
     def __handle_custom_msg(self, _, content, buffers):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
             row = content["row"]
-            column = DataGrid._column_index_to_name(self._data, content["column_index"])
+            column = DataGrid._column_index_to_name(
+                self._data, content["column_index"]
+            )
             value = content["value"]
             # update data on kernel
             self._data["data"][row][column] = value
@@ -358,7 +362,6 @@ class DataGrid(DOMWidget):
             schema["primaryKey"].append(guid_key)
 
         schema["primaryKeyUuid"] = guid_key
-
 
         return {
             "data": data,
@@ -524,7 +527,9 @@ class DataGrid(DOMWidget):
         List of selected cells. Each cell is represented as a dictionary
         with keys 'r': row and 'c': column
         """
-        return SelectionHelper(self._data, self.selections, self.selection_mode).all()
+        return SelectionHelper(
+            self._data, self.selections, self.selection_mode
+        ).all()
 
     @property
     def selected_cell_values(self):
@@ -537,7 +542,9 @@ class DataGrid(DOMWidget):
         # Serielize to JSON table schema
         view_data_object = DataGrid.generate_data_object(view_data, "ipydguuid")
 
-        return SelectionHelper(view_data_object, self.selections, self.selection_mode).all_values()
+        return SelectionHelper(
+            view_data_object, self.selections, self.selection_mode
+        ).all_values()
 
     @property
     def selected_cell_iterator(self):
