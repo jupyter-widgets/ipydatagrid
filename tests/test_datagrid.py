@@ -123,3 +123,13 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
         'fields': [{'index': None}, {'A': None}, {'B': None}, {'ipydguuid': None}]}
 
     assert data_object == expected_output
+
+def test_selected_cell_values(monkeypatch, datagrid, dataframe):
+    # Mocking data returned from front-end
+    def mock_get_visible_data():
+        return dataframe
+    
+    monkeypatch.setattr(datagrid, "get_visible_data", mock_get_visible_data)
+    datagrid.select(1, 0, 2, 1)  # Select 1A to 2B
+
+    assert datagrid.selected_cell_values == [2, 5, 3, 6]
