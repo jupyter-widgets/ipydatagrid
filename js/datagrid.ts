@@ -98,40 +98,6 @@ export class DataGridModel extends DOMWidgetModel {
       this.set('_transforms', value.transforms);
       this.save_changes();
     });
-    this.data_model.dataSync.connect((sender, msg) => {
-      switch (msg.type) {
-        case 'row-indices-updated':
-          this.set('_visible_rows', msg.indices);
-          this.save_changes();
-          break;
-        case 'cell-updated':
-          this.set('_data', this.data_model.dataset);
-          this.save_changes();
-          break;
-        case 'cell-edit-event':
-          // Update data in widget model
-          const newData = this.get('_data');
-          newData.data[msg.row][msg.columnIndex] = msg.value;
-          this.set('_data', newData);
-
-          this.comm.send(
-            {
-              method: 'custom',
-              content: {
-                event_type: 'cell-changed',
-                region: msg.region,
-                row: msg.row,
-                column_index: msg.columnIndex,
-                value: msg.value,
-              },
-            },
-            null,
-          );
-          break;
-        default:
-          throw 'unreachable';
-      }
-    });
 
     this.updateTransforms();
     this.trigger('data-model-changed');
@@ -321,24 +287,47 @@ export class DataGridView extends DOMWidgetView {
     this.grid.cellClicked.connect(
       (sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
         if (this.model.comm) {
-          this.model.comm.send(
-            {
-              method: 'custom',
-              content: {
-                event_type: 'cell-click',
-                region: event.region,
-                column: event.column,
-                column_index: event.columnIndex,
-                row: event.row,
-                primary_key_row: event.primaryKeyRow,
-                cell_value: event.cellValue,
-              },
-            },
-            null,
-          );
+          this.send({
+            event_type: 'cell-click',
+            region: event.region,
+            column: event.column,
+            column_index: event.columnIndex,
+            row: event.row,
+            primary_key_row: event.primaryKeyRow,
+            cell_value: event.cellValue,
+          });
         }
       },
     );
+
+    this.model.data_model.dataSync.connect((sender, msg) => {
+      switch (msg.type) {
+        case 'row-indices-updated':
+          this.model.set('_visible_rows', msg.indices);
+          this.model.save_changes();
+          break;
+        case 'cell-updated':
+          this.model.set('_data', this.model.data_model.dataset);
+          this.model.save_changes();
+          break;
+        case 'cell-edit-event':
+          // Update data in widget model
+          const newData = this.model.get('_data');
+          newData.data[msg.row][msg.columnIndex] = msg.value;
+          this.model.set('_data', newData);
+
+          this.send({
+            event_type: 'cell-changed',
+            region: msg.region,
+            row: msg.row,
+            column_index: msg.columnIndex,
+            value: msg.value,
+          });
+          break;
+        default:
+          throw 'unreachable';
+      }
+    });
 
     this.grid.columnsResized.connect(
       (sender: FeatherGrid, args: void): void => {
