@@ -21,6 +21,7 @@ import {
   resolvePromisesDict,
   unpack_models,
   WidgetModel,
+  ICallbacks,
 } from '@jupyter-widgets/base';
 
 import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
@@ -97,6 +98,38 @@ export class DataGridModel extends DOMWidgetModel {
     this.data_model.transformStateChanged.connect((sender, value) => {
       this.set('_transforms', value.transforms);
       this.save_changes();
+    });
+
+    this.data_model.dataSync.connect((sender, msg) => {
+      switch (msg.type) {
+        case 'row-indices-updated':
+          this.set('_visible_rows', msg.indices);
+          this.save_changes();
+          break;
+        case 'cell-updated':
+          this.set('_data', this.data_model.dataset);
+          this.save_changes();
+          break;
+        case 'cell-edit-event':
+          // Update data in widget model
+          const newData = this.get('_data');
+          newData.data[msg.row][msg.columnIndex] = msg.value;
+          this.set('_data', newData);
+
+          this.send(
+            {
+              event_type: 'cell-changed',
+              region: msg.region,
+              row: msg.row,
+              column_index: msg.columnIndex,
+              value: msg.value,
+            },
+            { ...this._view_callbacks },
+          );
+          break;
+        default:
+          throw 'unreachable';
+      }
     });
 
     this.updateTransforms();
@@ -207,6 +240,7 @@ export class DataGridModel extends DOMWidgetModel {
   data_model: ViewBasedJSONModel;
   selectionModel: BasicSelectionModel | null;
   synchingWithKernel = false;
+  _view_callbacks: ICallbacks;
 }
 
 // modified from ipywidgets original
@@ -300,35 +334,6 @@ export class DataGridView extends DOMWidgetView {
       },
     );
 
-    this.model.data_model.dataSync.connect((sender, msg) => {
-      switch (msg.type) {
-        case 'row-indices-updated':
-          this.model.set('_visible_rows', msg.indices);
-          this.model.save_changes();
-          break;
-        case 'cell-updated':
-          this.model.set('_data', this.model.data_model.dataset);
-          this.model.save_changes();
-          break;
-        case 'cell-edit-event':
-          // Update data in widget model
-          const newData = this.model.get('_data');
-          newData.data[msg.row][msg.columnIndex] = msg.value;
-          this.model.set('_data', newData);
-
-          this.send({
-            event_type: 'cell-changed',
-            region: msg.region,
-            row: msg.row,
-            column_index: msg.columnIndex,
-            value: msg.value,
-          });
-          break;
-        default:
-          throw 'unreachable';
-      }
-    });
-
     this.grid.columnsResized.connect(
       (sender: FeatherGrid, args: void): void => {
         this.model.set(
@@ -338,6 +343,11 @@ export class DataGridView extends DOMWidgetView {
         this.model.save_changes();
       },
     );
+
+    // Attaching the view's iopub callbacks functions to
+    // the data model so we can use those as an
+    // argument to model.send() function in the model class.
+    this.model._view_callbacks = this.callbacks();
 
     this.model.on('data-model-changed', () => {
       this.grid.dataModel = this.model.data_model;
@@ -525,6 +535,7 @@ export class DataGridView extends DOMWidgetView {
   grid: FeatherGrid;
   pWidget: JupyterPhosphorPanelWidget;
   model: DataGridModel;
+
   // keep undefined since widget initializes before constructor
   private _isLightTheme: boolean;
 }
