@@ -37,15 +37,15 @@ import {
 
 import {
   GraphicsContext
-} from '@lumino/datagrid/lib/graphicscontext';
+} from '@lumino/datagrid';
 
 import {
   RendererMap
-} from '@lumino/datagrid/lib/renderermap';
+} from '@lumino/datagrid';
 
 import {
   SectionList
-} from '@lumino/datagrid/lib/sectionlist';
+} from '@lumino/datagrid';
 
 import {
   SelectionModel
@@ -54,7 +54,7 @@ import {
 import {
   ICellEditorController,
   CellEditorController
-} from '@lumino/datagrid/lib/celleditorcontroller';
+} from '@lumino/datagrid';
 
 import { ViewBasedJSONModel } from './viewbasedjsonmodel';
 
@@ -95,16 +95,17 @@ class DataGrid extends Widget {
 
     // Parse the default sizes.
     let defaultSizes = options.defaultSizes || DataGrid.defaultSizes;
-    let rh = Private.clampSectionSize(defaultSizes.rowHeight);
-    let cw = Private.clampSectionSize(defaultSizes.columnWidth);
-    let rhw = Private.clampSectionSize(defaultSizes.rowHeaderWidth);
-    let chh = Private.clampSectionSize(defaultSizes.columnHeaderHeight);
+    let minimumSizes = options.minimumSizes || DataGrid.minimumSizes;
 
     // Set up the sections lists.
-    this._rowSections = new SectionList({ defaultSize: rh });
-    this._columnSections = new SectionList({ defaultSize: cw });
-    this._rowHeaderSections = new SectionList({ defaultSize: rhw });
-    this._columnHeaderSections = new SectionList({ defaultSize: chh });
+    this._rowSections = new SectionList({ defaultSize: defaultSizes.rowHeight,
+      minimumSize: minimumSizes.rowHeight });
+    this._columnSections = new SectionList({ defaultSize: defaultSizes.columnWidth,
+      minimumSize: minimumSizes.columnWidth});
+    this._rowHeaderSections = new SectionList({ defaultSize: defaultSizes.rowHeaderWidth,
+      minimumSize: minimumSizes.rowHeaderWidth});
+    this._columnHeaderSections = new SectionList({ defaultSize: defaultSizes.columnHeaderHeight,
+      minimumSize: minimumSizes.columnHeaderHeight});
 
     // Create the canvas, buffer, and overlay objects.
     this._canvas = Private.createCanvas();
@@ -336,7 +337,7 @@ class DataGrid extends Widget {
     this._selectionModel = value;
 
     // Schedule a repaint of the overlay.
-    this._repaintOverlay();
+    this.repaintOverlay();
   }
 
   /**
@@ -396,10 +397,10 @@ class DataGrid extends Widget {
     this._style = { ...value };
 
     // Schedule a repaint of the content.
-    this._repaintContent();
+    this.repaintContent();
 
     // Schedule a repaint of the overlay.
-    this._repaintOverlay();
+    this.repaintOverlay();
   }
 
   /**
@@ -428,7 +429,7 @@ class DataGrid extends Widget {
     this._cellRenderers = value;
 
     // Schedule a repaint of the grid content.
-    this._repaintContent();
+    this.repaintContent();
   }
 
   /**
@@ -469,17 +470,36 @@ class DataGrid extends Widget {
    * Set the default sizes for the various sections of the data grid.
    */
   set defaultSizes(value: DataGrid.DefaultSizes) {
-    // Clamp the sizes.
-    let rh = Private.clampSectionSize(value.rowHeight);
-    let cw = Private.clampSectionSize(value.columnWidth);
-    let rhw = Private.clampSectionSize(value.rowHeaderWidth);
-    let chh = Private.clampSectionSize(value.columnHeaderHeight);
-
     // Update the section default sizes.
-    this._rowSections.defaultSize = rh;
-    this._columnSections.defaultSize = cw;
-    this._rowHeaderSections.defaultSize = rhw;
-    this._columnHeaderSections.defaultSize = chh;
+    this._rowSections.defaultSize = value.rowHeight;
+    this._columnSections.defaultSize = value.columnWidth;
+    this._rowHeaderSections.defaultSize = value.rowHeaderWidth;
+    this._columnHeaderSections.defaultSize = value.columnHeaderHeight;
+
+    // Sync the viewport.
+    this._syncViewport();
+  }
+
+  /**
+   * Get the minimum sizes for the various sections of the data grid.
+   */
+  get minimumSizes(): DataGrid.DefaultSizes {
+    let rowHeight = this._rowSections.minimumSize;
+    let columnWidth = this._columnSections.minimumSize;
+    let rowHeaderWidth = this._rowHeaderSections.minimumSize;
+    let columnHeaderHeight = this._columnHeaderSections.minimumSize;
+    return { rowHeight, columnWidth, rowHeaderWidth, columnHeaderHeight };
+  }
+
+  /**
+   * Set the minimum sizes for the various sections of the data grid.
+   */
+  set minimumSizes(value: DataGrid.DefaultSizes) {
+    // Update the section default sizes.
+    this._rowSections.minimumSize = value.rowHeight;
+    this._columnSections.minimumSize = value.columnWidth;
+    this._rowHeaderSections.minimumSize = value.rowHeaderWidth;
+    this._columnHeaderSections.minimumSize = value.columnHeaderHeight;
 
     // Sync the viewport.
     this._syncViewport();
@@ -707,6 +727,41 @@ class DataGrid extends Widget {
       this._selectionModel !== null &&
       this._editorController !== null &&
       this.dataModel instanceof MutableDataModel;
+  }
+
+  /**
+   * The rendering context for painting the data grid.
+   */
+  protected get canvasGC(): CanvasRenderingContext2D {
+    return this._canvasGC;
+  }
+
+  /**
+   * The row sections of the data grid.
+   */
+  protected get rowSections(): SectionList {
+    return this._rowSections;
+  }
+
+  /**
+   * The column sections of the data grid.
+   */
+  protected get columnSections(): SectionList {
+    return this._columnSections;
+  }
+
+  /**
+   * The row header sections of the data grid.
+   */
+  protected get rowHeaderSections(): SectionList {
+    return this._rowHeaderSections;
+  }
+
+  /**
+   * The column header sections of the data grid.
+   */
+  protected get columnHeaderSections(): SectionList {
+    return this._columnHeaderSections;
   }
 
   /**
@@ -1388,8 +1443,8 @@ class DataGrid extends Widget {
     default:
       throw 'unreachable';
     }
-    this._repaintContent();
-    this._repaintOverlay();
+    this.repaintContent();
+    this.repaintOverlay();
   }
 
   /**
@@ -1412,8 +1467,8 @@ class DataGrid extends Widget {
     default:
       throw 'unreachable';
     }
-    this._repaintContent();
-    this._repaintOverlay();
+    this.repaintContent();
+    this.repaintOverlay();
   }
 
   /**
@@ -1909,8 +1964,8 @@ class DataGrid extends Widget {
     this._viewport.node.addEventListener('dblclick', this);
     this._viewport.node.addEventListener('mouseleave', this);
     this._viewport.node.addEventListener('contextmenu', this);
-    this._repaintContent();
-    this._repaintOverlay();
+    this.repaintContent();
+    this.repaintOverlay();
   }
 
   /**
@@ -1932,8 +1987,8 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'before-show'` message.
    */
   protected onBeforeShow(msg: Message): void {
-    this._repaintContent();
-    this._repaintOverlay();
+    this.repaintContent();
+    this.repaintOverlay();
   }
 
   /**
@@ -1950,7 +2005,7 @@ class DataGrid extends Widget {
   /**
    * Schedule a repaint of all of the grid content.
    */
-  private _repaintContent(): void {
+  protected repaintContent(): void {
     let msg = new Private.PaintRequest('all', 0, 0, 0, 0);
     MessageLoop.postMessage(this._viewport, msg);
   }
@@ -1958,7 +2013,7 @@ class DataGrid extends Widget {
   /**
    * Schedule a repaint of specific grid content.
    */
-  private _repaintRegion(region: DataModel.CellRegion, r1: number, c1: number, r2: number, c2: number): void {
+  protected repaintRegion(region: DataModel.CellRegion, r1: number, c1: number, r2: number, c2: number): void {
     let msg = new Private.PaintRequest(region, r1, c1, r2, c2);
     MessageLoop.postMessage(this._viewport, msg);
   }
@@ -1966,7 +2021,7 @@ class DataGrid extends Widget {
   /**
    * Schedule a repaint of the overlay.
    */
-  private _repaintOverlay(): void {
+  protected repaintOverlay(): void {
     MessageLoop.postMessage(this._viewport, Private.OverlayPaintRequest);
   }
 
@@ -2142,8 +2197,8 @@ class DataGrid extends Widget {
    * This schedules a full repaint and syncs the scroll state.
    */
   private _syncViewport(): void {
-    this._repaintContent();
-    this._repaintOverlay();
+    this.repaintContent();
+    this.repaintOverlay();
     this._syncScrollState();
   }
 
@@ -2217,7 +2272,7 @@ class DataGrid extends Widget {
 
     // Paint the whole grid if the old size was zero.
     if (oldWidth === 0 || oldHeight === 0) {
-      this._paintContent(0, 0, width, height);
+      this.paintContent(0, 0, width, height);
       this._paintOverlay();
       return;
     }
@@ -2226,18 +2281,18 @@ class DataGrid extends Widget {
     if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let bx = this._columnSections.offsetOf(this._columnSections.count - 1);
       let x = Math.min(this.headerWidth + bx, oldWidth);
-      this._paintContent(x, 0, width - x, height);
+      this.paintContent(x, 0, width - x, height);
     } else if (width > oldWidth) {
-      this._paintContent(oldWidth, 0, width - oldWidth, height);
+      this.paintContent(oldWidth, 0, width - oldWidth, height);
     }
 
     // Paint the bottom edge as needed.
     if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
       let by = this._rowSections.offsetOf(this._rowSections.count - 1);
       let y = Math.min(this.headerHeight + by, oldHeight);
-      this._paintContent(0, y, width, height - y);
+      this.paintContent(0, y, width, height - y);
     } else if (height > oldHeight) {
-      this._paintContent(0, oldHeight, width, height - oldHeight);
+      this.paintContent(0, oldHeight, width, height - oldHeight);
     }
 
     // Paint the overlay.
@@ -2358,7 +2413,7 @@ class DataGrid extends Widget {
     y2 = Math.max(yMin, Math.min(y2, yMax));
 
     // Paint the content of the dirty rect.
-    this._paintContent(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    this.paintContent(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
   }
 
   /**
@@ -2468,7 +2523,7 @@ class DataGrid extends Widget {
    * A signal handler for the selection model `changed` signal.
    */
   private _onSelectionsChanged(sender: SelectionModel): void {
-    this._repaintOverlay();
+    this.repaintOverlay();
   }
 
   /**
@@ -2656,15 +2711,15 @@ class DataGrid extends Widget {
 
     // Schedule a repaint of the dirty cells.
     if (region === 'body') {
-      this._repaintRegion('body', r1, 0, r2, Infinity);
-      this._repaintRegion('row-header', r1, 0, r2, Infinity);
+      this.repaintRegion('body', r1, 0, r2, Infinity);
+      this.repaintRegion('row-header', r1, 0, r2, Infinity);
     } else {
-      this._repaintRegion('column-header', r1, 0, r2, Infinity);
-      this._repaintRegion('corner-header', r1, 0, r2, Infinity);
+      this.repaintRegion('column-header', r1, 0, r2, Infinity);
+      this.repaintRegion('corner-header', r1, 0, r2, Infinity);
     }
 
-    // Schedule a repaint of the overlay.
-    this._repaintOverlay();
+    // Sync the viewport.
+    this._syncViewport();
   }
 
   /**
@@ -2714,15 +2769,15 @@ class DataGrid extends Widget {
 
     // Schedule a repaint of the dirty cells.
     if (region === 'body') {
-      this._repaintRegion('body', 0, c1, Infinity, c2);
-      this._repaintRegion('column-header', 0, c1, Infinity, c2);
+      this.repaintRegion('body', 0, c1, Infinity, c2);
+      this.repaintRegion('column-header', 0, c1, Infinity, c2);
     } else {
-      this._repaintRegion('row-header', 0, c1, Infinity, c2);
-      this._repaintRegion('corner-header', 0, c1, Infinity, c2);
+      this.repaintRegion('row-header', 0, c1, Infinity, c2);
+      this.repaintRegion('corner-header', 0, c1, Infinity, c2);
     }
 
-    // Schedule a repaint of the overlay.
-    this._repaintOverlay();
+    // Sync the viewport.
+    this._syncViewport();
   }
 
   /**
@@ -2744,7 +2799,7 @@ class DataGrid extends Widget {
     let c2 = c1 + columnSpan - 1;
 
     // Schedule a repaint of the cell content.
-    this._repaintRegion(region, r1, c1, r2, c2);
+    this.repaintRegion(region, r1, c1, r2, c2);
   }
 
   /**
@@ -2799,7 +2854,7 @@ class DataGrid extends Widget {
    * A signal handler for the renderer map `changed` signal.
    */
   private _onRenderersChanged(): void {
-    this._repaintContent();
+    this.repaintContent();
   }
 
   /**
@@ -2995,10 +3050,10 @@ class DataGrid extends Widget {
     this._dpiRatio = dpiRatio;
 
     // Schedule a repaint of the content.
-    this._repaintContent();
+    this.repaintContent();
 
     // Schedule a repaint of the overlay.
-    this._repaintOverlay();
+    this.repaintOverlay();
 
     // Update the canvas size for the new dpi ratio.
     this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
@@ -3028,7 +3083,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Private.clampSectionSize(size);
+    let newSize = list.clampSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -3075,7 +3130,7 @@ class DataGrid extends Widget {
 
     // Paint from the section onward if it spans the viewport.
     if (offset + oldSize >= vh || offset + newSize >= vh) {
-      this._paintContent(0, pos, vw, vh - pos);
+      this.paintContent(0, pos, vw, vh - pos);
       this._paintOverlay();
       this._syncScrollState();
       return;
@@ -3105,16 +3160,16 @@ class DataGrid extends Widget {
 
     // Repaint the section if needed.
     if (newSize > 0 && offset + newSize > hh) {
-      this._paintContent(0, pos, vw, offset + newSize - pos);
+      this.paintContent(0, pos, vw, offset + newSize - pos);
     }
 
     // Paint the trailing space as needed.
     if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
       let r = this._rowSections.count - 1;
       let y = hh + this._rowSections.offsetOf(r);
-      this._paintContent(0, y, vw, vh - y);
+      this.paintContent(0, y, vw, vh - y);
     } else if (delta < 0) {
-      this._paintContent(0, vh + delta, vw, -delta);
+      this.paintContent(0, vh + delta, vw, -delta);
     }
 
     // Paint the overlay.
@@ -3140,7 +3195,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Private.clampSectionSize(size);
+    let newSize = list.clampSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -3188,7 +3243,7 @@ class DataGrid extends Widget {
 
     // Paint from the section onward if it spans the viewport.
     if (offset + oldSize >= vw || offset + newSize >= vw) {
-      this._paintContent(pos, 0, vw - pos, vh, false);
+      this.paintContent(pos, 0, vw - pos, vh, false);
       this._drawColumnHeaderRegion(-this.scrollX, -this.scrollY, this.totalWidth, this.headerHeight);
       this._paintOverlay();
       this._syncScrollState();
@@ -3219,16 +3274,16 @@ class DataGrid extends Widget {
 
     // Repaint the section if needed.
     if (newSize > 0 && offset + newSize > hw) {
-      this._paintContent(pos, 0, offset + newSize - pos, vh, false);
+      this.paintContent(pos, 0, offset + newSize - pos, vh, false);
     }
 
     // Paint the trailing space as needed.
     if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let c = this._columnSections.count - 1;
       let x = hw + this._columnSections.offsetOf(c);
-      this._paintContent(x, 0, vw - x, vh, false);
+      this.paintContent(x, 0, vw - x, vh, false);
     } else if (delta < 0) {
-      this._paintContent(vw + delta, 0, -delta, vh, false);
+      this.paintContent(vw + delta, 0, -delta, vh, false);
     }
 
     // Draw the column header region.
@@ -3257,7 +3312,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Private.clampSectionSize(size);
+    let newSize = list.clampSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -3291,7 +3346,7 @@ class DataGrid extends Widget {
 
     // Paint the entire tail if the section spans the viewport.
     if (offset + oldSize >= vw || offset + newSize >= vw) {
-      this._paintContent(offset, 0, vw - offset, vh);
+      this.paintContent(offset, 0, vw - offset, vh);
       this._paintOverlay();
       this._syncScrollState();
       return;
@@ -3310,16 +3365,16 @@ class DataGrid extends Widget {
 
     // Repaint the header section if needed.
     if (newSize > 0) {
-      this._paintContent(offset, 0, newSize, vh);
+      this.paintContent(offset, 0, newSize, vh);
     }
 
     // Paint the trailing space as needed.
     if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let c = this._columnSections.count - 1;
       let x = this.headerWidth + this._columnSections.offsetOf(c);
-      this._paintContent(x, 0, vw - x, vh);
+      this.paintContent(x, 0, vw - x, vh);
     } else if (delta < 0) {
-      this._paintContent(vw + delta, 0, -delta, vh);
+      this.paintContent(vw + delta, 0, -delta, vh);
     }
 
     // Paint the overlay.
@@ -3345,7 +3400,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Private.clampSectionSize(size);
+    let newSize = list.clampSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -3382,7 +3437,7 @@ class DataGrid extends Widget {
 
     // Paint the entire tail if the section spans the viewport.
     if (offset + oldSize >= vh || offset + newSize >= vh) {
-      this._paintContent(0, offset, vw, vh - offset);
+      this.paintContent(0, offset, vw, vh - offset);
       this._paintOverlay();
       this._syncScrollState();
       return;
@@ -3401,16 +3456,16 @@ class DataGrid extends Widget {
 
     // Repaint the header section if needed.
     if (newSize > 0) {
-      this._paintContent(0, offset, vw, newSize);
+      this.paintContent(0, offset, vw, newSize);
     }
 
     // Paint the trailing space as needed.
     if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
       let r = this._rowSections.count - 1;
       let y = this.headerHeight + this._rowSections.offsetOf(r);
-      this._paintContent(0, y, vw, vh - y);
+      this.paintContent(0, y, vw, vh - y);
     } else if (delta < 0) {
-      this._paintContent(0, vh + delta, vw, -delta);
+      this.paintContent(0, vh + delta, vw, -delta);
     }
 
     // Paint the overlay.
@@ -3498,7 +3553,7 @@ class DataGrid extends Widget {
     if ((dxArea + dyArea) >= (width * height)) {
       this._scrollX = x;
       this._scrollY = y;
-      this._paintContent(0, 0, width, height);
+      this.paintContent(0, 0, width, height);
       this._paintOverlay();
       return;
     }
@@ -3511,14 +3566,14 @@ class DataGrid extends Widget {
     // valid content and paint the dirty region.
     if (dy !== 0 && contentHeight > 0) {
       if (Math.abs(dy) >= contentHeight) {
-        this._paintContent(0, contentY, width, contentHeight);
+        this.paintContent(0, contentY, width, contentHeight);
       } else {
         let x = 0;
         let y = dy < 0 ? contentY : contentY + dy;
         let w = width;
         let h = contentHeight - Math.abs(dy);
         this._blitContent(this._canvas, x, y, w, h, x, y - dy);
-        this._paintContent(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
+        this.paintContent(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
       }
     }
 
@@ -3530,14 +3585,14 @@ class DataGrid extends Widget {
     // valid content and paint the dirty region.
     if (dx !== 0 && contentWidth > 0) {
       if (Math.abs(dx) >= contentWidth) {
-        this._paintContent(contentX, 0, contentWidth, height, false);
+        this.paintContent(contentX, 0, contentWidth, height, false);
       } else {
         let x = dx < 0 ? contentX : contentX + dx;
         let y = 0;
         let w = contentWidth - Math.abs(dx);
         let h = height;
         this._blitContent(this._canvas, x, y, w, h, x - dx, y);
-        this._paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height, false);
+        this.paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height, false);
       }
     }
 
@@ -3585,7 +3640,7 @@ class DataGrid extends Widget {
    * methods should not be invoked directly. This method dispatches
    * to the drawing methods in the correct order.
    */
-  private _paintContent(rx: number, ry: number, rw: number, rh: number, renderColumnHeaders: boolean = true): void {
+  private paintContent(rx: number, ry: number, rw: number, rh: number, renderColumnHeaders: boolean = true): void {
     // Scale the canvas and buffer GC for the dpi ratio.
     this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
     this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
@@ -3608,7 +3663,7 @@ class DataGrid extends Widget {
     }
 
     // Draw the corner header region.
-    this._drawCornerHeaderRegion(rx, ry, rw, rh);
+    this.drawCornerHeaderRegion(rx, ry, rw, rh);
   }
 
   /**
@@ -4043,7 +4098,7 @@ class DataGrid extends Widget {
   /**
    * Draw the corner header region which intersects the dirty rect.
    */
-  private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
+  protected drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this.headerWidth;
     let contentH = this.headerHeight;
@@ -4449,8 +4504,8 @@ class DataGrid extends Widget {
     const model = this.dataModel as ViewBasedJSONModel;
 
     // Compute the Y bounds for the vertical lines.
-    const y1 = Math.max(rgn.yMin, rgn.y);
-    const y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
+    let y1 = Math.max(rgn.yMin, rgn.y);
+    let y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
 
     // Begin the path for the grid lines
     this._canvasGC.beginPath();
@@ -5364,6 +5419,32 @@ namespace DataGrid {
   };
 
   /**
+   * An object which defines the minimum sizes for a data grid.
+   */
+  export
+  type MinimumSizes = {
+    /**
+     * The minimum height of a row.
+     */
+    readonly rowHeight: number;
+
+    /**
+     * The minimum width of a column.
+     */
+    readonly columnWidth: number;
+
+    /**
+     * The minimum width of a row header.
+     */
+    readonly rowHeaderWidth: number;
+
+    /**
+     * The minimum height of a column header.
+     */
+    readonly columnHeaderHeight: number;
+  };
+
+  /**
    * A type alias for the supported header visibility modes.
    */
   export
@@ -5450,6 +5531,13 @@ namespace DataGrid {
      * The default is `DataGrid.defaultSizes`.
      */
     defaultSizes?: DefaultSizes;
+
+    /**
+     * The minimum sizes for the data grid.
+     *
+     * The default is `DataGrid.minimumSizes`.
+     */
+    minimumSizes?: MinimumSizes;
 
     /**
      * The header visibility for the data grid.
@@ -5700,6 +5788,17 @@ namespace DataGrid {
     rowHeight: 20,
     columnWidth: 64,
     rowHeaderWidth: 64,
+    columnHeaderHeight: 20
+  };
+
+  /**
+   * The default minimum sizes for a data grid.
+   */
+  export
+  const minimumSizes: MinimumSizes = {
+    rowHeight: 20,
+    columnWidth: 10,
+    rowHeaderWidth: 10,
     columnHeaderHeight: 20
   };
 
