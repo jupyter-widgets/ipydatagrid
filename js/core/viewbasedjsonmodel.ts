@@ -29,7 +29,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   constructor(data: ViewBasedJSONModel.IData) {
     super();
-    this._updateDataset(data);
+    this.updateDataset(data);
     this._transformState = new TransformStateManager();
     // Repaint grid on transform state update
     // Note: This will also result in the `model-reset` signal being sent.
@@ -64,7 +64,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @param data - The data to be set on this data model
    */
-  private _updateDataset(data: ViewBasedJSONModel.IData): void {
+  updateDataset(data: ViewBasedJSONModel.IData): void {
     this._dataset = data;
     this._updatePrimaryKeyMap();
     const view = new View(this._dataset);
