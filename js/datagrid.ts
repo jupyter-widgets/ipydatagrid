@@ -67,6 +67,9 @@ export class DataGridModel extends DOMWidgetModel {
   initialize(attributes: any, options: any) {
     super.initialize(attributes, options);
 
+    this.updateDataSync = this.updateDataSync.bind(this);
+    this.syncTransformState = this.syncTransformState.bind(this);
+
     this.on('change:_data', this.updateData.bind(this));
     this.on('change:_transforms', this.updateTransforms.bind(this));
     this.on('change:selection_mode', this.updateSelectionModel, this);
@@ -87,50 +90,58 @@ export class DataGridModel extends DOMWidgetModel {
     });
   }
 
+  updateDataSync(sender: any, msg: any) {
+    switch (msg.type) {
+      case 'row-indices-updated':
+        this.set('_visible_rows', msg.indices);
+        this.save_changes();
+        break;
+      case 'cell-updated':
+        this.set('_data', this.data_model.dataset);
+        this.save_changes();
+        break;
+      case 'cell-edit-event':
+        // Update data in widget model
+        const newData = this.get('_data');
+        newData.data[msg.row][msg.columnIndex] = msg.value;
+        this.set('_data', newData);
+
+        this.send(
+          {
+            event_type: 'cell-changed',
+            region: msg.region,
+            row: msg.row,
+            column_index: msg.columnIndex,
+            value: msg.value,
+          },
+          { ...this._view_callbacks },
+        );
+        break;
+      default:
+        throw 'unreachable';
+    }
+  }
+
+  syncTransformState(sender: any, value: any) {
+    this.set('_transforms', value.transforms);
+    this.save_changes();
+  }
+
   updateData() {
     const data = this.data;
     const schema = Private.createSchema(data);
 
-    this.data_model = new ViewBasedJSONModel({
-      data: data.data,
-      schema: schema,
-    });
-    this.data_model.transformStateChanged.connect((sender, value) => {
-      this.set('_transforms', value.transforms);
-      this.save_changes();
-    });
-
-    this.data_model.dataSync.connect((sender, msg) => {
-      switch (msg.type) {
-        case 'row-indices-updated':
-          this.set('_visible_rows', msg.indices);
-          this.save_changes();
-          break;
-        case 'cell-updated':
-          this.set('_data', this.data_model.dataset);
-          this.save_changes();
-          break;
-        case 'cell-edit-event':
-          // Update data in widget model
-          const newData = this.get('_data');
-          newData.data[msg.row][msg.columnIndex] = msg.value;
-          this.set('_data', newData);
-
-          this.send(
-            {
-              event_type: 'cell-changed',
-              region: msg.region,
-              row: msg.row,
-              column_index: msg.columnIndex,
-              value: msg.value,
-            },
-            { ...this._view_callbacks },
-          );
-          break;
-        default:
-          throw 'unreachable';
-      }
-    });
+    if (this.data_model) {
+      // Need to update existing ViewBasedJSONModel's dataset attribute.
+      this.data_model.updateDataset({ data: data.data, schema: schema });
+    } else {
+      this.data_model = new ViewBasedJSONModel({
+        data: data.data,
+        schema: schema,
+      });
+      this.data_model.transformStateChanged.connect(this.syncTransformState);
+      this.data_model.dataSync.connect(this.updateDataSync);
+    }
 
     this.updateTransforms();
     this.trigger('data-model-changed');
