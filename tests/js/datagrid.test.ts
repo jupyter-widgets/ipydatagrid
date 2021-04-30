@@ -21,13 +21,11 @@ describe('Test trait: data', () => {
   test('Data model is updated on trait update', async () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
-    const oldDataModel = grid.model.data_model;
     grid.model.set('_data', testData.set2);
     expect(grid.model.data_model.dataset).toEqual({
       data: testData.set2.data,
       schema: testData.set2.schema,
     });
-    expect(grid.model.data_model).not.toBe(oldDataModel);
   });
 
   test('Comm message sent to backend on frontend cell update', async () => {
@@ -125,9 +123,7 @@ describe('Test trait: data', () => {
     const oldTransforms = grid.model.data_model.transformMetadata(
       transform.columnIndex,
     );
-    const oldDataModel = grid.model.data_model;
     grid.model.set('_data', testData.set2);
-    expect(grid.model.data_model).not.toBe(oldDataModel);
     expect(
       grid.model.data_model.transformMetadata(transform.columnIndex),
     ).toEqual(oldTransforms);
