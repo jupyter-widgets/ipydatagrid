@@ -46,7 +46,7 @@
     "clean:labextension": "rimraf ipydatagrid/labextension",
     "clean:nbextension": "rimraf ipydatagrid/nbextension/index.*",
     "lint": "eslint 'js/**/*.{js,ts}' --quiet --fix",
-    "prepack": "npm run build:lib",
+    "prepack": "npm run build:labextension && npm run build:nbextension",
     "test": "jest",
     "watch": "npm-run-all -p watch:*",
     "watch:lib": "tsc -w",
