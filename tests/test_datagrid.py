@@ -55,7 +55,7 @@ def test_get_cell_value(datagrid: DataGrid) -> None:
 
 
 def test_set_cell_value() -> None:
-    """ Cannot be tested without a running front end """
+    """Cannot be tested without a running front end"""
     pass
 
 
@@ -65,7 +65,7 @@ def get_cell_value_by_index(datagrid: DataGrid) -> None:
 
 
 def test_set_cell_value_by_index() -> None:
-    """ Cannot be tested without a running front end """
+    """Cannot be tested without a running front end"""
     pass
 
 
