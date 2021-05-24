@@ -11,7 +11,7 @@ import {
 import { CommandRegistry } from '@lumino/commands';
 import { toArray } from '@lumino/algorithm';
 import { Signal, ISignal } from '@lumino/signaling';
-import { DataGrid } from './core/datagrid';
+import { DataGrid } from '@lumino/datagrid';
 import { HeaderRenderer } from './core/headerRenderer';
 import { InteractiveFilterDialog } from './core/filterMenu';
 import { FeatherGridContextMenu } from './core/gridContextMenu';
