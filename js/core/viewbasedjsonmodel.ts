@@ -1,4 +1,4 @@
-import { DataModel, MutableDataModel } from '@lumino/datagrid';
+import { CellGroup, DataModel, MutableDataModel } from '@lumino/datagrid';
 
 import { each } from '@lumino/algorithm';
 
@@ -30,6 +30,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
   constructor(data: ViewBasedJSONModel.IData) {
     super();
     this.updateDataset(data);
+    //@ts-ignore
+    window.jsonview = this;
     this._transformState = new TransformStateManager();
     // Repaint grid on transform state update
     // Note: This will also result in the `model-reset` signal being sent.
@@ -39,9 +41,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
     });
     // first run: generate a list of indices corresponding
     // to the locations of multi-index arrays.
-    const multiIndexArrayLocations = ArrayUtils.generateMultiIndexArrayLocations(
-      this,
-    );
+    const multiIndexArrayLocations =
+      ArrayUtils.generateMultiIndexArrayLocations(this);
     // second run: map the index locations generated above to
     // the dataset so we have access to the multi index arrays
     // only.
@@ -57,6 +58,11 @@ export class ViewBasedJSONModel extends MutableDataModel {
       retVal = [];
     }
     this._mergedCellLocations = retVal;
+
+    // Creating merged cell groups from index locations
+    this._columnCellGroups = ArrayUtils.generateCellGroups(
+      this._mergedCellLocations,
+    );
   }
 
   /**
@@ -141,6 +147,43 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   columnCount(region: DataModel.ColumnRegion): number {
     return this.currentView.columnCount(region);
+  }
+
+  /**
+   * Get the group count for each region
+   * @param region
+   * @returns
+   */
+  groupCount(region: DataModel.RowRegion): number {
+    if (region === 'body') {
+      return 0;
+    } else if (region === 'column-header') {
+      return this._columnCellGroups.length;
+    } else if (region === 'row-header') {
+      return 2;
+    }
+    return 0;
+  }
+
+  /**
+   * Specify merged cell groups for each region
+   * @param region
+   * @param groupIndex
+   * @returns
+   */
+  group(region: DataModel.CellRegion, groupIndex: number): CellGroup | null {
+    if (region === 'column-header') {
+      return this._columnCellGroups[groupIndex];
+    }
+
+    if (region === 'row-header') {
+      return [
+        { r1: 0, c1: 0, r2: 1, c2: 0 },
+        { r1: 2, c1: 0, r2: 3, c2: 0 },
+      ][groupIndex];
+    }
+
+    return null;
   }
 
   /**
@@ -569,6 +612,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
   protected _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;
   private _mergedCellLocations: any[];
+  private _columnCellGroups: CellGroup[];
 }
 
 /**
