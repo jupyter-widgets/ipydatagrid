@@ -1,4 +1,5 @@
 const d3Color: any = require('d3-color');
+import { CellGroup } from '@lumino/datagrid';
 
 export namespace ArrayUtils {
   /**
@@ -93,6 +94,22 @@ export namespace ArrayUtils {
       prevLevelLength = mergeRange.length;
     }
     return true;
+  }
+
+  export function generateCellGroups(indexLists: number[][][][]): CellGroup[] {
+    const columnGroup = [];
+    for (let curRow = 0; curRow < indexLists.length; curRow++) {
+      for (let groupNum = 0; groupNum < indexLists[curRow].length; groupNum++) {
+        if (indexLists[curRow][groupNum].length > 1) {
+          const groupLength = indexLists[curRow][groupNum].length;
+          const c1 = indexLists[curRow][groupNum][0][1];
+          const c2 = indexLists[curRow][groupNum][groupLength - 1][1];
+          columnGroup.push({ r1: curRow, c1, r2: curRow, c2 });
+        }
+      }
+    }
+
+    return columnGroup;
   }
 }
 
