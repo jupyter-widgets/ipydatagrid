@@ -32,7 +32,7 @@ export namespace ArrayUtils {
    * @param model the data model.
    * @param multiIndexArrayLocations index-based locations of all mutli-index coulmns.
    */
-  export function generateDataGridMergedCellLocations(
+  export function generateColMergedCellLocations(
     model: any,
     multiIndexArrayLocations: number[],
   ): any[] {
@@ -72,6 +72,44 @@ export namespace ArrayUtils {
     }
     return retArr;
   }
+
+  export function generateRowMergedCellLocations(dataset: any): any {
+    // Removing internal primary key identifier.
+    const primaryKey = dataset.schema.primaryKey.slice(
+      0,
+      dataset.schema.primaryKey.length - 1,
+    );
+
+    // Terminate if we're not dealing with nested row headers.
+    if (!(primaryKey.length > 1)) {
+      return [];
+    }
+
+    const data = dataset.data;
+    const retArr = [];
+    let curCol = [];
+
+    let prevVal = undefined;
+    for (let i = 0; i < primaryKey.length; i++) {
+      let curMergedRange: any = [];
+      for (let j = 0; j < data.length; j++) {
+        const curVal = data[j][primaryKey[i]];
+        if (curMergedRange.length == 0 || prevVal == curVal) {
+          curMergedRange.push([j, i]);
+        } else {
+          curCol.push(curMergedRange);
+          curMergedRange = [[j, i]];
+        }
+        prevVal = curVal;
+      }
+      curCol.push(curMergedRange);
+      retArr.push(curCol);
+      curCol = [];
+    }
+
+    return retArr;
+  }
+
   /**
    * Checks whether the merged cell ranges conform to a valid hierarchy.
    * @param retVal boolean
@@ -96,7 +134,9 @@ export namespace ArrayUtils {
     return true;
   }
 
-  export function generateCellGroups(indexLists: number[][][][]): CellGroup[] {
+  export function generateColumnCellGroups(
+    indexLists: number[][][][],
+  ): CellGroup[] {
     const columnGroup = [];
     for (let curRow = 0; curRow < indexLists.length; curRow++) {
       for (let groupNum = 0; groupNum < indexLists[curRow].length; groupNum++) {
@@ -111,6 +151,22 @@ export namespace ArrayUtils {
 
     return columnGroup;
   }
+}
+
+function generateRowCellGroups(indexLists: number[][][][]): CellGroup[] {
+  const rowGroup = [];
+  for (let curCol = 0; curCol < indexLists.length; curCol++) {
+    for (let groupNum = 0; groupNum < indexLists[curCol].length; groupNum++) {
+      if (indexLists[curCol][groupNum].length > 1) {
+        const groupLength = indexLists[curCol][groupNum].length;
+        const r1 = indexLists[curCol][groupNum][0][0];
+        const r2 = indexLists[curCol][groupNum][groupLength - 1][0];
+        rowGroup.push({ r1: r1, c1: curCol, r2: r2, c2: curCol });
+      }
+    }
+  }
+
+  return rowGroup;
 }
 
 // Scalar type
