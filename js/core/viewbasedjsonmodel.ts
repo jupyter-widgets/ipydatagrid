@@ -46,7 +46,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
     // second run: map the index locations generated above to
     // the dataset so we have access to the multi index arrays
     // only.
-    let retVal = ArrayUtils.generateDataGridMergedCellLocations(
+    let mergedColumnLocations = ArrayUtils.generateColMergedCellLocations(
       this,
       multiIndexArrayLocations,
     );
@@ -54,15 +54,22 @@ export class ViewBasedJSONModel extends MutableDataModel {
     // want to render a merged range below a non-merged range. This function will check
     // that this requirement is met. If it is not, we simply render each cell individually
     // as if it wasn't grouped.
-    if (!ArrayUtils.validateMergingHierarchy(retVal)) {
-      retVal = [];
+    if (!ArrayUtils.validateMergingHierarchy(mergedColumnLocations)) {
+      mergedColumnLocations = [];
     }
-    this._mergedCellLocations = retVal;
+    this._mergedColumnCellLocations = mergedColumnLocations;
 
-    // Creating merged cell groups from index locations
-    this._columnCellGroups = ArrayUtils.generateCellGroups(
-      this._mergedCellLocations,
+    // Creating column merged cell groups from index locations
+    this._columnCellGroups = ArrayUtils.generateColumnCellGroups(
+      this._mergedColumnCellLocations,
     );
+
+    // Creating merged row cell groups
+    let mergedRowLocations = ArrayUtils.generateRowMergedCellLocations(this);
+    if (!ArrayUtils.validateMergingHierarchy(mergedColumnLocations)) {
+      mergedRowLocations = [];
+    }
+    this._rowCellGroups = ArrayUtils.generateRowCellGroups(mergedRowLocations);
   }
 
   /**
@@ -112,11 +119,15 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   getMergedSiblingCells(cell: number[]): any[] {
     const [row, column] = cell;
-    if (row < 0 || column < 0 || row >= this._mergedCellLocations.length) {
+    if (
+      row < 0 ||
+      column < 0 ||
+      row >= this._mergedColumnCellLocations.length
+    ) {
       return [];
     }
 
-    for (const cellGroup of this._mergedCellLocations[row]) {
+    for (const cellGroup of this._mergedColumnCellLocations[row]) {
       for (const rowCell of cellGroup) {
         const [rowIndex, columnIndex] = rowCell;
         if (row === rowIndex && column == columnIndex) {
@@ -160,7 +171,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
     } else if (region === 'column-header') {
       return this._columnCellGroups.length;
     } else if (region === 'row-header') {
-      return 2;
+      return this._rowCellGroups.length;
     }
     return 0;
   }
@@ -177,10 +188,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
     }
 
     if (region === 'row-header') {
-      return [
-        { r1: 0, c1: 0, r2: 1, c2: 0 },
-        { r1: 2, c1: 0, r2: 3, c2: 0 },
-      ][groupIndex];
+      return this._rowCellGroups[groupIndex];
     }
 
     return null;
@@ -611,7 +619,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
   protected _dataset: ViewBasedJSONModel.IData;
   protected readonly _transformState: TransformStateManager;
-  private _mergedCellLocations: any[];
+  private _mergedColumnCellLocations: any[];
+  private _rowCellGroups: CellGroup[];
   private _columnCellGroups: CellGroup[];
 }
 

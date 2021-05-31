@@ -30,12 +30,12 @@ export namespace ArrayUtils {
    * Returns an array of [mergedCellSiblingGroup]. Each element represents a row of columns.
    * The 0th row will be the top level group, and the n-th will be the last.
    * @param model the data model.
-   * @param multiIndexArrayLocations index-based locations of all mutli-index coulmns.
+   * @param multiIndexArrayLocations index-based locations of all mutli-index columns.
    */
   export function generateColMergedCellLocations(
     model: any,
     multiIndexArrayLocations: number[],
-  ): any[] {
+  ): number[][][][] {
     // Terminating if no locations are passed.
     if (multiIndexArrayLocations.length === 0) {
       return [];
@@ -73,11 +73,17 @@ export namespace ArrayUtils {
     return retArr;
   }
 
-  export function generateRowMergedCellLocations(dataset: any): any {
+  /**
+   * Returns an array of [mergedCellSiblingGroup]. Each element represents a column of rows.
+   * The 0th row will be the top level group, and the n-th will be the last.
+   * @param model data model with schema and data fields
+   * @returns index-based locations of all mutli-index rows.
+   */
+  export function generateRowMergedCellLocations(model: any): number[][][][] {
     // Removing internal primary key identifier.
-    const primaryKey = dataset.schema.primaryKey.slice(
+    const primaryKey = model._dataset.schema.primaryKey.slice(
       0,
-      dataset.schema.primaryKey.length - 1,
+      model._dataset.schema.primaryKey.length - 1,
     );
 
     // Terminate if we're not dealing with nested row headers.
@@ -85,7 +91,7 @@ export namespace ArrayUtils {
       return [];
     }
 
-    const data = dataset.data;
+    const data = model._dataset.data;
     const retArr = [];
     let curCol = [];
 
@@ -114,7 +120,7 @@ export namespace ArrayUtils {
    * Checks whether the merged cell ranges conform to a valid hierarchy.
    * @param retVal boolean
    */
-  export function validateMergingHierarchy(retVal: number[][]): boolean {
+  export function validateMergingHierarchy(retVal: number[][][][]): boolean {
     let prevLevelLength;
     for (const mergeRange of retVal) {
       // First element - setting up the value of prevLevelLength
@@ -134,6 +140,11 @@ export namespace ArrayUtils {
     return true;
   }
 
+  /**
+   * Generates a list of merged column cell groups for use in the data model.
+   * @param indexLists index-based location of merged columns
+   * @returns CellGroup[]
+   */
   export function generateColumnCellGroups(
     indexLists: number[][][][],
   ): CellGroup[] {
@@ -151,22 +162,29 @@ export namespace ArrayUtils {
 
     return columnGroup;
   }
-}
 
-function generateRowCellGroups(indexLists: number[][][][]): CellGroup[] {
-  const rowGroup = [];
-  for (let curCol = 0; curCol < indexLists.length; curCol++) {
-    for (let groupNum = 0; groupNum < indexLists[curCol].length; groupNum++) {
-      if (indexLists[curCol][groupNum].length > 1) {
-        const groupLength = indexLists[curCol][groupNum].length;
-        const r1 = indexLists[curCol][groupNum][0][0];
-        const r2 = indexLists[curCol][groupNum][groupLength - 1][0];
-        rowGroup.push({ r1: r1, c1: curCol, r2: r2, c2: curCol });
+  /**
+   * Generates a list of merged row cell groups for use in the data model.
+   * @param indexLists index-based location of merged rows.
+   * @returns CellGroup[]
+   */
+  export function generateRowCellGroups(
+    indexLists: number[][][][],
+  ): CellGroup[] {
+    const rowGroup = [];
+    for (let curCol = 0; curCol < indexLists.length; curCol++) {
+      for (let groupNum = 0; groupNum < indexLists[curCol].length; groupNum++) {
+        if (indexLists[curCol][groupNum].length > 1) {
+          const groupLength = indexLists[curCol][groupNum].length;
+          const r1 = indexLists[curCol][groupNum][0][0];
+          const r2 = indexLists[curCol][groupNum][groupLength - 1][0];
+          rowGroup.push({ r1: r1, c1: curCol, r2: r2, c2: curCol });
+        }
       }
     }
-  }
 
-  return rowGroup;
+    return rowGroup;
+  }
 }
 
 // Scalar type
