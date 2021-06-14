@@ -6,7 +6,7 @@ import { Theme } from '../utils';
 
 import { TransformStateManager } from './transformStateManager';
 
-import { DataGrid } from './datagrid';
+import { DataGrid } from '@lumino/datagrid';
 
 /**
  * A custom cell renderer for headers that provides a menu icon.
@@ -266,9 +266,8 @@ export class HeaderRenderer extends TextRenderer {
         config.column,
       );
 
-      const colMetaData:
-        | TransformStateManager.IColumn
-        | undefined = this.model.transformMetadata(schemaIndex);
+      const colMetaData: TransformStateManager.IColumn | undefined =
+        this.model.transformMetadata(schemaIndex);
 
       // Fill filter icon if filter applied
       if (colMetaData && colMetaData['filter']) {
