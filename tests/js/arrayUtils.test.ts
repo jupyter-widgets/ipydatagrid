@@ -61,11 +61,10 @@ describe('Test multi index array utilities', () => {
   });
 
   // Generating an array with location of nested level headers
-  const nestedColumnDataGridIndices =
-    ArrayUtils.generateDataGridMergedCellLocations(
-      testModel,
-      mutltiIndexArrayLocations,
-    );
+  const nestedColumnDataGridIndices = ArrayUtils.generateColMergedCellLocations(
+    testModel,
+    mutltiIndexArrayLocations,
+  );
 
   test('Test .mergedCellLocations()', async () => {
     expect(nestedColumnDataGridIndices).toEqual([
@@ -100,7 +99,9 @@ describe('Test multi index array utilities', () => {
       { r1: 0, c1: 4, r2: 0, c2: 5 },
     ];
 
-    const actual = ArrayUtils.generateCellGroups(nestedColumnDataGridIndices);
+    const actual = ArrayUtils.generateColumnCellGroups(
+      nestedColumnDataGridIndices,
+    );
     expect(actual).toEqual(expected);
   });
 });
