@@ -66,7 +66,7 @@ describe('Test multi index array utilities', () => {
     mutltiIndexArrayLocations,
   );
 
-  test('Test .mergedCellLocations()', async () => {
+  test('Test .generateColMergedCellLocations()', async () => {
     expect(nestedColumnDataGridIndices).toEqual([
       [
         [
@@ -86,13 +86,13 @@ describe('Test multi index array utilities', () => {
     ]);
   });
 
-  test('Test .validateMergingHierarchy()', async () => {
+  test('Test .validateMergingHierarchy() for nested columns', async () => {
     expect(
       ArrayUtils.validateMergingHierarchy(nestedColumnDataGridIndices),
     ).toBe(true);
   });
 
-  test('Test .generateCellGroups()', async () => {
+  test('Test .generateColumnCellGroups()', async () => {
     const expected = [
       { r1: 0, c1: 0, r2: 0, c2: 1 },
       { r1: 0, c1: 2, r2: 0, c2: 3 },
