@@ -26,65 +26,6 @@ export class HeaderRenderer extends TextRenderer {
   }
 
   /**
-   * Draw the background for the cell.
-   *
-   * @param gc - The graphics context to use for drawing.
-   *
-   * @param config - The configuration data for the cell.
-   */
-  drawBackground(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
-    const merges =
-      config.region === 'column-header'
-        ? this.model.getMergedSiblingCells([config.row, config.column])
-        : [];
-
-    // Resolve the background color for the cell.
-    const color = CellRenderer.resolveOption(this.backgroundColor, config);
-
-    // Bail if there is no background color to draw.
-    if (!color) {
-      return;
-    }
-
-    if (merges.length > 1) {
-      let xStart = Number.MAX_SAFE_INTEGER;
-      let yStart = Number.MAX_SAFE_INTEGER;
-      let xEnd = Number.MIN_SAFE_INTEGER;
-      let yEnd = Number.MIN_SAFE_INTEGER;
-
-      const grid = this._grid!;
-      for (const merge of merges) {
-        const [row, column] = merge;
-
-        const headerOffset =
-          config.region === 'corner-header'
-            ? 0
-            : this._grid!.headerWidth - this._grid.scrollX;
-        const x1 = grid.columnOffset('body', column) + headerOffset;
-        const y1 = grid.rowOffset('column-header', row);
-        const x2 = x1 + grid.columnSize('body', column);
-        const y2 = y1 + grid.rowSize('column-header', row);
-        xStart = Math.min(xStart, x1);
-        yStart = Math.min(yStart, y1);
-        xEnd = Math.max(xEnd, x2);
-        yEnd = Math.max(yEnd, y2);
-      }
-
-      const width = xEnd - xStart;
-      const height = yEnd - yStart;
-
-      // Fill the cell with the background color.
-      gc.fillStyle = color;
-
-      gc.fillRect(xStart, yStart, width, height);
-    } else {
-      // Fill the cell with the background color.
-      gc.fillStyle = color;
-      gc.fillRect(config.x, config.y, config.width, config.height);
-    }
-  }
-
-  /**
    * Draw the text for the cell.
    *
    * @param gc - The graphics context to use for drawing.
@@ -117,52 +58,12 @@ export class HeaderRenderer extends TextRenderer {
       return;
     }
 
-    const merges =
-      config.region === 'column-header'
-        ? this.model.getMergedSiblingCells([config.row, config.column])
-        : [];
-
-    let width = config.width;
-    let height = config.height;
-    let x = config.x;
-    let y = config.y;
-
-    if (merges.length > 1) {
-      let xStart = Number.MAX_SAFE_INTEGER;
-      let yStart = Number.MAX_SAFE_INTEGER;
-      let xEnd = Number.MIN_SAFE_INTEGER;
-      let yEnd = Number.MIN_SAFE_INTEGER;
-
-      for (const merge of merges) {
-        const [row, column] = merge;
-        const grid = this._grid!;
-
-        const offsetX =
-          config.region === 'corner-header'
-            ? 0
-            : this._grid!.headerWidth - this._grid.scrollX;
-        const x1 = grid.columnOffset('body', column) + offsetX;
-        const y1 = grid.rowOffset('column-header', row);
-        const x2 = x1 + grid.columnSize('body', column);
-        const y2 = y1 + grid.rowSize('column-header', row);
-        xStart = Math.min(xStart, x1);
-        yStart = Math.min(yStart, y1);
-        xEnd = Math.max(xEnd, x2);
-        yEnd = Math.max(yEnd, y2);
-
-        width = xEnd - xStart;
-        height = yEnd - yStart;
-        x = xStart;
-        y = yStart;
-      }
-    }
-
     // Resolve the vertical and horizontal alignment.
     const vAlign = CellRenderer.resolveOption(this.verticalAlignment, config);
     const hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
-    const boxHeight = height - (vAlign === 'center' ? 1 : 2);
+    const boxHeight = config.height - (vAlign === 'center' ? 1 : 2);
 
     // Bail if the text box has no effective size.
     if (boxHeight <= 0) {
@@ -179,13 +80,13 @@ export class HeaderRenderer extends TextRenderer {
     // Compute the Y position for the text.
     switch (vAlign) {
       case 'top':
-        textY = y + 2 + textHeight;
+        textY = config.y + 2 + textHeight;
         break;
       case 'center':
-        textY = y + height / 2 + textHeight / 2;
+        textY = config.y + config.height / 2 + textHeight / 2;
         break;
       case 'bottom':
-        textY = y + height - 2;
+        textY = config.y + config.height - 2;
         break;
       default:
         throw 'unreachable';
@@ -194,13 +95,13 @@ export class HeaderRenderer extends TextRenderer {
     // Compute the X position for the text.
     switch (hAlign) {
       case 'left':
-        textX = x + 2;
+        textX = config.x + 2;
         break;
       case 'center':
-        textX = x + width / 2;
+        textX = config.x + config.width / 2;
         break;
       case 'right':
-        textX = x + width - 3;
+        textX = config.x + config.width - 3;
         break;
       default:
         throw 'unreachable';
@@ -209,7 +110,7 @@ export class HeaderRenderer extends TextRenderer {
     // Clip the cell if the text is taller than the text box height.
     if (textHeight > boxHeight) {
       gc.beginPath();
-      gc.rect(x, y, width, height - 1);
+      gc.rect(config.x, config.y, config.width, config.height - 1);
       gc.clip();
     }
 
