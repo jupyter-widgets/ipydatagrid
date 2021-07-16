@@ -232,6 +232,8 @@ export class TextRendererModel extends CellRendererModel {
       _view_name: TextRendererModel.view_name,
       font: '12px sans-serif',
       text_color: null,
+      text_wrap: false,
+      text_elide_direction: 'right',
       text_value: null,
       background_color: null,
       vertical_alignment: 'center',
@@ -245,6 +247,12 @@ export class TextRendererModel extends CellRendererModel {
   get_attrs(): ICellRendererAttribute[] {
     return [
       { name: 'font', phosphorName: 'font', defaultValue: '12px sans-serif' },
+      { name: 'text_wrap', phosphorName: 'wrapText', defaultValue: false },
+      {
+        name: 'text_elide_direction',
+        phosphorName: 'elideDirection',
+        defaultValue: 'right',
+      },
       {
         name: 'text_color',
         phosphorName: 'textColor',
@@ -274,6 +282,8 @@ export class TextRendererModel extends CellRendererModel {
     ...CellRendererModel.serializers,
     font: { deserialize: unpack_models as any },
     text_color: { deserialize: unpack_models as any },
+    text_wrap: { deserialize: unpack_models as any },
+    text_elide_direction: { deserialize: unpack_models as any },
     text_value: { deserialize: unpack_models as any },
     background_color: { deserialize: unpack_models as any },
     vertical_alignment: { deserialize: unpack_models as any },
