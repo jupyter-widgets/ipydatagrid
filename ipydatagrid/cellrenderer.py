@@ -57,6 +57,10 @@ class TextRenderer(CellRenderer):
         allow_none=True,
         default_value=None,
     ).tag(sync=True, **widget_serialization)
+    text_wrap = Bool(default_value=False).tag(sync=True, **widget_serialization)
+    text_elide_direction = Enum(
+        values=["right", "left"], default_value='right'
+    ).tag(sync=True, **widget_serialization)
     font = Union(
         (Unicode(), Instance(VegaExpr), Instance(Scale)),
         default_value="12px sans-serif",
