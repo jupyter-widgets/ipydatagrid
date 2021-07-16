@@ -395,6 +395,8 @@ export class FeatherGrid extends Widget {
     this._columnHeaderRenderer = new HeaderRenderer({
       textOptions: {
         font: textRenderer.font,
+        wrapText: textRenderer.wrapText,
+        elideDirection: textRenderer.elideDirection,
         textColor: textRenderer.textColor,
         backgroundColor: textRenderer.backgroundColor,
         verticalAlignment: textRenderer.verticalAlignment,
