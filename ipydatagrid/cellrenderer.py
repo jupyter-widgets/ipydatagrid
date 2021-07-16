@@ -59,7 +59,7 @@ class TextRenderer(CellRenderer):
     ).tag(sync=True, **widget_serialization)
     text_wrap = Bool(default_value=False).tag(sync=True, **widget_serialization)
     text_elide_direction = Enum(
-        values=["right", "left"], default_value='right'
+        values=["right", "left"], default_value="right"
     ).tag(sync=True, **widget_serialization)
     font = Union(
         (Unicode(), Instance(VegaExpr), Instance(Scale)),
