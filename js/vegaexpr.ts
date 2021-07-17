@@ -16,7 +16,7 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 const locale = vegaFormat.defaultLocale();
 const dataflow = { context: { dataflow: { locale: () => locale } } };
 vegaFunctions.functionContext.format = vegaFunctions.functionContext.format.bind(
-  dataflow
+  dataflow,
 );
 
 export class VegaExprModel extends WidgetModel {
