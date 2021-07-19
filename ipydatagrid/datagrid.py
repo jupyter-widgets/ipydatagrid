@@ -281,7 +281,7 @@ class DataGrid(DOMWidget):
     selections = List(Dict()).tag(sync=True, **widget_serialization)
     editable = Bool(False).tag(sync=True)
     column_widths = Dict({}).tag(sync=True)
-    grid_style = Dict(allow_none=True).tag(sync=True)
+    grid_style = Dict(allow_none=True).tag(sync=True, **widget_serialization)
 
     def __init__(self, dataframe, **kwargs):
         self.data = dataframe
