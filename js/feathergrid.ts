@@ -559,17 +559,36 @@ export class FeatherGrid extends Widget {
     };
 
     this.grid.style = {
-      voidColor: Theme.getBackgroundColor(),
-      backgroundColor: Theme.getBackgroundColor(),
-      gridLineColor: Theme.getBorderColor(),
-      headerGridLineColor: Theme.getBorderColor(1),
-      selectionFillColor: Theme.getBrandColor(2, 0.4),
-      selectionBorderColor: Theme.getBrandColor(1),
-      headerSelectionFillColor: Theme.getBackgroundColor(3, 0.4),
-      headerSelectionBorderColor: Theme.getBorderColor(1),
-      cursorFillColor: Theme.getBrandColor(3, 0.4),
-      cursorBorderColor: Theme.getBrandColor(1),
-      scrollShadow: scrollShadow,
+      voidColor: this.grid.style.voidColor || Theme.getBackgroundColor(),
+      backgroundColor:
+        this.grid.style.backgroundColor || Theme.getBackgroundColor(),
+      rowBackgroundColor: this.grid.style.rowBackgroundColor || undefined,
+      columnBackgroundColor: this.grid.style.columnBackgroundColor || undefined,
+      gridLineColor: this.grid.style.gridLineColor || Theme.getBorderColor(),
+      verticalGridLineColor: this.grid.style.verticalGridLineColor || undefined,
+      horizontalGridLineColor:
+        this.grid.style.horizontalGridLineColor || undefined,
+      headerBackgroundColor: this.grid.style.headerBackgroundColor || undefined,
+      headerGridLineColor:
+        this.grid.style.headerGridLineColor || Theme.getBorderColor(1),
+      headerVerticalGridLineColor:
+        this.grid.style.headerVerticalGridLineColor || undefined,
+      headerHorizontalGridLineColor:
+        this.grid.style.headerHorizontalGridLineColor || undefined,
+      selectionFillColor:
+        this.grid.style.selectionFillColor || Theme.getBrandColor(2, 0.4),
+      selectionBorderColor:
+        this.grid.style.headerSelectionBorderColor || Theme.getBrandColor(1),
+      headerSelectionFillColor:
+        this.grid.style.headerSelectionFillColor ||
+        Theme.getBackgroundColor(3, 0.4),
+      headerSelectionBorderColor:
+        this.grid.style.headerSelectionBorderColor || Theme.getBorderColor(1),
+      cursorFillColor:
+        this.grid.style.cursorFillColor || Theme.getBrandColor(3, 0.4),
+      cursorBorderColor:
+        this.grid.style.cursorBorderColor || Theme.getBrandColor(1),
+      scrollShadow: this.grid.style.scrollShadow || scrollShadow,
     };
   }
 

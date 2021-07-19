@@ -59,6 +59,7 @@ export class DataGridModel extends DOMWidgetModel {
       header_renderer: null,
       selection_mode: 'none',
       selections: [],
+      grid_style: {},
       editable: false,
       column_widths: {},
     };
@@ -320,6 +321,7 @@ export class DataGridView extends DOMWidgetView {
         columnHeaderHeight: this.model.get('base_column_header_size'),
       },
       headerVisibility: this.model.get('header_visibility'),
+      style: this.model.get('grid_style'),
     });
 
     this.grid.columnWidths = this.model.get('column_widths');
