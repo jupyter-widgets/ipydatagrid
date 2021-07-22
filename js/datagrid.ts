@@ -240,6 +240,7 @@ export class DataGridModel extends DOMWidgetModel {
     default_renderer: { deserialize: unpack_models as any },
     header_renderer: { deserialize: unpack_models as any },
     _data: { deserialize: unpack_data as any },
+    grid_style: { deserialize: unpack_style as any },
   };
 
   static model_name = 'DataGridModel';
@@ -254,6 +255,31 @@ export class DataGridModel extends DOMWidgetModel {
   selectionModel: BasicSelectionModel | null;
   synchingWithKernel = false;
   _view_callbacks: ICallbacks;
+}
+
+/**
+ * Custom deserialization function for grid styles.
+ */
+function unpack_style(
+  value: any | Dict<unknown> | string | (Dict<unknown> | string)[],
+  manager: any,
+): Promise<WidgetModel | Dict<WidgetModel> | WidgetModel[] | any> {
+  if (value instanceof Object && typeof value !== 'string') {
+    const unpacked: { [key: string]: any } = {};
+    Object.keys(value).forEach((key) => {
+      unpacked[key] = unpack_style(value[key], manager);
+    });
+    return resolvePromisesDict(unpacked);
+  } else if (typeof value === 'string' && value.slice(0, 10) === 'IPY_MODEL_') {
+    return Promise.resolve(
+      manager.get_model(value.slice(10, value.length)),
+    ).then((model) => {
+      // returning the color formatting function from VegaExprModel.
+      return model._function;
+    });
+  } else {
+    return Promise.resolve(value);
+  }
 }
 
 // modified from ipywidgets original
