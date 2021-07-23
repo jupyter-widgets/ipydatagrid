@@ -245,6 +245,8 @@ export class TextRendererModel extends CellRendererModel {
   }
 
   get_attrs(): ICellRendererAttribute[] {
+    const gridStyle = this.get('grid_style');
+    console.log(gridStyle);
     return [
       { name: 'font', phosphorName: 'font', defaultValue: '12px sans-serif' },
       { name: 'text_wrap', phosphorName: 'wrapText', defaultValue: false },
@@ -262,7 +264,7 @@ export class TextRendererModel extends CellRendererModel {
       {
         name: 'background_color',
         phosphorName: 'backgroundColor',
-        defaultValue: Theme.getBackgroundColor(),
+        defaultValue: undefined,
       },
       {
         name: 'vertical_alignment',
