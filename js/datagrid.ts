@@ -420,7 +420,7 @@ export class DataGridView extends DOMWidgetView {
     });
 
     this.model.on_some_change(
-      ['header_renderer', 'default_renderer', 'renderers'],
+      ['header_renderer', 'default_renderer', 'renderers', 'grid_style'],
       () => {
         this.updateRenderers().then(this.updateGridRenderers.bind(this));
       },
