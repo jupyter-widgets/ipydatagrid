@@ -20,6 +20,8 @@ import { Transform } from './core/transform';
 import { Theme } from './utils';
 import { KeyHandler } from './keyhandler';
 
+import { DataGridModel as BackBoneModel } from './datagrid';
+
 import '@lumino/default-theme/style/datagrid.css';
 import '../style/feathergrid.css';
 
@@ -518,39 +520,16 @@ export class FeatherGrid extends Widget {
     this.updateGridStyle();
     this._updateGridRenderers();
     this._updateColumnWidths();
+    this.setGridStyle();
   }
 
-  public updateGridStyle() {
-    this._updateHeaderRenderer();
-
-    if (!this._defaultRendererSet) {
-      this._defaultRenderer = new TextRenderer({
-        font: '12px sans-serif',
-        textColor: Theme.getFontColor(),
-        backgroundColor: Theme.getBackgroundColor(),
-        horizontalAlignment: 'left',
-        verticalAlignment: 'center',
-      });
+  public setGridStyle() {
+    // Resetting grid style if theme changes.
+    if (this.backboneModel) {
+      this.grid.style = this.backboneModel.get('grid_style');
     }
 
-    this._rowHeaderRenderer = new TextRenderer({
-      textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
-      horizontalAlignment: 'center',
-      verticalAlignment: 'center',
-    });
-
-    this._columnHeaderRenderer = new HeaderRenderer({
-      textOptions: {
-        textColor: Theme.getFontColor(1),
-        backgroundColor: Theme.getBackgroundColor(2),
-        horizontalAlignment: 'left',
-        verticalAlignment: 'center',
-      },
-      isLightTheme: this._isLightTheme,
-      grid: this.grid,
-    });
-
+    // Setting up theme.
     const scrollShadow = {
       size: 4,
       color1: Theme.getBorderColor(1, 1.0),
@@ -590,6 +569,40 @@ export class FeatherGrid extends Widget {
         this.grid.style.cursorBorderColor || Theme.getBrandColor(1),
       scrollShadow: this.grid.style.scrollShadow || scrollShadow,
     };
+  }
+
+  public updateGridStyle() {
+    this._updateHeaderRenderer();
+
+    if (!this._defaultRendererSet) {
+      this._defaultRenderer = new TextRenderer({
+        font: '12px sans-serif',
+        textColor: Theme.getFontColor(),
+        backgroundColor: Theme.getBackgroundColor(),
+        horizontalAlignment: 'left',
+        verticalAlignment: 'center',
+      });
+    }
+
+    this._rowHeaderRenderer = new TextRenderer({
+      textColor: Theme.getFontColor(1),
+      backgroundColor: Theme.getBackgroundColor(2),
+      horizontalAlignment: 'center',
+      verticalAlignment: 'center',
+    });
+
+    this._columnHeaderRenderer = new HeaderRenderer({
+      textOptions: {
+        textColor: Theme.getFontColor(1),
+        backgroundColor: Theme.getBackgroundColor(2),
+        horizontalAlignment: 'left',
+        verticalAlignment: 'center',
+      },
+      isLightTheme: this._isLightTheme,
+      grid: this.grid,
+    });
+
+    this.setGridStyle();
   }
 
   copyToClipboard(): void {
@@ -1014,6 +1027,7 @@ export class FeatherGrid extends Widget {
   private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
   private _columnsResized = new Signal<this, void>(this);
   private _isLightTheme = true;
+  backboneModel: BackBoneModel;
 }
 
 /**

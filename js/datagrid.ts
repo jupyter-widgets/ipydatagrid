@@ -357,6 +357,7 @@ export class DataGridView extends DOMWidgetView {
     this.grid.isLightTheme = this._isLightTheme;
     this.grid.dataModel = this.model.data_model;
     this.grid.selectionModel = this.model.selectionModel;
+    this.grid.backboneModel = this.model;
 
     this.grid.cellClicked.connect(
       (sender: FeatherGrid, event: FeatherGrid.ICellClickedEvent) => {
@@ -438,7 +439,7 @@ export class DataGridView extends DOMWidgetView {
     return this.updateRenderers().then(() => {
       this.updateGridStyle();
       this.updateGridRenderers();
-
+      this.grid.setGridStyle();
       this.pWidget.addWidget(this.grid);
     });
   }
@@ -518,6 +519,7 @@ export class DataGridView extends DOMWidgetView {
 
   public updateGridStyle() {
     this.grid.updateGridStyle();
+    this.grid.setGridStyle();
   }
 
   set isLightTheme(value: boolean) {
@@ -575,6 +577,7 @@ export class DataGridView extends DOMWidgetView {
   grid: FeatherGrid;
   pWidget: JupyterPhosphorPanelWidget;
   model: DataGridModel;
+  backboneModel: DataGridModel;
 
   // keep undefined since widget initializes before constructor
   private _isLightTheme: boolean;
