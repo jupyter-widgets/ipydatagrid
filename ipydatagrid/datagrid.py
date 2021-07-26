@@ -216,6 +216,8 @@ class DataGrid(DOMWidget):
         Default renderer to use for cell rendering
     header_renderer : CellRenderer (default: TextRenderer)
         Renderer to use for header cell rendering
+    corner_renderer : CellRenderer (default: TextRenderer)
+        Renderer to use for corner header cell rendering
     selection_mode : {'row', 'column', 'cell', 'none'} (default: 'none')
         Selection mode used when user clicks on grid or makes selections
         programmatically.
@@ -312,6 +314,9 @@ class DataGrid(DOMWidget):
         sync=True, **widget_serialization
     )
     header_renderer = Instance(CellRenderer, allow_none=True).tag(
+        sync=True, **widget_serialization
+    )
+    corner_renderer = Instance(CellRenderer, allow_none=True).tag(
         sync=True, **widget_serialization
     )
     selection_mode = Enum(
