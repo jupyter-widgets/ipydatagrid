@@ -56,6 +56,7 @@ export class DataGridModel extends DOMWidgetModel {
       headerVisibility: 'all',
       _data: {},
       renderers: {},
+      corner_renderer: null,
       default_renderer: null,
       header_renderer: null,
       selection_mode: 'none',
@@ -238,6 +239,7 @@ export class DataGridModel extends DOMWidgetModel {
     ...DOMWidgetModel.serializers,
     transforms: { deserialize: unpack_models as any },
     renderers: { deserialize: unpack_models as any },
+    corner_renderer: { deserialize: unpack_models as any },
     default_renderer: { deserialize: unpack_models as any },
     header_renderer: { deserialize: unpack_models as any },
     _data: { deserialize: unpack_data as any },
@@ -444,7 +446,13 @@ export class DataGridView extends DOMWidgetView {
     });
 
     this.model.on_some_change(
-      ['header_renderer', 'default_renderer', 'renderers', 'grid_style'],
+      [
+        'corner_renderer',
+        'header_renderer',
+        'default_renderer',
+        'renderers',
+        'grid_style',
+      ],
       () => {
         this.updateRenderers()
           .then(this.updateGridStyle.bind(this))
@@ -476,6 +484,9 @@ export class DataGridView extends DOMWidgetView {
     if (this.header_renderer) {
       this.stopListening(this.header_renderer, 'renderer-changed');
     }
+    if (this.corner_renderer) {
+      this.stopListening(this.corner_renderer, 'renderer-changed');
+    }
     for (const key in this.renderers) {
       this.stopListening(this.renderers[key], 'renderer-changed');
     }
@@ -497,6 +508,23 @@ export class DataGridView extends DOMWidgetView {
         },
       ),
     );
+
+    const corner_renderer = this.model.get('corner_renderer');
+    if (corner_renderer) {
+      promises.push(
+        this.create_child_view(corner_renderer).then(
+          (cornerRendererView: any) => {
+            this.corner_renderer = cornerRendererView;
+
+            this.listenTo(
+              this.corner_renderer,
+              'renderer-changed',
+              this.updateGridRenderers.bind(this),
+            );
+          },
+        ),
+      );
+    }
 
     const header_renderer = this.model.get('header_renderer');
     if (header_renderer) {
@@ -577,6 +605,11 @@ export class DataGridView extends DOMWidgetView {
       columnHeaderRenderer = this.header_renderer.renderer;
     }
 
+    let cornerHeaderRenderer = null;
+    if (this.corner_renderer) {
+      cornerHeaderRenderer = this.corner_renderer.renderer;
+    }
+
     const renderers: Dict<CellRenderer> = {};
     Object.entries(this.renderers).forEach(([name, rendererView]) => {
       renderers[name] = rendererView.renderer;
@@ -586,6 +619,10 @@ export class DataGridView extends DOMWidgetView {
     // Set column header renderer only if received from backend
     if (columnHeaderRenderer) {
       this.grid.columnHeaderRenderer = columnHeaderRenderer;
+    }
+
+    if (cornerHeaderRenderer) {
+      this.grid.cornerHeaderRenderer = cornerHeaderRenderer;
     }
     this.grid.renderers = renderers;
   }
@@ -608,6 +645,7 @@ export class DataGridView extends DOMWidgetView {
   }
 
   renderers: Dict<CellRendererView>;
+  corner_renderer: CellRendererView;
   default_renderer: CellRendererView;
   header_renderer: CellRendererView;
   grid: FeatherGrid;

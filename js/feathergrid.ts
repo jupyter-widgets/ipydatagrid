@@ -424,6 +424,39 @@ export class FeatherGrid extends Widget {
     return this._columnHeaderRenderer;
   }
 
+  set cornerHeaderRenderer(renderer: CellRenderer) {
+    const textRenderer = renderer as TextRenderer;
+
+    // HeaderRenderer adds the filter dialogue box overlay
+    this._cornerHeaderRenderer = new HeaderRenderer({
+      textOptions: {
+        font: textRenderer.font,
+        wrapText: textRenderer.wrapText,
+        elideDirection: textRenderer.elideDirection,
+        textColor: textRenderer.textColor,
+        backgroundColor:
+          this.grid.style.headerBackgroundColor ||
+          textRenderer.backgroundColor ||
+          Theme.getBackgroundColor(),
+        verticalAlignment: textRenderer.verticalAlignment,
+        horizontalAlignment: textRenderer.horizontalAlignment,
+        format: textRenderer.format,
+      },
+      isLightTheme: this._isLightTheme,
+      grid: this.grid,
+    });
+
+    if (!this.grid) {
+      return;
+    }
+
+    this._updateHeaderRenderer();
+  }
+
+  get cornerHeaderRenderer(): CellRenderer {
+    return this._cornerHeaderRenderer;
+  }
+
   set renderers(renderers: Dict<CellRenderer>) {
     this._renderers = renderers;
 
@@ -597,6 +630,18 @@ export class FeatherGrid extends Widget {
     });
 
     this._columnHeaderRenderer = new HeaderRenderer({
+      textOptions: {
+        textColor: Theme.getFontColor(1),
+        backgroundColor:
+          this.grid.style.headerBackgroundColor || Theme.getBackgroundColor(2),
+        horizontalAlignment: 'left',
+        verticalAlignment: 'center',
+      },
+      isLightTheme: this._isLightTheme,
+      grid: this.grid,
+    });
+
+    this._cornerHeaderRenderer = new HeaderRenderer({
       textOptions: {
         textColor: Theme.getFontColor(1),
         backgroundColor:
@@ -893,9 +938,17 @@ export class FeatherGrid extends Widget {
     this.grid.cellRenderers.update({
       'column-header': this._columnHeaderRenderer,
     });
-    // Treating corner header as column header for rendering purposes
+    // Treating corner-header as column-header if a value has not
+    // been passed for the former.
+    let hasCornerRenderer = false;
+    if (this.backboneModel) {
+      hasCornerRenderer = this.backboneModel.get('corner_renderer') !== null;
+    }
+
     this.grid.cellRenderers.update({
-      'corner-header': this._columnHeaderRenderer,
+      'corner-header': hasCornerRenderer
+        ? this._cornerHeaderRenderer
+        : this._columnHeaderRenderer,
     });
   }
 
@@ -1027,6 +1080,7 @@ export class FeatherGrid extends Widget {
   private _renderers: Dict<CellRenderer> = {};
   private _defaultRenderer: CellRenderer;
   private _columnHeaderRenderer: CellRenderer;
+  private _cornerHeaderRenderer: CellRenderer;
   private _rowHeaderRenderer: CellRenderer;
   private _defaultRendererSet = false;
   private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
