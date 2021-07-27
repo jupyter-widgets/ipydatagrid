@@ -268,7 +268,7 @@ class DataGrid(DOMWidget):
         header_selection_border_color : border color of headers intersecting with selected area at column or row
         cursor_fill_color : fill color of cursor
         cursor_border_color : border color of cursor
-        scroll_shadow : color parameters for scroll shadow (vertical and horizontal). Takes three paramaters. 
+        scroll_shadow : color parameters for scroll shadow (vertical and horizontal). Takes three paramaters.
             size : size of shadow in pixels
             color1 : gradient color 1
             color2 : gradient color 2
