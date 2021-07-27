@@ -1012,6 +1012,7 @@ export class FeatherGrid extends Widget {
   }
 
   grid: DataGrid;
+  backboneModel: BackBoneModel;
   contextMenu: FeatherGridContextMenu;
   private _filterDialog: InteractiveFilterDialog;
   private _baseRowSize = 20;
@@ -1031,7 +1032,6 @@ export class FeatherGrid extends Widget {
   private _cellClicked = new Signal<this, FeatherGrid.ICellClickedEvent>(this);
   private _columnsResized = new Signal<this, void>(this);
   private _isLightTheme = true;
-  backboneModel: BackBoneModel;
 }
 
 /**
