@@ -525,7 +525,7 @@ export class FeatherGrid extends Widget {
     this._updateColumnWidths();
   }
 
-  public setGridStyle() {
+  public setGridStyle(): void {
     // Resetting grid style if theme changes.
     if (this.backboneModel) {
       this.grid.style = this.backboneModel.get('grid_style');
@@ -573,7 +573,7 @@ export class FeatherGrid extends Widget {
     };
   }
 
-  public updateGridStyle() {
+  public updateGridStyle(): void {
     this.setGridStyle();
     this._updateHeaderRenderer();
 
