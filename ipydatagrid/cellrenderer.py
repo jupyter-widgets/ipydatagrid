@@ -35,7 +35,7 @@ class Expr(VegaExpr):
             [
                 Variable("cell", ["value", "row", "column", "metadata"]),
                 "default_value",
-                "index"
+                "index",
             ],
         )
 
