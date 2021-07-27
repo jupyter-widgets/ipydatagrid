@@ -259,6 +259,28 @@ export class DataGridModel extends DOMWidgetModel {
 }
 
 /**
+ * Helper function to conver snake_case strings to camelCase.
+ * Assumes all strings are valid snake_case (all lowercase).
+ * @param string snake_case string
+ * @returns camelCase string
+ */
+function camelCase(string: string): string {
+  string = string.toLowerCase();
+  const charArray = [];
+  for (let i = 0; i < string.length; i++) {
+    const curChar = string.charAt(i);
+    if (curChar === '_') {
+      i++;
+      charArray.push(string.charAt(i).toUpperCase());
+      continue;
+    }
+    charArray.push(curChar);
+  }
+
+  return charArray.join('');
+}
+
+/**
  * Custom deserialization function for grid styles.
  */
 function unpack_style(
@@ -268,7 +290,7 @@ function unpack_style(
   if (value instanceof Object && typeof value !== 'string') {
     const unpacked: { [key: string]: any } = {};
     Object.keys(value).forEach((key) => {
-      unpacked[key] = unpack_style(value[key], manager);
+      unpacked[camelCase(key)] = unpack_style(value[key], manager);
     });
     return resolvePromisesDict(unpacked);
   } else if (typeof value === 'string' && value.slice(0, 10) === 'IPY_MODEL_') {
