@@ -251,24 +251,34 @@ class DataGrid(DOMWidget):
         An iterator to traverse selected cells one by one.
 
     Supported styling properties:
-        void_color : color of the area where the grid is not painted on the canvas
+        void_color : color of the area where the grid is not painted
+            on the canvas
         background_color : background color for all body cells
-        row_background_color : row-wise background color (can take a string or Vega Expression)
-        column_background_color : column-wise background color (can take a string of Vega Expression)
+        row_background_color : row-wise background color (can take
+            a string or Vega Expression)
+        column_background_color : column-wise background color (can take a
+            string of Vega Expression)
         grid_line_color : color of both vertical and horizontal grid lines
         vertical_grid_line_color : vertical grid line color
         horizontal_grid_line_color : horizontal grid line color
-        header_background_color : background color for all non-body cells (index and columns)
-        header_grid_line_color : grid line color for all non-body cells (index and columns)
-        header_vertical_grid_line_color : vertical grid line color for all non-body cells
-        header_horizontal_grid_line_color : horizontal grid line color for all non-body cells
+        header_background_color : background color for all non-body cells
+            (index and columns)
+        header_grid_line_color : grid line color for all non-body
+            cells (index and columns)
+        header_vertical_grid_line_color : vertical grid line color
+            for all non-body cells
+        header_horizontal_grid_line_color : horizontal grid line color
+            for all non-body cells
         selection_fill_color : fill color of selected area
         selection_border_color : border color of selected area
-        header_selection_fill_color : fill color of headers intersecting with selected area at column or row
-        header_selection_border_color : border color of headers intersecting with selected area at column or row
+        header_selection_fill_color : fill color of headers intersecting with
+            selected area at column or row
+        header_selection_border_color : border color of headers
+            intersecting with selected area at column or row
         cursor_fill_color : fill color of cursor
         cursor_border_color : border color of cursor
-        scroll_shadow : color parameters for scroll shadow (vertical and horizontal). Takes three paramaters.
+        scroll_shadow : Dict of color parameters for scroll shadow (vertical and
+            horizontal). Takes three paramaters:
             size : size of shadow in pixels
             color1 : gradient color 1
             color2 : gradient color 2
