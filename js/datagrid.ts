@@ -3,7 +3,7 @@
 
 import * as _ from 'underscore';
 
-import { BasicSelectionModel } from '@lumino/datagrid';
+import { BasicSelectionModel, TextRenderer } from '@lumino/datagrid';
 
 import { CellRenderer } from '@lumino/datagrid';
 
@@ -30,6 +30,7 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 
 import { CellRendererModel, CellRendererView } from './cellrenderer';
 import { FeatherGrid } from './feathergrid';
+import { Theme } from './utils';
 
 // Import CSS
 import '../style/jupyter-widget.css';
@@ -439,7 +440,6 @@ export class DataGridView extends DOMWidgetView {
     return this.updateRenderers().then(() => {
       this.updateGridStyle();
       this.updateGridRenderers();
-      this.grid.setGridStyle();
       this.pWidget.addWidget(this.grid);
     });
   }
@@ -519,7 +519,6 @@ export class DataGridView extends DOMWidgetView {
 
   public updateGridStyle() {
     this.grid.updateGridStyle();
-    this.grid.setGridStyle();
   }
 
   set isLightTheme(value: boolean) {
@@ -535,7 +534,20 @@ export class DataGridView extends DOMWidgetView {
   }
 
   private updateGridRenderers() {
-    const defaultRenderer = this.default_renderer.renderer;
+    let defaultRenderer = this.default_renderer.renderer;
+    if (
+      this.grid.grid.style.backgroundColor !== Theme.getBackgroundColor() ||
+      this.grid.grid.style.rowBackgroundColor ||
+      this.grid.grid.style.columnBackgroundColor
+    ) {
+      // Making sure the default renderer doesn't paint over the global
+      // grid background color, if the latter is set.
+      defaultRenderer = new TextRenderer({
+        ...this.default_renderer.renderer,
+        backgroundColor: undefined,
+      });
+    }
+
     let columnHeaderRenderer = null;
     if (this.header_renderer) {
       columnHeaderRenderer = this.header_renderer.renderer;
