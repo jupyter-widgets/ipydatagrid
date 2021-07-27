@@ -217,14 +217,16 @@ export class FeatherGrid extends Widget {
     this._defaultRenderer = new TextRenderer({
       font: '12px sans-serif',
       textColor: Theme.getFontColor(),
-      backgroundColor: Theme.getBackgroundColor(),
+      backgroundColor:
+        this.grid.style.backgroundColor || Theme.getBackgroundColor(),
       horizontalAlignment: 'center',
       verticalAlignment: 'center',
     });
 
     this._rowHeaderRenderer = new TextRenderer({
       textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
+      backgroundColor:
+        this.grid.style.headerBackgroundColor || Theme.getBackgroundColor(2),
       horizontalAlignment: 'center',
       verticalAlignment: 'center',
     });
@@ -392,15 +394,17 @@ export class FeatherGrid extends Widget {
   set columnHeaderRenderer(renderer: CellRenderer) {
     const textRenderer = renderer as TextRenderer;
 
-    // Need to create a HeadeRenderer object as TextRenderer
-    // objects do not support merged cell rendering.
+    // HeaderRenderer adds the filter dialogue box overlay
     this._columnHeaderRenderer = new HeaderRenderer({
       textOptions: {
         font: textRenderer.font,
         wrapText: textRenderer.wrapText,
         elideDirection: textRenderer.elideDirection,
         textColor: textRenderer.textColor,
-        backgroundColor: textRenderer.backgroundColor,
+        backgroundColor:
+          this.grid.style.headerBackgroundColor ||
+          textRenderer.backgroundColor ||
+          Theme.getBackgroundColor(),
         verticalAlignment: textRenderer.verticalAlignment,
         horizontalAlignment: textRenderer.horizontalAlignment,
         format: textRenderer.format,
@@ -492,7 +496,6 @@ export class FeatherGrid extends Widget {
     this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid);
 
     this.grid.dataModel = this._dataModel;
-    //@ts-ignore **added so we can remove basickeyhandler.ts from fork
     this.grid.keyHandler = new KeyHandler();
     const mouseHandler = new FeatherGridMouseHandler(this);
     mouseHandler.cellClicked.connect(
@@ -512,7 +515,7 @@ export class FeatherGrid extends Widget {
         });
       },
     );
-    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
+
     this.grid.mouseHandler = mouseHandler;
     this.grid.selectionModel = this._selectionModel;
     this.grid.editingEnabled = this._editable;
@@ -520,7 +523,6 @@ export class FeatherGrid extends Widget {
     this.updateGridStyle();
     this._updateGridRenderers();
     this._updateColumnWidths();
-    this.setGridStyle();
   }
 
   public setGridStyle() {
@@ -557,7 +559,7 @@ export class FeatherGrid extends Widget {
       selectionFillColor:
         this.grid.style.selectionFillColor || Theme.getBrandColor(2, 0.4),
       selectionBorderColor:
-        this.grid.style.headerSelectionBorderColor || Theme.getBrandColor(1),
+        this.grid.style.selectionBorderColor || Theme.getBrandColor(1),
       headerSelectionFillColor:
         this.grid.style.headerSelectionFillColor ||
         Theme.getBackgroundColor(3, 0.4),
@@ -572,13 +574,15 @@ export class FeatherGrid extends Widget {
   }
 
   public updateGridStyle() {
+    this.setGridStyle();
     this._updateHeaderRenderer();
 
     if (!this._defaultRendererSet) {
-      this._defaultRenderer = new TextRenderer({
+      this.defaultRenderer = new TextRenderer({
         font: '12px sans-serif',
         textColor: Theme.getFontColor(),
-        backgroundColor: Theme.getBackgroundColor(),
+        backgroundColor:
+          this.grid.style.backgroundColor || Theme.getBackgroundColor(),
         horizontalAlignment: 'left',
         verticalAlignment: 'center',
       });
@@ -586,7 +590,8 @@ export class FeatherGrid extends Widget {
 
     this._rowHeaderRenderer = new TextRenderer({
       textColor: Theme.getFontColor(1),
-      backgroundColor: Theme.getBackgroundColor(2),
+      backgroundColor:
+        this.grid.style.headerBackgroundColor || Theme.getBackgroundColor(2),
       horizontalAlignment: 'center',
       verticalAlignment: 'center',
     });
@@ -594,15 +599,14 @@ export class FeatherGrid extends Widget {
     this._columnHeaderRenderer = new HeaderRenderer({
       textOptions: {
         textColor: Theme.getFontColor(1),
-        backgroundColor: Theme.getBackgroundColor(2),
+        backgroundColor:
+          this.grid.style.headerBackgroundColor || Theme.getBackgroundColor(2),
         horizontalAlignment: 'left',
         verticalAlignment: 'center',
       },
       isLightTheme: this._isLightTheme,
       grid: this.grid,
     });
-
-    this.setGridStyle();
   }
 
   copyToClipboard(): void {
