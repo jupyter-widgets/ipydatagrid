@@ -600,9 +600,16 @@ export class DataGridView extends DOMWidgetView {
       });
     }
 
+    const hasHeaderRenderer = this.model.get('header_renderer') !== null;
     let columnHeaderRenderer = null;
-    if (this.header_renderer) {
+    if (this.header_renderer && hasHeaderRenderer) {
       columnHeaderRenderer = this.header_renderer.renderer;
+    } else {
+      columnHeaderRenderer = new TextRenderer({
+        font: '12px sans-serif',
+        textColor: Theme.getFontColor(),
+        backgroundColor: Theme.getBackgroundColor(2),
+      });
     }
 
     let cornerHeaderRenderer = null;
@@ -616,10 +623,7 @@ export class DataGridView extends DOMWidgetView {
     });
 
     this.grid.defaultRenderer = defaultRenderer;
-    // Set column header renderer only if received from backend
-    if (columnHeaderRenderer) {
-      this.grid.columnHeaderRenderer = columnHeaderRenderer;
-    }
+    this.grid.columnHeaderRenderer = columnHeaderRenderer;
 
     if (cornerHeaderRenderer) {
       this.grid.cornerHeaderRenderer = cornerHeaderRenderer;
