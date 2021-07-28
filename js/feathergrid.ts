@@ -608,7 +608,6 @@ export class FeatherGrid extends Widget {
 
   public updateGridStyle(): void {
     this.setGridStyle();
-    this._updateHeaderRenderer();
 
     if (!this._defaultRendererSet) {
       this.defaultRenderer = new TextRenderer({
@@ -652,6 +651,8 @@ export class FeatherGrid extends Widget {
       isLightTheme: this._isLightTheme,
       grid: this.grid,
     });
+
+    this._updateHeaderRenderer();
   }
 
   copyToClipboard(): void {
