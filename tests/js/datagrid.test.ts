@@ -129,7 +129,7 @@ describe('Test trait: data', () => {
     ).toEqual(oldTransforms);
   });
 
-  test('HeaderRenderer updated with reference to new model', async () => {
+  test('HeaderRenderer keeps same data model ref on data change (same model, new data)', async () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({
       data: testData.set1,
@@ -137,15 +137,13 @@ describe('Test trait: data', () => {
     });
     const cornerCellConfig = Private.createCellConfig('corner-header');
     const columnCellConfig = Private.createCellConfig('column-header');
-    const oldColHead = grid.view.grid.cellRenderers.get(cornerCellConfig);
-    const oldCornerHead = grid.view.grid.cellRenderers.get(columnCellConfig);
+    const oldCornerHead = grid.view.grid.cellRenderers.get(cornerCellConfig);
+    const oldColHead = grid.view.grid.cellRenderers.get(columnCellConfig);
     grid.model.set('_data', testData.set2);
-    expect(grid.view.grid.cellRenderers.get(cornerCellConfig)).not.toBe(
+    expect(grid.view.grid.cellRenderers.get(cornerCellConfig)).toBe(
       oldCornerHead,
     );
-    expect(grid.view.grid.cellRenderers.get(columnCellConfig)).not.toBe(
-      oldColHead,
-    );
+    expect(grid.view.grid.cellRenderers.get(columnCellConfig)).toBe(oldColHead);
   });
 
   test('Correct index of the grid is determined from column name', async () => {
