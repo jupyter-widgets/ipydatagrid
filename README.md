@@ -103,7 +103,7 @@ Before sending a [Pull Request](../../pulls), please make sure you read our
 
 ## License
 
-Please read the [LICENSE](LICENSE) file.
+Please read the [LICENSE](LICENSE.txt) file.
 
 ## Code of Conduct
 
