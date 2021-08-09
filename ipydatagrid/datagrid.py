@@ -179,7 +179,7 @@ def _data_to_json(x, obj):
         elif x is pd.NaT:
             return "$NaT$"
         elif pd.isna(x):
-            return "$NA$"
+            return "$NaN$"
         return x
 
 
