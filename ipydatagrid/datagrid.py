@@ -378,6 +378,22 @@ class DataGrid(DOMWidget):
     @staticmethod
     def generate_data_object(dataframe, guid_key="ipydguuid"):
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
+        
+        # Renaming default index name from 'index' to 'id' on 
+        # single index DataFrames. This allows users to use
+        # 'index' as a column name. If 'id' exists, we add _x
+        # suffix to id, where { x | 0 <= x <= inf }
+        if not isinstance(dataframe.index, pd.MultiIndex):
+            if "id" in dataframe.columns:
+                index = 0
+                new_index_name = f'id_{index}'
+                while new_index_name in dataframe.columns:
+                    index += 1
+                    new_index_name = f'id_{index}'
+                dataframe = dataframe.rename_axis(new_index_name)
+            else:
+                dataframe = dataframe.rename_axis("id")
+
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
         data = reset_index_dataframe.to_dict(orient="records")
