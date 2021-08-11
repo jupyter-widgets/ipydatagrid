@@ -118,23 +118,23 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
     data_object = DataGrid.generate_data_object(dataframe, "ipydguuid")
     expected_output = {
         "data": [
-            {"index": "One", "A": 1, "B": 4, "ipydguuid": 0},
-            {"index": "Two", "A": 2, "B": 5, "ipydguuid": 1},
-            {"index": "Three", "A": 3, "B": 6, "ipydguuid": 2},
+            {"id": "One", "A": 1, "B": 4, "ipydguuid": 0},
+            {"id": "Two", "A": 2, "B": 5, "ipydguuid": 1},
+            {"id": "Three", "A": 3, "B": 6, "ipydguuid": 2},
         ],
         "schema": {
             "fields": [
-                {"name": "index", "type": "string"},
+                {"name": "id", "type": "string"},
                 {"name": "A", "type": "integer"},
                 {"name": "B", "type": "integer"},
                 {"name": "ipydguuid", "type": "integer"},
             ],
-            "primaryKey": ["index", "ipydguuid"],
+            "primaryKey": ["id", "ipydguuid"],
             "pandas_version": "0.20.0",
             "primaryKeyUuid": "ipydguuid",
         },
         "fields": [
-            {"index": None},
+            {"id": None},
             {"A": None},
             {"B": None},
             {"ipydguuid": None},
