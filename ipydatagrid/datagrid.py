@@ -243,6 +243,9 @@ class DataGrid(DOMWidget):
         The keys (strings) indicate the styling property
         The values (css color properties or Vega Expression) indicate the values
         See below for all supported styling properties
+    index_name : str (default: "key")
+        String to specify the index column name. **Only set when the grid
+        is constructed and is not an observable traitlet**
 
     Accessors (not observable traitlets)
     ---------
@@ -330,6 +333,13 @@ class DataGrid(DOMWidget):
     grid_style = Dict(allow_none=True).tag(sync=True, **widget_serialization)
 
     def __init__(self, dataframe, **kwargs):
+        # Setting default index name if not explicitly
+        # set by the user.
+        if "index_name" in kwargs:
+            self._index_name = kwargs["index_name"]
+        else:
+            self._index_name = "key"
+
         self.data = dataframe
         super().__init__(**kwargs)
         self._cell_click_handlers = CallbackDispatcher()
@@ -376,7 +386,7 @@ class DataGrid(DOMWidget):
         return final_df
 
     @staticmethod
-    def generate_data_object(dataframe, guid_key="ipydguuid"):
+    def generate_data_object(dataframe, guid_key="ipydguuid", index_name="key"):
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
 
         # Renaming default index name from 'index' to 'id' on
@@ -384,15 +394,15 @@ class DataGrid(DOMWidget):
         # 'index' as a column name. If 'id' exists, we add _x
         # suffix to id, where { x | 0 <= x <= inf }
         if not isinstance(dataframe.index, pd.MultiIndex):
-            if "id" in dataframe.columns:
+            if index_name in dataframe.columns:
                 index = 0
-                new_index_name = f"id_{index}"
+                new_index_name = f"{index_name}_{index}"
                 while new_index_name in dataframe.columns:
                     index += 1
-                    new_index_name = f"id_{index}"
+                    new_index_name = f"{index_name}_{index}"
                 dataframe = dataframe.rename_axis(new_index_name)
             else:
-                dataframe = dataframe.rename_axis("id")
+                dataframe = dataframe.rename_axis(index_name)
 
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
@@ -440,7 +450,9 @@ class DataGrid(DOMWidget):
         self.__dataframe_reference_columns = dataframe.columns
         dataframe = dataframe.copy()
 
-        self._data = self.generate_data_object(dataframe, "ipydguuid")
+        self._data = self.generate_data_object(
+            dataframe, "ipydguuid", self._index_name
+        )
 
     def get_cell_value(self, column_name, primary_key_value):
         """Gets the value for a single or multiple cells by column name and index name.
@@ -603,7 +615,9 @@ class DataGrid(DOMWidget):
         view_data = self.get_visible_data()
 
         # Serielize to JSON table schema
-        view_data_object = self.generate_data_object(view_data, "ipydguuid")
+        view_data_object = self.generate_data_object(
+            view_data, "ipydguuid", self._index_name
+        )
 
         return SelectionHelper(
             view_data_object, self.selections, self.selection_mode
