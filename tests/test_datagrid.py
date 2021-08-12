@@ -18,7 +18,7 @@ def datagrid(dataframe) -> None:
 
 @pytest.fixture
 def data_object(dataframe) -> None:
-    return DataGrid.generate_data_object(dataframe, "ipydguuid")
+    return DataGrid.generate_data_object(dataframe, "ipydguuid", "key")
 
 
 @pytest.mark.parametrize("clear", [True, False])
@@ -115,26 +115,26 @@ def test_get_cell_value_by_numerical_index(
 
 
 def test_data_object_generation(dataframe: pd.DataFrame) -> None:
-    data_object = DataGrid.generate_data_object(dataframe, "ipydguuid")
+    data_object = DataGrid.generate_data_object(dataframe, "ipydguuid", "key")
     expected_output = {
         "data": [
-            {"id": "One", "A": 1, "B": 4, "ipydguuid": 0},
-            {"id": "Two", "A": 2, "B": 5, "ipydguuid": 1},
-            {"id": "Three", "A": 3, "B": 6, "ipydguuid": 2},
+            {"key": "One", "A": 1, "B": 4, "ipydguuid": 0},
+            {"key": "Two", "A": 2, "B": 5, "ipydguuid": 1},
+            {"key": "Three", "A": 3, "B": 6, "ipydguuid": 2},
         ],
         "schema": {
             "fields": [
-                {"name": "id", "type": "string"},
+                {"name": "key", "type": "string"},
                 {"name": "A", "type": "integer"},
                 {"name": "B", "type": "integer"},
                 {"name": "ipydguuid", "type": "integer"},
             ],
-            "primaryKey": ["id", "ipydguuid"],
+            "primaryKey": ["key", "ipydguuid"],
             "pandas_version": "0.20.0",
             "primaryKeyUuid": "ipydguuid",
         },
         "fields": [
-            {"id": None},
+            {"key": None},
             {"A": None},
             {"B": None},
             {"ipydguuid": None},
