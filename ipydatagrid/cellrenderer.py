@@ -133,3 +133,10 @@ class BarRenderer(TextRenderer):
     show_text = Union((Bool(), Instance(VegaExpr)), default_value=True).tag(
         sync=True, **widget_serialization
     )
+
+class HyperlinkRenderer(TextRenderer):
+    _model_name = Unicode("HyperlinkRendererModel").tag(sync=True)
+    _view_name = Unicode("HyperlinkRendererView").tag(sync=True)
+
+    url = Instance(VegaExpr, allow_none=False).tag(sync=True, **widget_serialization)
+    url_name = Instance(VegaExpr, allow_none=False).tag(sync=True, **widget_serialization)
