@@ -666,6 +666,8 @@ export {
   TextRendererView,
   BarRendererModel,
   BarRendererView,
+  HyperlinkRendererModel,
+  HyperlinkRendererView,
 } from './cellrenderer';
 
 export { VegaExprModel, VegaExprView } from './vegaexpr';
