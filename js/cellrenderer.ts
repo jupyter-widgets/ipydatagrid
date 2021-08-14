@@ -6,7 +6,11 @@ import * as _ from 'underscore';
 const d3Format: any = require('d3-format');
 const d3TimeFormat: any = require('d3-time-format');
 
-import { CellRenderer, TextRenderer, HyperlinkRenderer } from '@lumino/datagrid';
+import {
+  CellRenderer,
+  TextRenderer,
+  HyperlinkRenderer,
+} from '@lumino/datagrid';
 
 import {
   Dict,
@@ -424,7 +428,7 @@ export class HyperlinkRendererModel extends TextRendererModel {
       _model_name: BarRendererModel.model_name,
       _view_name: BarRendererModel.view_name,
       url: {},
-      url_name: {}
+      url_name: {},
     };
   }
 
