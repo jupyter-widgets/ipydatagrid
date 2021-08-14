@@ -6,7 +6,7 @@ import * as _ from 'underscore';
 const d3Format: any = require('d3-format');
 const d3TimeFormat: any = require('d3-time-format');
 
-import { CellRenderer, TextRenderer } from '@lumino/datagrid';
+import { CellRenderer, TextRenderer, HyperlinkRenderer } from '@lumino/datagrid';
 
 import {
   Dict,
@@ -415,4 +415,45 @@ export class BarRendererView extends TextRendererView {
   renderer: BarRenderer;
 
   model: BarRendererModel;
+}
+
+export class HyperlinkRendererModel extends TextRendererModel {
+  defaults() {
+    return {
+      ...super.defaults(),
+      _model_name: BarRendererModel.model_name,
+      _view_name: BarRendererModel.view_name,
+      url: {},
+      url_name: {}
+    };
+  }
+
+  get_attrs(): ICellRendererAttribute[] {
+    return super.get_attrs().concat([
+      { name: 'url', phosphorName: 'url', defaultValue: null },
+      { name: 'url_name', phosphorName: 'urlName', defaultValue: null },
+    ]);
+  }
+
+  static serializers: ISerializers = {
+    ...TextRendererModel.serializers,
+    url: { deserialize: unpack_models as any },
+    url_name: { deserialize: unpack_models as any },
+  };
+
+  static model_name = 'HyperlinkRendererModel';
+  static view_name = 'HyperlinkRendererView';
+}
+
+export class HyperlinkRendererView extends TextRendererView {
+  createRenderer(options: HyperlinkRenderer.IOptions) {
+    return new HyperlinkRenderer({
+      ...options,
+      format: this.getFormatter(),
+    });
+  }
+
+  renderer: HyperlinkRenderer;
+
+  model: HyperlinkRendererModel;
 }
