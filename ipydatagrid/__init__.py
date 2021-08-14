@@ -4,6 +4,7 @@
 from ._version import __version__  # noqa
 from .cellrenderer import (  # noqa
     BarRenderer,
+    HyperlinkRenderer,
     CellRenderer,
     Expr,
     TextRenderer,
