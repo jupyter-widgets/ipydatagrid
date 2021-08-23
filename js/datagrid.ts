@@ -469,11 +469,46 @@ export class DataGridView extends DOMWidgetView {
       this.grid.editable = this.model.get('editable');
     });
 
+    this.model.on_some_change(
+      ['auto_fit_columns', 'auto_fit_params'],
+      () => {
+        this.handleColumnAutoFit();
+      },
+      this,
+    );
+
+    if (this.model.get('auto_fit_columns')) {
+      this.handleColumnAutoFit();
+    }
+
     return this.updateRenderers().then(() => {
       this.updateGridStyle();
       this.updateGridRenderers();
       this.pWidget.addWidget(this.grid);
     });
+  }
+
+  private handleColumnAutoFit() {
+    // Check whether we need to auto-fit or revert to base size.
+    const shouldAutoFit = this.model.get('auto_fit_columns');
+    if (!shouldAutoFit) {
+      this.grid.baseColumnSize = this.model.get('base_column_size');
+      // Terminate call here if not auto-fitting.
+      return;
+    }
+
+    // Retrieve user-defined auto-fit params
+    let { area, padding, numCols } = this.model.get('auto_fit_params');
+
+    // Data validation on params
+    area = area ?? 'all';
+    padding = padding ?? 30;
+    numCols = numCols ?? undefined;
+    console.log(area, padding, numCols);
+
+    // Call resize function
+    //@ts-ignore
+    this.grid.grid.fitColumnNames(area, padding, numCols);
   }
 
   private updateRenderers() {
