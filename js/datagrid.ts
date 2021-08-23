@@ -507,7 +507,6 @@ export class DataGridView extends DOMWidgetView {
     console.log(area, padding, numCols);
 
     // Call resize function
-    //@ts-ignore
     this.grid.grid.fitColumnNames(area, padding, numCols);
   }
 
