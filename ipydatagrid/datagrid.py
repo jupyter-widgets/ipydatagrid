@@ -241,9 +241,10 @@ class DataGrid(DOMWidget):
     auto_fit_columns : Bool (default: True)
         Specify whether column width should automatically be
         determined by the grid
-    auto_fit_params : Dict (default: {"area":"all", "padding":30, "numCols":None})
-        Specify column auto fit parameters. Supported parameters:
-        1) area: where to resize column widths - 'row-header', 'body' or 'all' (default)
+    auto_fit_params : Dict. Specify column auto fit parameters.
+        Supported parameters:
+        1) area: where to resize column widths - 'row-header',
+                'body' or 'all' (default)
         2) padding: add padding to resized column widths (15 pixels by default)
         3) numCols: cap the number of columns to be resized (None)
     grid_style : Dict of {propertyName: string | VegaExpr | Dict}
@@ -340,8 +341,9 @@ class DataGrid(DOMWidget):
     column_widths = Dict({}).tag(sync=True)
     grid_style = Dict(allow_none=True).tag(sync=True, **widget_serialization)
     auto_fit_columns = Bool(False).tag(sync=True)
-    auto_fit_params = Dict(dict(area="all", padding=30, numCols=None), 
-        allow_none=False).tag(sync=True, **widget_serialization)
+    auto_fit_params = Dict(
+        {"area": "all", "padding": 30, "numCols": None}, allow_none=False
+    ).tag(sync=True, **widget_serialization)
 
     def __init__(self, dataframe, **kwargs):
         # Setting default index name if not explicitly
