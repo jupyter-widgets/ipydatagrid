@@ -350,6 +350,8 @@ class DataGrid(DOMWidget):
         # set by the user.
         if "index_name" in kwargs:
             self._index_name = kwargs["index_name"]
+        elif dataframe.index.name is not None:
+            self._index_name = dataframe.index.name
         else:
             self._index_name = "key"
 
