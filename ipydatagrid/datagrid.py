@@ -404,10 +404,10 @@ class DataGrid(DOMWidget):
     def generate_data_object(dataframe, guid_key="ipydguuid", index_name="key"):
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
 
-        # Renaming default index name from 'index' to 'id' on
+        # Renaming default index name from 'index' to 'key' on
         # single index DataFrames. This allows users to use
-        # 'index' as a column name. If 'id' exists, we add _x
-        # suffix to id, where { x | 0 <= x <= inf }
+        # 'index' as a column name. If 'key' exists, we add _x
+        # suffix to id, where { x | 0 <= x < inf }
         if not isinstance(dataframe.index, pd.MultiIndex):
             if index_name in dataframe.columns:
                 index = 0
