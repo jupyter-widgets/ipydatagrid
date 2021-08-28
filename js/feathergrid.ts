@@ -150,7 +150,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
       const isMenuRow =
         (hit.region === 'column-header' &&
           hit.row ==
-            this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
+          this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
         (hit.region === 'corner-header' && hit.row === 0);
 
       const isMenuClick =
@@ -559,11 +559,6 @@ export class FeatherGrid extends Widget {
   }
 
   public setGridStyle(): void {
-    // Resetting grid style if theme changes.
-    if (this.backboneModel) {
-      this.grid.style = this.backboneModel.get('grid_style');
-    }
-
     // Setting up theme.
     const scrollShadow = {
       size: 4,
@@ -571,6 +566,30 @@ export class FeatherGrid extends Widget {
       color2: Theme.getBorderColor(1, 0.5),
       color3: Theme.getBorderColor(1, 0.0),
     };
+
+    // Resetting grid style if theme changes.
+    if (this.backboneModel) {
+      this.grid.style = this.backboneModel.get('grid_style');
+    }
+    // Always apply FeatherGrid Theme
+    // if not rendered in ipydatagrid.
+    else {
+      this.grid.style = {
+        voidColor: Theme.getBackgroundColor(),
+        backgroundColor: Theme.getBackgroundColor(),
+        gridLineColor: Theme.getBorderColor(),
+        headerGridLineColor: Theme.getBorderColor(1),
+        selectionFillColor: Theme.getBrandColor(2, 0.4),
+        selectionBorderColor: Theme.getBrandColor(1),
+        headerSelectionFillColor: Theme.getBackgroundColor(3, 0.4),
+        headerSelectionBorderColor: Theme.getBorderColor(1),
+        cursorFillColor: Theme.getBrandColor(3, 0.4),
+        cursorBorderColor: Theme.getBrandColor(1),
+        scrollShadow,
+      };
+      // Terminate call here if rendering outside ipydatagrid.
+      return;
+    }
 
     this.grid.style = {
       voidColor: this.grid.style.voidColor || Theme.getBackgroundColor(),
@@ -609,7 +628,9 @@ export class FeatherGrid extends Widget {
   public updateGridStyle(): void {
     this.setGridStyle();
 
-    if (!this._defaultRendererSet) {
+    // If we are not rendering with ipydatagrid,
+    // defaultRenderer needs to be set each time.
+    if (!this._defaultRendererSet || !this.backboneModel) {
       this.defaultRenderer = new TextRenderer({
         font: '12px sans-serif',
         textColor: Theme.getFontColor(),
@@ -887,8 +908,8 @@ export class FeatherGrid extends Widget {
     return this._renderers.hasOwnProperty(columnName)
       ? this._renderers[columnName]
       : cellRegion === 'row-header'
-      ? this._rowHeaderRenderer
-      : this._defaultRenderer;
+        ? this._rowHeaderRenderer
+        : this._defaultRenderer;
   }
 
   private _updateGridRenderers() {
