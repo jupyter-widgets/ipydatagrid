@@ -350,10 +350,8 @@ class DataGrid(DOMWidget):
         # set by the user.
         if "index_name" in kwargs:
             self._index_name = kwargs["index_name"]
-        elif dataframe.index.name is not None:
-            self._index_name = dataframe.index.name
         else:
-            self._index_name = "key"
+            self._index_name = None
 
         self.data = dataframe
         super().__init__(**kwargs)
@@ -465,9 +463,28 @@ class DataGrid(DOMWidget):
         self.__dataframe_reference_columns = dataframe.columns
         dataframe = dataframe.copy()
 
+        # Primary key used
+        index_key = self.get_dataframe_index(dataframe)
+
         self._data = self.generate_data_object(
-            dataframe, "ipydguuid", self._index_name
+            dataframe, "ipydguuid", index_key
         )
+
+    def get_dataframe_index(self, dataframe):
+        """Returns a primary key to be used in ipydatagrid's
+        view of the passed DataFrame"""
+
+        # Passed index_name takes highest priority
+        if self._index_name is not None:
+            return self._index_name
+
+        # Dataframe with names index used by default
+        if dataframe.index.name is not None:
+            return dataframe.index.name
+
+        # If no index_name param, nor named-index DataFrame
+        # have been passed, revert to default "key"
+        return "key"
 
     def get_cell_value(self, column_name, primary_key_value):
         """Gets the value for a single or multiple cells by column name and index name.
@@ -629,9 +646,12 @@ class DataGrid(DOMWidget):
         # Copy of the front-end data model
         view_data = self.get_visible_data()
 
+        # Get primary key from dataframe
+        index_key = self.get_dataframe_index(view_data)
+
         # Serielize to JSON table schema
         view_data_object = self.generate_data_object(
-            view_data, "ipydguuid", self._index_name
+            view_data, "ipydguuid", index_key
         )
 
         return SelectionHelper(
