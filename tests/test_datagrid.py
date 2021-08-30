@@ -154,6 +154,7 @@ def test_selected_cell_values(monkeypatch, datagrid, dataframe):
 
     assert datagrid.selected_cell_values == [2, 5, 3, 6]
 
+
 def test_dataframe_index_name(dataframe):
     # Setting a custom index name
     dataframe.index.name = "custom_index"
@@ -164,7 +165,8 @@ def test_dataframe_index_name(dataframe):
 
     # Checking index name matches DataFrame retrieved from grid
     data = grid.get_visible_data()
-    assert(data.index.name == "custom_index")
+    assert data.index.name == "custom_index"
+
 
 def test_user_defined_index_name(dataframe):
     # Setting a custom index name
@@ -176,16 +178,15 @@ def test_user_defined_index_name(dataframe):
 
     # Checking index name matches DataFrame retrieved from grid
     index_key = grid.get_dataframe_index(dataframe)
-    data_obj = grid.generate_data_object(
-        dataframe, "ipydguuid", index_key
-    )
+    data_obj = grid.generate_data_object(dataframe, "ipydguuid", index_key)
 
     # Default and unused keys should not be in schema
-    assert "key" not in data_obj['schema']['primaryKey']
-    assert "unused_index" not in data_obj['schema']['primaryKey']
+    assert "key" not in data_obj["schema"]["primaryKey"]
+    assert "unused_index" not in data_obj["schema"]["primaryKey"]
 
     # User defined key should be in primary key schema
-    assert "custom_index" in data_obj['schema']['primaryKey']
+    assert "custom_index" in data_obj["schema"]["primaryKey"]
+
 
 def test_named_dataframe_index(dataframe):
     # Setting a custom index name
@@ -197,15 +198,14 @@ def test_named_dataframe_index(dataframe):
 
     # Generate primary key schema object
     index_key = grid.get_dataframe_index(dataframe)
-    data_obj = grid.generate_data_object(
-        dataframe, "ipydguuid", index_key
-    )
+    data_obj = grid.generate_data_object(dataframe, "ipydguuid", index_key)
 
     # Default and unused keys should not be in schema
-    assert "key" not in data_obj['schema']['primaryKey']
+    assert "key" not in data_obj["schema"]["primaryKey"]
 
     # User named dataframe index should be in schema
-    assert "my_used_index" in data_obj['schema']['primaryKey']
+    assert "my_used_index" in data_obj["schema"]["primaryKey"]
+
 
 def test_default_dataframe_index(dataframe):
     # Setting a custom index name
@@ -216,9 +216,7 @@ def test_default_dataframe_index(dataframe):
 
     # Generate primary key schema object
     index_key = grid.get_dataframe_index(dataframe)
-    data_obj = grid.generate_data_object(
-        dataframe, "ipydguuid", index_key
-    )
+    data_obj = grid.generate_data_object(dataframe, "ipydguuid", index_key)
 
     # Default and unused keys should not be in schema
-    assert "key" in data_obj['schema']['primaryKey']
+    assert "key" in data_obj["schema"]["primaryKey"]
