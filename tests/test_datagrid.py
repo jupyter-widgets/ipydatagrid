@@ -153,3 +153,72 @@ def test_selected_cell_values(monkeypatch, datagrid, dataframe):
     datagrid.select(1, 0, 2, 1)  # Select 1A to 2B
 
     assert datagrid.selected_cell_values == [2, 5, 3, 6]
+
+def test_dataframe_index_name(dataframe):
+    # Setting a custom index name
+    dataframe.index.name = "custom_index"
+    grid = DataGrid(dataframe)
+
+    # Making sure no value is set for index_name
+    assert grid._index_name is None
+
+    # Checking index name matches DataFrame retrieved from grid
+    data = grid.get_visible_data()
+    assert(data.index.name == "custom_index")
+
+def test_user_defined_index_name(dataframe):
+    # Setting a custom index name
+    dataframe.index.name = "unused_index"
+    grid = DataGrid(dataframe, index_name="custom_index")
+
+    # Making sure index_name is set
+    assert grid._index_name is not None
+
+    # Checking index name matches DataFrame retrieved from grid
+    index_key = grid.get_dataframe_index(dataframe)
+    data_obj = grid.generate_data_object(
+        dataframe, "ipydguuid", index_key
+    )
+
+    # Default and unused keys should not be in schema
+    assert "key" not in data_obj['schema']['primaryKey']
+    assert "unused_index" not in data_obj['schema']['primaryKey']
+
+    # User defined key should be in primary key schema
+    assert "custom_index" in data_obj['schema']['primaryKey']
+
+def test_named_dataframe_index(dataframe):
+    # Setting a custom index name
+    dataframe.index.name = "my_used_index"
+    grid = DataGrid(dataframe)
+
+    # Making sure index_name is set
+    assert grid._index_name is None
+
+    # Generate primary key schema object
+    index_key = grid.get_dataframe_index(dataframe)
+    data_obj = grid.generate_data_object(
+        dataframe, "ipydguuid", index_key
+    )
+
+    # Default and unused keys should not be in schema
+    assert "key" not in data_obj['schema']['primaryKey']
+
+    # User named dataframe index should be in schema
+    assert "my_used_index" in data_obj['schema']['primaryKey']
+
+def test_default_dataframe_index(dataframe):
+    # Setting a custom index name
+    grid = DataGrid(dataframe)
+
+    # Making sure index_name is set
+    assert grid._index_name is None
+
+    # Generate primary key schema object
+    index_key = grid.get_dataframe_index(dataframe)
+    data_obj = grid.generate_data_object(
+        dataframe, "ipydguuid", index_key
+    )
+
+    # Default and unused keys should not be in schema
+    assert "key" in data_obj['schema']['primaryKey']
