@@ -150,7 +150,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
       const isMenuRow =
         (hit.region === 'column-header' &&
           hit.row ==
-          this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
+            this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
         (hit.region === 'corner-header' && hit.row === 0);
 
       const isMenuClick =
@@ -908,8 +908,8 @@ export class FeatherGrid extends Widget {
     return this._renderers.hasOwnProperty(columnName)
       ? this._renderers[columnName]
       : cellRegion === 'row-header'
-        ? this._rowHeaderRenderer
-        : this._defaultRenderer;
+      ? this._rowHeaderRenderer
+      : this._defaultRenderer;
   }
 
   private _updateGridRenderers() {
