@@ -59,7 +59,7 @@
     "@lumino/algorithm": "^1.6.2",
     "@lumino/commands": "^1.15.2",
     "@lumino/coreutils": "^1.8.2",
-    "@lumino/datagrid": "^0.30.0",
+    "@lumino/datagrid": "^0.32.0",
     "@lumino/default-theme": "^0.17.2",
     "@lumino/domutils": "^1.5.2",
     "@lumino/messaging": "^1.7.2",
