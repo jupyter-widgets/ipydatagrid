@@ -2,6 +2,10 @@ name: jest
 
 on: [push, pull_request]
 
+concurrency:
+  group: jest-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
