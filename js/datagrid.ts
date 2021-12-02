@@ -135,17 +135,18 @@ export class DataGridModel extends DOMWidgetModel {
     const schema = Private.createSchema(data);
 
     if (this.data_model) {
-      // Need to update existing ViewBasedJSONModel's dataset attribute
-      // before discarding.
       this.data_model.updateDataset({ data: data.data, schema: schema });
-    } else {
-      this.data_model = new ViewBasedJSONModel({
-        data: data.data,
-        schema: schema,
-      });
-      this.data_model.transformStateChanged.connect(this.syncTransformState);
-      this.data_model.dataSync.connect(this.updateDataSync);
+      this.data_model.transformStateChanged.disconnect(this.syncTransformState);
+      this.data_model.dataSync.disconnect(this.updateDataSync);
     }
+
+    this.data_model = new ViewBasedJSONModel({
+      data: data.data,
+      schema: schema,
+    });
+
+    this.data_model.transformStateChanged.connect(this.syncTransformState);
+    this.data_model.dataSync.connect(this.updateDataSync);
 
     this.updateTransforms();
     this.trigger('data-model-changed');
