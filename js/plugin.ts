@@ -39,7 +39,7 @@ function activateWidgetExtension(
 ): void {
   // Exporting a patched DataGridView widget which handles dynamic theme changes
   class DataGridView extends widgetExports.DataGridView {
-    initialize(parameters: WidgetView.InitializeParameters) {
+    initialize(parameters: WidgetView.IInitializeParameters) {
       if (themeManager.theme != null) {
         this.isLightTheme = themeManager.isLight(themeManager.theme);
       }
