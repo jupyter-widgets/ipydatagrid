@@ -54,7 +54,8 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^2 || ^3 || ^4",
+    "@jupyter-widgets/base-manager": "^1.0.0beta.0",
+    "@jupyter-widgets/base": "^5.0.0beta.0",
     "@jupyterlab/apputils": "^3.0.2",
     "@lumino/algorithm": "^1.8.0",
     "@lumino/commands": "^1.17.0",

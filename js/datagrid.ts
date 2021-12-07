@@ -16,7 +16,7 @@ import { Widget } from '@lumino/widgets';
 import {
   DOMWidgetModel,
   DOMWidgetView,
-  JupyterPhosphorPanelWidget,
+  JupyterLuminoPanelWidget,
   ISerializers,
   resolvePromisesDict,
   unpack_models,
@@ -340,21 +340,24 @@ function unpack_data(
 
 export class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
-    this.pWidget = new JupyterPhosphorPanelWidget({ view: this });
+    this.luminoWidget = new JupyterLuminoPanelWidget({ view: this });
     this._initializeTheme();
-    return this.pWidget.node;
+    return this.luminoWidget.node;
   }
 
   _setElement(el: HTMLElement) {
-    if (this.el || el !== this.pWidget.node) {
+    if (this.el || el !== this.luminoWidget.node) {
       throw new Error('Cannot reset the DOM element.');
     }
 
-    this.el = this.pWidget.node;
+    this.el = this.luminoWidget.node;
   }
 
   manageResizeEvent = () => {
-    MessageLoop.postMessage(this.pWidget, Widget.ResizeMessage.UnknownSize);
+    MessageLoop.postMessage(
+      this.luminoWidget,
+      Widget.ResizeMessage.UnknownSize,
+    );
   };
 
   processPhosphorMessage(msg: Message): void {
@@ -496,7 +499,7 @@ export class DataGridView extends DOMWidgetView {
     return this.updateRenderers().then(() => {
       this.updateGridStyle();
       this.updateGridRenderers();
-      this.pWidget.addWidget(this.grid);
+      this.luminoWidget.addWidget(this.grid);
     });
   }
 
@@ -698,7 +701,7 @@ export class DataGridView extends DOMWidgetView {
   default_renderer: CellRendererView;
   header_renderer: CellRendererView;
   grid: FeatherGrid;
-  pWidget: JupyterPhosphorPanelWidget;
+  luminoWidget: JupyterLuminoPanelWidget;
   model: DataGridModel;
   backboneModel: DataGridModel;
 
