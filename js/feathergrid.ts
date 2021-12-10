@@ -7,6 +7,8 @@ import {
   BasicSelectionModel,
   CellRenderer,
   RendererMap,
+  Private,
+  HyperlinkRenderer,
 } from '@lumino/datagrid';
 import { CommandRegistry } from '@lumino/commands';
 import { toArray } from '@lumino/algorithm';
@@ -24,6 +26,7 @@ import { DataGridModel as BackBoneModel } from './datagrid';
 
 import '@lumino/default-theme/style/datagrid.css';
 import '../style/feathergrid.css';
+import { Platform } from '@lumino/domutils';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T };
@@ -132,6 +135,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
     const hitRegion = hit.region;
     const buttonSize = HeaderRenderer.iconWidth * 1.5;
     const buttonPadding = HeaderRenderer.buttonPadding;
+    let accel = Platform.accelKey(event);
 
     this._mouseIsDown = true;
 
@@ -167,6 +171,36 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
           y: event.clientY + window.scrollY,
         });
         return;
+      }
+    }
+    if (grid) {
+      // Create cell config object.
+      const config = Private.createCellConfigObject(grid, hit);
+
+      // Retrieve cell renderer.
+      let renderer = grid.cellRenderers.get(config!);
+
+      // Only process hyperlink renderers.
+      if (renderer instanceof HyperlinkRenderer) {
+        // Use the url param if it exists.
+        let url = CellRenderer.resolveOption(renderer.url, config!);
+        // Otherwise assume cell value is the URL.
+        if (!url) {
+          const format = TextRenderer.formatGeneric();
+          url = format(config!);
+        }
+
+        // Emit message to open the hyperlink only if user hit Ctrl+Click.
+        if (accel) {
+          // Emit event that will be caught in case window.open is blocked
+          window.postMessage({
+            id: 'ipydatagrid::hyperlinkclick',
+            url,
+          }, '*');
+          // Reset cursor default after clicking
+          const cursor = this.cursorForHandle('none');
+          grid.viewport.node.style.cursor = cursor;
+        }
       }
     }
     //@ts-ignore added so we don't have to add basicmousehandler.ts fork
