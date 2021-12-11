@@ -135,7 +135,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
     const hitRegion = hit.region;
     const buttonSize = HeaderRenderer.iconWidth * 1.5;
     const buttonPadding = HeaderRenderer.buttonPadding;
-    let accel = Platform.accelKey(event);
+    const accel = Platform.accelKey(event);
 
     this._mouseIsDown = true;
 
@@ -178,7 +178,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
       const config = Private.createCellConfigObject(grid, hit);
 
       // Retrieve cell renderer.
-      let renderer = grid.cellRenderers.get(config!);
+      const renderer = grid.cellRenderers.get(config!);
 
       // Only process hyperlink renderers.
       if (renderer instanceof HyperlinkRenderer) {
@@ -193,10 +193,13 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
         // Emit message to open the hyperlink only if user hit Ctrl+Click.
         if (accel) {
           // Emit event that will be caught in case window.open is blocked
-          window.postMessage({
-            id: 'ipydatagrid::hyperlinkclick',
-            url,
-          }, '*');
+          window.postMessage(
+            {
+              id: 'ipydatagrid::hyperlinkclick',
+              url,
+            },
+            '*',
+          );
           // Reset cursor default after clicking
           const cursor = this.cursorForHandle('none');
           grid.viewport.node.style.cursor = cursor;
@@ -283,11 +286,11 @@ export class FeatherGrid extends Widget {
   messageHook(handler: IMessageHandler, msg: Message): boolean {
     if (handler === this.grid.viewport) {
       // //@ts-ignore added so we don't have to add basicmousehandler.ts fork
-      const mouseHandler = this.grid
-        .mouseHandler as unknown as FeatherGridMouseHandler;
+      const mouseHandler = (this.grid
+        .mouseHandler as unknown) as FeatherGridMouseHandler;
 
       if (msg.type === 'column-resize-request' && mouseHandler.mouseIsDown) {
-        const resizeMsg = msg as unknown as FeatherGridColumnResizeMessage;
+        const resizeMsg = (msg as unknown) as FeatherGridColumnResizeMessage;
         const columnName: string = this.dataModel.columnIndexToName(
           resizeMsg.index,
           resizeMsg.region,
@@ -1016,8 +1019,7 @@ export class FeatherGrid extends Widget {
       iconClass:
         'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortAsc',
       execute: (args): void => {
-        const cellClick: FeatherGridContextMenu.CommandArgs =
-          args as FeatherGridContextMenu.CommandArgs;
+        const cellClick: FeatherGridContextMenu.CommandArgs = args as FeatherGridContextMenu.CommandArgs;
         const colIndex = this._dataModel.getSchemaIndex(
           cellClick.region,
           cellClick.columnIndex,
@@ -1035,8 +1037,7 @@ export class FeatherGrid extends Widget {
       iconClass:
         'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortDesc',
       execute: (args) => {
-        const cellClick: FeatherGridContextMenu.CommandArgs =
-          args as FeatherGridContextMenu.CommandArgs;
+        const cellClick: FeatherGridContextMenu.CommandArgs = args as FeatherGridContextMenu.CommandArgs;
         const colIndex = this._dataModel.getSchemaIndex(
           cellClick.region,
           cellClick.columnIndex,
@@ -1066,8 +1067,8 @@ export class FeatherGrid extends Widget {
         label: 'Clear Filters in All Columns',
         mnemonic: -1,
         execute: (args) => {
-          const activeTransforms: Transform.TransformSpec[] =
-            this._dataModel.activeTransforms;
+          const activeTransforms: Transform.TransformSpec[] = this._dataModel
+            .activeTransforms;
           const newTransforms = activeTransforms.filter(
             (val) => val.type !== 'filter',
           );
