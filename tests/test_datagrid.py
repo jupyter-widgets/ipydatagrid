@@ -4,19 +4,19 @@ import pytest
 from ipydatagrid import DataGrid
 
 
-@pytest.fixture
+@pytest.fixture()
 def dataframe() -> None:
     return pd.DataFrame(
         data={"A": [1, 2, 3], "B": [4, 5, 6]}, index=["One", "Two", "Three"]
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def datagrid(dataframe) -> None:
     return DataGrid(dataframe)
 
 
-@pytest.fixture
+@pytest.fixture()
 def data_object(dataframe) -> None:
     return DataGrid.generate_data_object(dataframe, "ipydguuid", "key")
 
