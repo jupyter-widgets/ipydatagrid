@@ -162,3 +162,4 @@ ipydatagrid/labextension
 
 conda_out
 recipe
+/examples/trees.json

@@ -1,8 +1,8 @@
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
 
-from ._version import __version__  # noqa
-from .cellrenderer import (  # noqa
+from ._version import __version__
+from .cellrenderer import (
     BarRenderer,
     CellRenderer,
     Expr,
@@ -10,7 +10,7 @@ from .cellrenderer import (  # noqa
     TextRenderer,
     VegaExpr,
 )
-from .datagrid import DataGrid, SelectionHelper  # noqa
+from .datagrid import DataGrid, SelectionHelper
 
 
 def _jupyter_nbextension_paths():
@@ -26,3 +26,16 @@ def _jupyter_nbextension_paths():
 
 def _jupyter_labextension_paths():
     return [{"src": "labextension", "dest": "ipydatagrid"}]
+
+
+__all__ = [
+    "__version__",
+    "BarRenderer",
+    "CellRenderer",
+    "Expr",
+    "HyperlinkRenderer",
+    "TextRenderer",
+    "VegaExpr",
+    "DataGrid",
+    "SelectionHelper",
+]
