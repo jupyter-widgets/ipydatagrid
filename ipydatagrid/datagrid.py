@@ -360,6 +360,7 @@ class DataGrid(DOMWidget):
     ).tag(sync=True)
 
     def __init__(self, dataframe, **kwargs):
+        # print(kwargs)
         # Setting default index name if not explicitly
         # set by the user.
         if "index_name" in kwargs:
@@ -368,7 +369,7 @@ class DataGrid(DOMWidget):
             self._index_name = None
 
         self.data = dataframe
-        super().__init__(**kwargs)
+        super().__init__()
         self._cell_click_handlers = CallbackDispatcher()
         self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
