@@ -143,7 +143,7 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
         ],
     }
 
-    # assert data_object == expected_output
+    assert data_object == expected_output
 
 
 def test_selected_cell_values(monkeypatch, datagrid, dataframe):
