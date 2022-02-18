@@ -129,7 +129,6 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
    *
    * @param event - The mouse down event of interest.
    */
-  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
     const hitRegion = hit.region;
@@ -154,7 +153,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
       const isMenuRow =
         (hit.region === 'column-header' &&
           hit.row ==
-            this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
+          this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
         (hit.region === 'corner-header' && hit.row === 0);
 
       const isMenuClick =
@@ -176,6 +175,11 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
     if (grid) {
       // Create cell config object.
       const config = Private.createCellConfigObject(grid, hit);
+
+      // Bail if no cell config object is defined for the region.
+      if (!config) {
+        return;
+      }
 
       // Retrieve cell renderer.
       const renderer = grid.cellRenderers.get(config!);
@@ -206,19 +210,24 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
         }
       }
     }
-    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     super.onMouseDown(grid, event);
   }
 
-  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseUp(grid: DataGrid, event: MouseEvent): void {
     this._mouseIsDown = false;
-    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     super.onMouseUp(grid, event);
   }
 
   get mouseIsDown(): boolean {
     return this._mouseIsDown;
+  }
+
+  get isResizing(): boolean {
+    return (
+      this.pressData !== null &&
+      (this.pressData.type == 'column-resize' ||
+        this.pressData.type == 'row-resize')
+    );
   }
 
   /**
@@ -285,7 +294,6 @@ export class FeatherGrid extends Widget {
    */
   messageHook(handler: IMessageHandler, msg: Message): boolean {
     if (handler === this.grid.viewport) {
-      // //@ts-ignore added so we don't have to add basicmousehandler.ts fork
       const mouseHandler = this.grid
         .mouseHandler as unknown as FeatherGridMouseHandler;
 
@@ -945,8 +953,8 @@ export class FeatherGrid extends Widget {
     return this._renderers.hasOwnProperty(columnName)
       ? this._renderers[columnName]
       : cellRegion === 'row-header'
-      ? this._rowHeaderRenderer
-      : this._defaultRenderer;
+        ? this._rowHeaderRenderer
+        : this._defaultRenderer;
   }
 
   private _updateGridRenderers() {
@@ -958,11 +966,11 @@ export class FeatherGrid extends Widget {
 
   private _updateColumnWidths() {
     const columnWidths = this._columnWidths;
-    // @ts-ignore added so we don't have to add basicmousehandler.ts fork
-    const mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler;
+    const mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler | null;
 
-    // Do not want this callback to be executed when user resizes using the mouse
-    if (mouseHandler.mouseIsDown) {
+    // Check we have a mouse handler
+    if (mouseHandler && mouseHandler.isResizing) {
+      // Do not want this callback to be executed when user resizes using the mouse
       return;
     }
 
