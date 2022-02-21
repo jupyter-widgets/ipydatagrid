@@ -141,8 +141,6 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
         ],
     }
 
-    print(data_object)
-
     assert data_object == expected_output
 
 
