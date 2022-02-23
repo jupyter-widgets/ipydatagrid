@@ -9,7 +9,7 @@ import { CellRenderer } from '@lumino/datagrid';
 
 import { JSONExt } from '@lumino/coreutils';
 
-import { MessageLoop } from '@lumino/messaging';
+import { MessageLoop, Message } from '@lumino/messaging';
 
 import { Widget } from '@lumino/widgets';
 
@@ -356,6 +356,18 @@ export class DataGridView extends DOMWidgetView {
   manageResizeEvent = () => {
     MessageLoop.postMessage(this.pWidget, Widget.ResizeMessage.UnknownSize);
   };
+
+  processPhosphorMessage(msg: Message): void {
+    super.processPhosphorMessage(msg);
+
+    switch (msg.type) {
+      case 'after-show':
+        if (this.pWidget.isVisible) {
+          this.manageResizeEvent();
+        }
+        break;
+    }
+  }
 
   render() {
     this.el.classList.add('datagrid-container');
