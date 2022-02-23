@@ -371,7 +371,7 @@ export class DataGridView extends DOMWidgetView {
 
   render() {
     this.el.classList.add('datagrid-container');
-
+    console.log('Test!');
     window.addEventListener('resize', this.manageResizeEvent);
     this.once('remove', () => {
       window.removeEventListener('resize', this.manageResizeEvent);

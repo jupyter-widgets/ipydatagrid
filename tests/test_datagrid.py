@@ -130,7 +130,7 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
                 {"name": "ipydguuid", "type": "integer"},
             ],
             "primaryKey": ["key", "ipydguuid"],
-            "pandas_version": "1.4.0",
+            "pandas_version": "0.20.0",
             "primaryKeyUuid": "ipydguuid",
         },
         "fields": [
