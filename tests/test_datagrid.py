@@ -220,3 +220,20 @@ def test_default_dataframe_index(dataframe):
 
     # Default and unused keys should not be in schema
     assert "key" in data_obj["schema"]["primaryKey"]
+
+def test_setting_column_widths_on_multiindex_grid():
+    import pandas as pd
+    from ipydatagrid import DataGrid
+
+    col_names = [('Parent Column', 'SubCol 1'), ('Parent Column', 'SubCol 2')]
+    df = pd.DataFrame(data={i: [1, 2, 3] for i in col_names},
+                    columns=col_names)
+
+    grid = DataGrid(df, layout={'height': '200px'})
+    grid
+
+    col_widths = {
+        ('Parent Column', 'SubCol 1'): 100
+    }
+
+    grid.column_widths = col_widths
