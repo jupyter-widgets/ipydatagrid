@@ -165,9 +165,9 @@ class SelectionHelper:
 # modified from ipywidgets original
 def _data_to_json(x, obj):
     if isinstance(x, dict):
-        return {k: _data_to_json(v, obj) for k, v in x.items()}
+        return {str(k): _data_to_json(v, obj) for k, v in x.items()}
     elif isinstance(x, (list, tuple)):
-        return [_data_to_json(v, obj) for v in x]
+        return [_data_to_json(v, str(obj)) for v in x]
     else:
         if isinstance(x, float):
             if np.isnan(x):
@@ -338,7 +338,7 @@ class DataGrid(DOMWidget):
     ).tag(sync=True)
     selections = List(Dict()).tag(sync=True, **widget_serialization)
     editable = Bool(False).tag(sync=True)
-    column_widths = Dict({}).tag(sync=True)
+    column_widths = Dict({}).tag(sync=True, **_data_serialization)
     grid_style = Dict(allow_none=True).tag(sync=True, **widget_serialization)
     auto_fit_columns = Bool(False).tag(sync=True)
     auto_fit_params = Dict(

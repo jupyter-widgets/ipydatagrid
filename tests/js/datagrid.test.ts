@@ -31,8 +31,9 @@ describe('Test trait: data', () => {
   test('Comm message sent to backend on frontend cell update', async () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
-    const dataModel = grid.model.data_model;
+    let dataModel = grid.model.data_model;
     grid.model.set('_data', testData.set2);
+    dataModel = grid.model.data_model
     const mock = jest.spyOn(grid.model.comm, 'send');
     dataModel.setData('body', 1, 0, 1.23);
     expect(mock).toBeCalled();

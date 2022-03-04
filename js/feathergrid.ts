@@ -7,6 +7,8 @@ import {
   BasicSelectionModel,
   CellRenderer,
   RendererMap,
+  Private,
+  HyperlinkRenderer,
 } from '@lumino/datagrid';
 import { CommandRegistry } from '@lumino/commands';
 import { toArray } from '@lumino/algorithm';
@@ -24,6 +26,7 @@ import { DataGridModel as BackBoneModel } from './datagrid';
 
 import '@lumino/default-theme/style/datagrid.css';
 import '../style/feathergrid.css';
+import { Platform } from '@lumino/domutils';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T };
@@ -126,12 +129,12 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
    *
    * @param event - The mouse down event of interest.
    */
-  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     const hit = grid.hitTest(event.clientX, event.clientY);
     const hitRegion = hit.region;
     const buttonSize = HeaderRenderer.iconWidth * 1.5;
     const buttonPadding = HeaderRenderer.buttonPadding;
+    const accel = Platform.accelKey(event);
 
     this._mouseIsDown = true;
 
@@ -150,7 +153,7 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
       const isMenuRow =
         (hit.region === 'column-header' &&
           hit.row ==
-            this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
+          this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
         (hit.region === 'corner-header' && hit.row === 0);
 
       const isMenuClick =
@@ -163,25 +166,68 @@ class FeatherGridMouseHandler extends BasicMouseHandler {
       if (isMenuClick) {
         this._grid.contextMenu.open(grid, {
           ...hit,
-          x: event.clientX,
-          y: event.clientY,
+          x: event.clientX + window.scrollX,
+          y: event.clientY + window.scrollY,
         });
         return;
       }
     }
-    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
+    if (grid) {
+      // Create cell config object.
+      const config = Private.createCellConfigObject(grid, hit);
+
+      // Bail if no cell config object is defined for the region.
+      if (!config) {
+        return;
+      }
+
+      // Retrieve cell renderer.
+      const renderer = grid.cellRenderers.get(config!);
+
+      // Only process hyperlink renderers.
+      if (renderer instanceof HyperlinkRenderer) {
+        // Use the url param if it exists.
+        let url = CellRenderer.resolveOption(renderer.url, config!);
+        // Otherwise assume cell value is the URL.
+        if (!url) {
+          const format = TextRenderer.formatGeneric();
+          url = format(config!);
+        }
+
+        // Emit message to open the hyperlink only if user hit Ctrl+Click.
+        if (accel) {
+          // Emit event that will be caught in case window.open is blocked
+          window.postMessage(
+            {
+              id: 'ipydatagrid::hyperlinkclick',
+              url,
+            },
+            '*',
+          );
+          // Reset cursor default after clicking
+          const cursor = this.cursorForHandle('none');
+          grid.viewport.node.style.cursor = cursor;
+        }
+      }
+    }
     super.onMouseDown(grid, event);
   }
 
-  //@ts-ignore added so we don't have to add basicmousehandler.ts fork
   onMouseUp(grid: DataGrid, event: MouseEvent): void {
     this._mouseIsDown = false;
-    //@ts-ignore added so we don't have to add basicmousehandler.ts fork
     super.onMouseUp(grid, event);
   }
 
   get mouseIsDown(): boolean {
     return this._mouseIsDown;
+  }
+
+  get isResizing(): boolean {
+    return (
+      this.pressData !== null &&
+      (this.pressData.type == 'column-resize' ||
+        this.pressData.type == 'row-resize')
+    );
   }
 
   /**
@@ -248,7 +294,6 @@ export class FeatherGrid extends Widget {
    */
   messageHook(handler: IMessageHandler, msg: Message): boolean {
     if (handler === this.grid.viewport) {
-      // //@ts-ignore added so we don't have to add basicmousehandler.ts fork
       const mouseHandler = this.grid
         .mouseHandler as unknown as FeatherGridMouseHandler;
 
@@ -908,8 +953,8 @@ export class FeatherGrid extends Widget {
     return this._renderers.hasOwnProperty(columnName)
       ? this._renderers[columnName]
       : cellRegion === 'row-header'
-      ? this._rowHeaderRenderer
-      : this._defaultRenderer;
+        ? this._rowHeaderRenderer
+        : this._defaultRenderer;
   }
 
   private _updateGridRenderers() {
@@ -921,11 +966,11 @@ export class FeatherGrid extends Widget {
 
   private _updateColumnWidths() {
     const columnWidths = this._columnWidths;
-    // @ts-ignore added so we don't have to add basicmousehandler.ts fork
-    const mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler;
+    const mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler | null;
 
-    // Do not want this callback to be executed when user resizes using the mouse
-    if (mouseHandler.mouseIsDown) {
+    // Check we have a mouse handler
+    if (mouseHandler && mouseHandler.isResizing) {
+      // Do not want this callback to be executed when user resizes using the mouse
       return;
     }
 

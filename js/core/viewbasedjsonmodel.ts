@@ -30,8 +30,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
   constructor(data: ViewBasedJSONModel.IData) {
     super();
     this.updateDataset(data);
-    //@ts-ignore
-    window.jsonview = this;
+
     this._transformState = new TransformStateManager();
     // Repaint grid on transform state update
     // Note: This will also result in the `model-reset` signal being sent.

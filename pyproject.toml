@@ -3,7 +3,7 @@ requires = [
     "setuptools>=44",
     "wheel>=0.30",
     "jupyter_packaging~=0.9.0",
-    "jupyterlab~=3.0",
+    "jupyterlab~=3.0"
 ]
 build-backend = "setuptools.build_meta"
 
