@@ -189,6 +189,18 @@ _data_serialization = {
 }
 
 
+def _widgets_dict_to_json(x, obj):
+    return {
+        str(k): widget_serialization["to_json"](v, obj) for k, v in x.items()
+    }
+
+
+_widgets_dict_serialization = {
+    "from_json": widget_serialization["from_json"],
+    "to_json": _widgets_dict_to_json,
+}
+
+
 class DataGrid(DOMWidget):
 
     """A Grid Widget with filter, sort and selection capabilities.
@@ -322,7 +334,7 @@ class DataGrid(DOMWidget):
     _data = Dict().tag(sync=True, **_data_serialization)
 
     renderers = Dict(Instance(CellRenderer)).tag(
-        sync=True, **widget_serialization
+        sync=True, **_widgets_dict_serialization
     )
     default_renderer = Instance(CellRenderer).tag(
         sync=True, **widget_serialization
@@ -336,14 +348,17 @@ class DataGrid(DOMWidget):
     selection_mode = Enum(
         default_value="none", values=["row", "column", "cell", "none"]
     ).tag(sync=True)
-    selections = List(Dict()).tag(sync=True, **widget_serialization)
+    selections = List(Dict()).tag(sync=True)
     editable = Bool(False).tag(sync=True)
     column_widths = Dict({}).tag(sync=True, **_data_serialization)
-    grid_style = Dict(allow_none=True).tag(sync=True, **widget_serialization)
+    column_widths = Dict({}).tag(sync=True)
+    grid_style = Dict(allow_none=True).tag(
+        sync=True, **_widgets_dict_serialization
+    )
     auto_fit_columns = Bool(False).tag(sync=True)
     auto_fit_params = Dict(
         {"area": "all", "padding": 30, "numCols": None}, allow_none=False
-    ).tag(sync=True, **widget_serialization)
+    ).tag(sync=True)
 
     def __init__(self, dataframe, **kwargs):
         # Setting default index name if not explicitly
