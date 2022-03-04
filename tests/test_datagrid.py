@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 
-from ipydatagrid import DataGrid
+from ipydatagrid import DataGrid, TextRenderer
+from ipydatagrid.datagrid import _widgets_dict_serialization
 
 
 @pytest.fixture()
@@ -236,3 +237,20 @@ def test_setting_column_widths_on_multiindex_grid():
     col_widths = {("Parent Column", "SubCol 1"): 100}
 
     grid.column_widths = col_widths
+
+
+def test_renderers_serialization():
+    col_names = [("Parent Column", "SubCol 1"), ("Parent Column", "SubCol 2")]
+    df = pd.DataFrame(data={i: [1, 2, 3] for i in col_names}, columns=col_names)
+
+    grid = DataGrid(
+        df,
+        layout={"height": "200px"},
+        renderers={("Parent Column", "SubCol 1"): TextRenderer()},
+    )
+
+    serialized_renderers = _widgets_dict_serialization["to_json"](
+        grid.renderers, grid
+    )
+
+    assert isinstance(list(serialized_renderers.keys())[0], str)
