@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 8 * * *"
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 concurrency:
   group: check-${{ github.ref }}
   cancel-in-progress: true
