@@ -97,7 +97,7 @@ jobs:
           skip_existing: true
           user: __token__
           password: ${{ secrets.pypi_password }}
-  
+
   visual-regression-tests:
     runs-on: ubuntu-latest
 
