@@ -3,7 +3,7 @@ module.exports = {
     '^.+\\.tsx?$': 'ts-jest',
     '^.+\\.js$': 'babel-jest',
   },
-  transformIgnorePatterns: ['node_modules/?!(@jupyter-widgets)'],
+  transformIgnorePatterns: ['node_modules/?!(@jupyter-widgets)', 'ui-tests/'],
   setupFiles: ['./tests/js/setupFile.js'],
   moduleNameMapper: {
     '\\.(css|less)$': '<rootDir>/__mocks__/styleMock.js',
