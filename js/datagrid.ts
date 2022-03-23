@@ -93,7 +93,7 @@ export class DataGridModel extends DOMWidgetModel {
     });
   }
 
-  updateDataSync(sender: any, msg: any) {
+  updateDataSync(sender: any, msg: any): void {
     switch (msg.type) {
       case 'row-indices-updated':
         this.set('_visible_rows', msg.indices);
@@ -125,12 +125,12 @@ export class DataGridModel extends DOMWidgetModel {
     }
   }
 
-  syncTransformState(sender: any, value: any) {
+  syncTransformState(sender: any, value: any): void {
     this.set('_transforms', value.transforms);
     this.save_changes();
   }
 
-  updateData() {
+  updateData(): void {
     const data = this.data;
     const schema = Private.createSchema(data);
 
@@ -153,14 +153,24 @@ export class DataGridModel extends DOMWidgetModel {
     this.updateSelectionModel();
   }
 
-  updateTransforms() {
+  updateTransforms(): void {
     if (this.selectionModel) {
       this.selectionModel.clear();
     }
-    this.data_model.replaceTransforms(this.get('_transforms'));
+
+    const model_transforms = this.get('_transforms');
+
+    // If we have any transforms, we disable grouping (rows only).
+    if (model_transforms.length > 0) {
+      this.data_model.hasMergedRows = false;
+    } else {
+      this.data_model.hasMergedRows = true;
+    }
+
+    this.data_model.replaceTransforms(model_transforms);
   }
 
-  updateSelectionModel() {
+  updateSelectionModel(): void {
     if (this.selectionModel) {
       this.selectionModel.clear();
     }
@@ -353,7 +363,7 @@ export class DataGridView extends DOMWidgetView {
     this.el = this.pWidget.node;
   }
 
-  manageResizeEvent = () => {
+  manageResizeEvent = (): void => {
     MessageLoop.postMessage(this.pWidget, Widget.ResizeMessage.UnknownSize);
   };
 
@@ -369,7 +379,7 @@ export class DataGridView extends DOMWidgetView {
     }
   }
 
-  render() {
+  render(): Promise<void> {
     this.el.classList.add('datagrid-container');
     window.addEventListener('resize', this.manageResizeEvent);
     this.once('remove', () => {
