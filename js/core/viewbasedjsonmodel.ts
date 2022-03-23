@@ -642,7 +642,6 @@ export class ViewBasedJSONModel extends MutableDataModel {
   private _rowCellGroups: CellGroup[];
   private _columnCellGroups: CellGroup[];
   private _hasMergedRows = true;
-  // private _hasMergedCols: boolean;
 }
 
 /**
