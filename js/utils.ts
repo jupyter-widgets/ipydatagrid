@@ -95,12 +95,21 @@ export namespace ArrayUtils {
     const retArr = [];
     let curCol = [];
 
-    let prevVal = undefined;
     for (let i = 0; i < primaryKey.length; i++) {
+      let prevVal = undefined;
       let curMergedRange: any = [];
       for (let j = 0; j < data.length; j++) {
         const curVal = data[j][primaryKey[i]];
-        if (curMergedRange.length == 0 || prevVal == curVal) {
+        const [parentGroupStart, parentGroupEnd] = getParentGroupPosition(
+          retArr,
+          i,
+          j,
+        );
+        if (
+          (curMergedRange.length == 0 || prevVal == curVal) &&
+          j >= parentGroupStart &&
+          j <= parentGroupEnd
+        ) {
           curMergedRange.push([j, i]);
         } else {
           curCol.push(curMergedRange);
@@ -114,6 +123,29 @@ export namespace ArrayUtils {
     }
 
     return retArr;
+  }
+
+  function getParentGroupPosition(
+    retArr: any,
+    rowNum: number,
+    colNum: number,
+  ): number[] {
+    for (let i = 0; i < retArr.length; i++) {
+      const curMergedGroup = retArr[i];
+      const curMergedGroupLen = retArr[i].length;
+      let firstRow: number | undefined = undefined;
+      for (let j = 0; i < curMergedGroup.length; j++) {
+        const [curRow, curCol] = curMergedGroup[j];
+        firstRow = firstRow ?? curRow;
+        if (curRow === rowNum && colNum === curCol - 1) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          return [firstRow!, firstRow! + curMergedGroupLen - 1]; // return [startRow, endRow]
+        }
+      }
+
+      firstRow = undefined;
+    }
+    return [];
   }
 
   /**
