@@ -134,7 +134,7 @@ export namespace ArrayUtils {
       const curMergedGroup = retArr[i];
       const curMergedGroupLen = retArr[i].length;
       let firstRow: number | undefined = undefined;
-      for (let j = 0; i < curMergedGroup.length; j++) {
+      for (let j = 0; j < curMergedGroup.length; j++) {
         const [curRow, curCol] = curMergedGroup[j];
         firstRow = firstRow ?? curRow;
         if (curRow === rowNum && colNum === curCol - 1) {
