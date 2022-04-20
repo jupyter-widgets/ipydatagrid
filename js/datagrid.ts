@@ -360,19 +360,31 @@ export class DataGridView extends DOMWidgetView {
     );
   };
 
-  processPhosphorMessage(msg: Message): void {
-    super.processPhosphorMessage(msg);
+  // ipywidgets 7 compatibility
+  _processLuminoMessage(
+    msg: Message,
+    _super: DOMWidgetView['processLuminoMessage'],
+  ): void {
+    _super.call(this, msg);
 
     switch (msg.type) {
       case 'after-show':
-        if (this.pWidget.isVisible) {
+        if (this.luminoWidget.isVisible) {
           this.manageResizeEvent();
         }
         break;
     }
   }
 
-  render() {
+  processLuminoMessage(msg: Message): void {
+    this._processLuminoMessage(msg, super.processLuminoMessage);
+  }
+
+  processPhosphorMessage(msg: Message): void {
+    this._processLuminoMessage(msg, super.processLuminoMessage);
+  }
+
+  render(): Promise<void> {
     this.el.classList.add('datagrid-container');
     window.addEventListener('resize', this.manageResizeEvent);
     this.once('remove', () => {
