@@ -359,16 +359,12 @@ class DataGrid(DOMWidget):
         {"area": "all", "padding": 30, "numCols": None}, allow_none=False
     ).tag(sync=True)
 
-    def __init__(self, dataframe, **kwargs):
+    def __init__(self, dataframe, index_name=None, **kwargs):
         # Setting default index name if not explicitly
         # set by the user.
-        if "index_name" in kwargs:
-            self._index_name = kwargs["index_name"]
-        else:
-            self._index_name = None
-
+        self._index_name = index_name
         self.data = dataframe
-        super().__init__()
+        super().__init__(**kwargs)
         self._cell_click_handlers = CallbackDispatcher()
         self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
