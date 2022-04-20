@@ -360,7 +360,6 @@ class DataGrid(DOMWidget):
     ).tag(sync=True)
 
     def __init__(self, dataframe, **kwargs):
-        # print(kwargs)
         # Setting default index name if not explicitly
         # set by the user.
         if "index_name" in kwargs:
