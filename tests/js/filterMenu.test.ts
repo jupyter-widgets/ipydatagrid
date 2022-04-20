@@ -168,7 +168,7 @@ describe('.open()', () => {
     expect(dialog.columnIndex).toBe(openOptions.columnIndex);
     expect(dialog.columnDType).toBe(
       dialog.model.metadata(openOptions.region, 0, openOptions.columnIndex)[
-        'type'
+      'type'
       ],
     );
   });
