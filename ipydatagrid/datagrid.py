@@ -364,7 +364,7 @@ class DataGrid(DOMWidget):
         # set by the user.
         self._index_name = index_name
         self.data = dataframe
-        super().__init__()
+        super().__init__(**kwargs)
         self._cell_click_handlers = CallbackDispatcher()
         self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
