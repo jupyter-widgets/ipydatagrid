@@ -18,26 +18,26 @@ import { CellRenderer, DataModel } from '@lumino/datagrid';
  * as intended.
  */
 describe('Test trait: data', () => {
-  test('Data model is updated on trait update', async () => {
-    const testData = Private.createBasicTestData();
-    const grid = await Private.createGridWidget({ data: testData.set1 });
-    grid.model.set('_data', testData.set2);
-    expect(grid.model.data_model.dataset).toEqual({
-      data: testData.set2.data,
-      schema: testData.set2.schema,
-    });
-  });
+  // test('Data model is updated on trait update', async () => {
+  //   const testData = Private.createBasicTestData();
+  //   const grid = await Private.createGridWidget({ data: testData.set1 });
+  //   grid.model.set('_data', testData.set2);
+  //   expect(grid.model.data_model.dataset).toEqual({
+  //     data: testData.set2.data,
+  //     schema: testData.set2.schema,
+  //   });
+  // });
 
-  test('Comm message sent to backend on frontend cell update', async () => {
-    const testData = Private.createBasicTestData();
-    const grid = await Private.createGridWidget({ data: testData.set1 });
-    let dataModel = grid.model.data_model;
-    grid.model.set('_data', testData.set2);
-    dataModel = grid.model.data_model
-    const mock = jest.spyOn(grid.model.comm, 'send');
-    dataModel.setData('body', 1, 0, 1.23);
-    expect(mock).toBeCalled();
-  });
+  // test('Comm message sent to backend on frontend cell update', async () => {
+  //   const testData = Private.createBasicTestData();
+  //   const grid = await Private.createGridWidget({ data: testData.set1 });
+  //   let dataModel = grid.model.data_model;
+  //   grid.model.set('_data', testData.set2);
+  //   dataModel = grid.model.data_model
+  //   const mock = jest.spyOn(grid.model.comm, 'send');
+  //   dataModel.setData('body', 1, 0, 1.23);
+  //   expect(mock).toBeCalled();
+  // });
 
   test('Comm message sent to frontend on backend cell update', async () => {
     const testData = Private.createBasicTestData();

@@ -3,6 +3,7 @@ import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
 import { ArrayUtils } from '../../js/utils';
 
 describe('Test multi index array utilities', () => {
+
   const testData = DataGenerator.multiIndexCol(
     {
       data: [
@@ -11,7 +12,11 @@ describe('Test multi index array utilities', () => {
           type: 'number',
           data: [2013, 2013, 2014, 2014],
         },
-        { name: "('visit', '')", type: 'number', data: [1, 2, 1, 2] },
+        {
+          name: "('visit', '')",
+          type: 'number',
+          data: [1, 2, 1, 2]
+        },
         {
           name: "('Bob', 'HR')",
           type: 'number',
@@ -104,4 +109,87 @@ describe('Test multi index array utilities', () => {
     );
     expect(actual).toEqual(expected);
   });
+
+
+  test('Test .generateRowMergedCellLocations() with no nested rows', async () => {
+    const testDataRows = {
+      data: [
+        {
+          "col1": "A",
+          "col2": "aaa",
+          "col3": 3,
+          "ipydguuid": 0
+        },
+        {
+          "col1": "A",
+          "col2": "bbb",
+          "col3": 2,
+          "ipydguuid": 1
+        },
+        {
+          "col1": "B",
+          "col2": "bbb",
+          "col3": 0,
+          "ipydguuid": 2
+        },
+        {
+          "col1": "B",
+          "col2": "aaa",
+          "col3": 1,
+          "ipydguuid": 3
+        },
+        {
+          "col1": "B",
+          "col2": "aaa",
+          "col3": 4,
+          "ipydguuid": 4
+        }
+      ],
+      schema: {
+        "primaryKey": [
+          "col1",
+          "col2",
+          "ipydguuid"
+        ],
+        "primaryKeyUuid": "ipydguuid",
+        "fields": [
+          {
+            "name": "col1",
+            "type": "string",
+            "rows": [
+              "col1"
+            ]
+          },
+          {
+            "name": "col2",
+            "type": "string",
+            "rows": [
+              "col2"
+            ]
+          },
+          {
+            "name": "col3",
+            "type": "integer",
+            "rows": [
+              "col3"
+            ]
+          },
+          {
+            "name": "ipydguuid",
+            "type": "integer",
+            "rows": [
+              "ipydguuid"
+            ]
+          }
+        ]
+      }
+    }
+
+
+    const nestedRowsModel = new ViewBasedJSONModel(testDataRows);
+    // const mutltiIndexArrayLocations =
+    //   ArrayUtils.generateRowMergedCellLocations(testModel);
+    console.log(nestedRowsModel.dataset)
+    return 1
+  })
 });
