@@ -3,7 +3,7 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: '0 8 * * *'
 
 defaults:
   run:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - uses: pre-commit/action@v3.0.0
 
   test:
@@ -30,18 +30,18 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.10"
-          - "3.9"
-          - "3.8"
-          - "3.7"
-          - "3.6"
+          - '3.10'
+          - '3.9'
+          - '3.8'
+          - '3.7'
+          - '3.6'
           - pypy3.7
     steps:
       - uses: actions/checkout@v3
       - name: setup python for tox
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - name: install tox
         run: python -m pip install tox
       - name: setup python for test ${{ matrix.py }}
@@ -77,7 +77,7 @@ jobs:
       - name: setup Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - name: install tox
         run: python -m pip install tox
       - name: run check for ${{ matrix.tox_env }}
@@ -91,7 +91,7 @@ jobs:
       - name: setup python to build package
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - name: install build
         run: python -m pip install build
       - uses: actions/checkout@v3
@@ -104,7 +104,7 @@ jobs:
           user: __token__
           password: ${{ secrets.pypi_password }}
 
-  visual-regression-tests:
+  visual-regression-tests-ipw7:
     runs-on: ubuntu-latest
 
     steps:
@@ -115,9 +115,58 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ipydatagrid-test
-          environment-file: test-environment.yaml
+          environment-file: test-environment-ipw7.yaml
           python-version: 3.9
-          mamba-version: "*"
+          mamba-version: '*'
+          auto-activate-base: false
+          channels: conda-forge
+
+      - name: Install the package
+        run: pip install -vv .
+
+      - name: Install Galata
+        run: |
+          yarn install
+          yarn playwright install chromium
+        working-directory: ui-tests
+
+      - name: Launch JupyterLab
+        run: yarn run start:detached
+        working-directory: ui-tests
+
+      - name: Wait for JupyterLab
+        uses: ifaxity/wait-on-action@v1
+        with:
+          resource: http-get://localhost:8888/api
+          timeout: 20000
+
+      - name: Run UI Tests
+        run: yarn run test
+        working-directory: ui-tests
+
+      - name: Upload UI Test artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ui-test-output
+          path: |
+            ui-tests/playwright-report
+            ui-tests/test-results
+
+  visual-regression-tests-ipw8:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: ipydatagrid-test
+          environment-file: test-environment-ipw8.yaml
+          python-version: 3.9
+          mamba-version: '*'
           auto-activate-base: false
           channels: conda-forge
 
