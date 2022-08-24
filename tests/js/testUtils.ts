@@ -155,7 +155,7 @@ export namespace DataGenerator {
 export class MockWidgetManager {
   create_view(model: any) {
     return new Promise((resolve, reject) => {
-      resolve(jest.fn());
+      resolve(new MockView());
     });
   }
   display_view(model: any) {
@@ -167,6 +167,10 @@ export class MockWidgetManager {
   callbacks(view?: WidgetView): ICallbacks {
     return {};
   }
+}
+
+class MockView {
+  on() { }
 }
 
 /**

@@ -389,7 +389,8 @@ export class DataGridView extends DOMWidgetView {
   }
 
   processPhosphorMessage(msg: Message): void {
-    this._processLuminoMessage(msg, super.processLuminoMessage);
+    //@ts-ignore needed for ipywidgets 7.x compatibility
+    this._processLuminoMessage(msg, super.processPhosphorMessage);
   }
 
   render(): Promise<void> {
