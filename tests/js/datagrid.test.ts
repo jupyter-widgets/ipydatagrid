@@ -12,6 +12,7 @@ import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
 import { Transform } from '../../js/core/transform';
 
 import { CellRenderer, DataModel } from '@lumino/datagrid';
+import { IClassicComm } from '@jupyter-widgets/base';
 
 /**
  * Tests that assigning new data to the `data` attribute of the widget behaves
@@ -34,7 +35,7 @@ describe('Test trait: data', () => {
     let dataModel = grid.model.data_model;
     grid.model.set('_data', testData.set2);
     dataModel = grid.model.data_model
-    const mock = jest.spyOn(grid.model.comm, 'send');
+    const mock = jest.spyOn((grid.model.comm as IClassicComm), 'send');
     dataModel.setData('body', 1, 0, 1.23);
     expect(mock).toBeCalled();
   });
