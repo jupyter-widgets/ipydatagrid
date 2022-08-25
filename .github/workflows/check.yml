@@ -115,7 +115,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ipydatagrid-test
-          environment-file: test-environment-ipw7.yaml
+          environment-file: test-environment-ipyw7.yaml
           python-version: 3.9
           mamba-version: '*'
           auto-activate-base: false
@@ -164,7 +164,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ipydatagrid-test
-          environment-file: test-environment-ipw8.yaml
+          environment-file: test-environment-ipyw8.yaml
           python-version: 3.9
           mamba-version: '*'
           auto-activate-base: false
