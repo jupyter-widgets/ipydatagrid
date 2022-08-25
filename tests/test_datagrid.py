@@ -142,6 +142,9 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
         ],
     }
 
+    # Pin pandas version to avoid potential errors due to differing versions
+    data_object["schema"]["pandas_version"] = "0.20.0"
+
     assert data_object == expected_output
 
 
