@@ -9,19 +9,21 @@ import { CellRenderer } from '@lumino/datagrid';
 
 import { JSONExt } from '@lumino/coreutils';
 
-import { MessageLoop, Message } from '@lumino/messaging';
+import { Message, MessageLoop } from '@lumino/messaging';
 
 import { Widget } from '@lumino/widgets';
 
 import {
   DOMWidgetModel,
   DOMWidgetView,
-  JupyterLuminoPanelWidget,
+  ICallbacks,
   ISerializers,
+  JupyterLuminoPanelWidget,
+  //@ts-ignore needed for ipywidgetx 7.x compatibility
+  JupyterPhosphorPanelWidget,
   resolvePromisesDict,
   unpack_models,
-  WidgetModel,
-  ICallbacks,
+  WidgetModel
 } from '@jupyter-widgets/base';
 
 import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
@@ -340,7 +342,8 @@ function unpack_data(
 
 export class DataGridView extends DOMWidgetView {
   _createElement(tagName: string) {
-    this.luminoWidget = new JupyterLuminoPanelWidget({ view: this });
+    const panelWidget = Private.getWidgetPanel();
+    this.luminoWidget = new panelWidget({ view: this });
     this._initializeTheme();
     return this.luminoWidget.node;
   }
@@ -723,15 +726,14 @@ export class DataGridView extends DOMWidgetView {
 }
 
 export {
-  TextRendererModel,
-  TextRendererView,
   BarRendererModel,
   BarRendererView,
   HyperlinkRendererModel,
-  HyperlinkRendererView,
+  HyperlinkRendererView, TextRendererModel,
+  TextRendererView
 } from './cellrenderer';
-
 export { VegaExprModel, VegaExprView } from './vegaexpr';
+
 
 export namespace DataGridModel {
   /**
@@ -758,6 +760,16 @@ export namespace DataGridModel {
  * The namespace for the module implementation details.
  */
 namespace Private {
+  export function getLuminoWidget(ipywidget: DOMWidgetView): any {
+    return ipywidget.pWidget ?? ipywidget.luminoWidget;
+  }
+
+  export function getWidgetPanel(): any {
+    //@ts-ignore needed for ipywidget 7.x compatibility
+    return JupyterLuminoPanelWidget ?? JupyterPhosphorPanelWidget;
+  }
+
+
   /**
    * Creates a valid JSON Table Schema from the schema provided by pandas.
    *
