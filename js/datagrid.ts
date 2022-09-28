@@ -348,6 +348,11 @@ export class DataGridView extends DOMWidgetView {
     return this.luminoWidget.node;
   }
 
+  // Added for ipywidgets 7.x compatibility
+  get pWidget(): any {
+    return this.luminoWidget;
+  }
+
   _setElement(el: HTMLElement) {
     if (this.el || el !== this.luminoWidget.node) {
       throw new Error('Cannot reset the DOM element.');
@@ -759,10 +764,6 @@ export namespace DataGridModel {
  * The namespace for the module implementation details.
  */
 namespace Private {
-  export function getLuminoWidget(ipywidget: DOMWidgetView): any {
-    return ipywidget.pWidget ?? ipywidget.luminoWidget;
-  }
-
   export function getWidgetPanel(): any {
     //@ts-ignore needed for ipywidget 7.x compatibility
     return JupyterLuminoPanelWidget ?? JupyterPhosphorPanelWidget;
