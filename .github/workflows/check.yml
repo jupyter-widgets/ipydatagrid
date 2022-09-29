@@ -128,11 +128,11 @@ jobs:
         run: |
           yarn install
           yarn playwright install chromium
-        working-directory: ui-tests
+        working-directory: ui-tests-ipw7
 
       - name: Launch JupyterLab
         run: yarn run start:detached
-        working-directory: ui-tests
+        working-directory: ui-tests-ipw7
 
       - name: Wait for JupyterLab
         uses: ifaxity/wait-on-action@v1
@@ -142,7 +142,7 @@ jobs:
 
       - name: Run UI Tests
         run: yarn run test
-        working-directory: ui-tests
+        working-directory: ui-tests-ipw7
 
       - name: Upload UI Test artifacts
         if: always()
@@ -150,8 +150,8 @@ jobs:
         with:
           name: ui-test-output
           path: |
-            ui-tests/playwright-report
-            ui-tests/test-results
+            ui-tests-ipw7/playwright-report
+            ui-tests-ipw7/test-results
 
   visual-regression-tests-ipw8:
     runs-on: ubuntu-latest
@@ -177,11 +177,11 @@ jobs:
         run: |
           yarn install
           yarn playwright install chromium
-        working-directory: ui-tests
+        working-directory: ui-tests-ipw8
 
       - name: Launch JupyterLab
         run: yarn run start:detached
-        working-directory: ui-tests
+        working-directory: ui-tests-ipw8
 
       - name: Wait for JupyterLab
         uses: ifaxity/wait-on-action@v1
@@ -191,7 +191,7 @@ jobs:
 
       - name: Run UI Tests
         run: yarn run test
-        working-directory: ui-tests
+        working-directory: ui-tests-ipw8
 
       - name: Upload UI Test artifacts
         if: always()
@@ -199,5 +199,5 @@ jobs:
         with:
           name: ui-test-output
           path: |
-            ui-tests/playwright-report
-            ui-tests/test-results
+            ui-tests-ipw8/playwright-report
+            ui-tests-ipw8/test-results
