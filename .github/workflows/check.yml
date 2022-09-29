@@ -114,7 +114,7 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: ipydatagrid-test
+          activate-environment: ipydatagrid-test-ipw7
           environment-file: test-environment-ipyw7.yaml
           python-version: 3.9
           mamba-version: '*'
@@ -163,7 +163,7 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: ipydatagrid-test
+          activate-environment: ipydatagrid-test-ipw8
           environment-file: test-environment-ipyw8.yaml
           python-version: 3.9
           mamba-version: '*'
