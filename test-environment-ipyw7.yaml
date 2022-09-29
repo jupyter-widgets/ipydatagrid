@@ -1,4 +1,4 @@
-name: ipydatagrid-test
+name: ipydatagrid-test-ipw7
 channels:
   - conda-forge
 dependencies:
