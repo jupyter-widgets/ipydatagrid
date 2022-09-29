@@ -13,7 +13,7 @@ defaults:
     shell: bash -l {0}
 
 jobs:
-  update-reference-screenshots:
+  update-reference-screenshots-ipw7:
     name: Update Galata References
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'update galata references') }}
     runs-on: ubuntu-latest
@@ -35,10 +35,10 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: ipydatagrid-test
-          environment-file: test-environment.yaml
+          activate-environment: ipydatagrid-test-ipw7
+          environment-file: test-environment-ipyw7.yaml
           python-version: 3.9
-          mamba-version: "*"
+          mamba-version: '*'
           auto-activate-base: false
           channels: conda-forge
 
@@ -48,4 +48,40 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           server_url: http-get://localhost:8888/
-          test_folder: ui-tests
+          test_folder: ui-tests-ipw7
+  update-reference-screenshots-ipw8:
+    name: Update Galata References
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'update galata references') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git to use https
+        run: git config --global hub.protocol https
+
+      - name: Checkout the branch from the PR that triggered the job
+        run: hub pr checkout ${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: ipydatagrid-test-ipw8
+          environment-file: test-environment-ipyw8.yaml
+          python-version: 3.9
+          mamba-version: '*'
+          auto-activate-base: false
+          channels: conda-forge
+
+      - name: Install the package
+        run: pip install -vv .
+      - uses: jupyterlab/maintainer-tools/.github/actions/update-snapshots@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          server_url: http-get://localhost:8888/
+          test_folder: ui-tests-ipw8
