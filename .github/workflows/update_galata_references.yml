@@ -35,11 +35,7 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-<<<<<<< HEAD
           activate-environment: ipydatagrid-test-ipw7
-=======
-          activate-environment: ipydatagrid-test
->>>>>>> Update Galata test env file name
           environment-file: test-environment-ipyw7.yaml
           python-version: 3.9
           mamba-version: '*'
@@ -75,7 +71,7 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: ipydatagrid-test-ipw8
+          activate-environment: ipydatagrid-test
           environment-file: test-environment-ipyw8.yaml
           python-version: 3.9
           mamba-version: '*'

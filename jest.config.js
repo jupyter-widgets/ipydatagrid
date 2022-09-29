@@ -4,7 +4,7 @@ module.exports = {
     '^.+\\.js$': 'babel-jest',
   },
   transformIgnorePatterns: ['node_modules/?!(@jupyter-widgets)'],
-  testPathIgnorePatterns: ['ui-tests/'],
+  testPathIgnorePatterns: ['ui-tests-ipw7/', 'ui-tests-ipw8/'],
   setupFiles: ['./tests/js/setupFile.js'],
   testEnvironment: 'jsdom',
   moduleNameMapper: {
