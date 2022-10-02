@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 import pytest
 
@@ -117,7 +119,6 @@ def test_get_cell_value_by_numerical_index(
 
 def test_data_object_generation(dataframe: pd.DataFrame) -> None:
     data_object = DataGrid.generate_data_object(dataframe, "ipydguuid", "key")
-    print(data_object)
     expected_output = {
         "data": [
             {"key": "One", "A": 1, "B": 4, "ipydguuid": 0},
@@ -258,3 +259,11 @@ def test_renderers_serialization():
     )
 
     assert isinstance(list(serialized_renderers.keys())[0], str)
+
+def test_serialization():
+    import datetime
+    from decimal import Decimal
+    df = pd.DataFrame({"text_col": ['a', 1, -2, 0.23, '11', math.nan, pd.NA, Decimal(0.00), datetime.date(2022, 8, 19), datetime.datetime.now()]})
+
+    # Should not raise an error
+    DataGrid(df)
