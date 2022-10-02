@@ -1,6 +1,8 @@
 # Copyright (c) Bloomberg.
 # Distributed under the terms of the Modified BSD License.
 
+import datetime
+import decimal
 from collections.abc import Iterator
 from copy import deepcopy
 from math import floor
@@ -169,18 +171,25 @@ def _data_to_json(x, obj):
     elif isinstance(x, (list, tuple)):
         return [_data_to_json(v, str(obj)) for v in x]
     else:
-        if isinstance(x, float):
+        if isinstance(x, (float, int)):
             if np.isnan(x):
                 return "$NaN$"
             elif np.isposinf(x):
                 return "$Infinity$"
             elif np.isneginf(x):
                 return "$NegInfinity$"
+            else:
+                return x
+        elif isinstance(x, decimal.Decimal):
+            return str(x)
+        elif isinstance(x, (datetime.datetime, datetime.date)):
+            return x.isoformat()
         elif x is pd.NaT:
             return "$NaT$"
         elif pd.isna(x):
             return "$NaN$"
-        return x
+        else:
+            return str(x)
 
 
 _data_serialization = {
