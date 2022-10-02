@@ -260,10 +260,27 @@ def test_renderers_serialization():
 
     assert isinstance(list(serialized_renderers.keys())[0], str)
 
+
 def test_serialization():
     import datetime
     from decimal import Decimal
-    df = pd.DataFrame({"text_col": ['a', 1, -2, 0.23, '11', math.nan, pd.NA, Decimal(0.00), datetime.date(2022, 8, 19), datetime.datetime.now()]})
+
+    df = pd.DataFrame(
+        {
+            "text_col": [
+                "a",
+                1,
+                -2,
+                0.23,
+                "11",
+                math.nan,
+                pd.NA,
+                Decimal(0.00),
+                datetime.date(2022, 8, 19),
+                datetime.datetime.now(),
+            ]
+        }
+    )
 
     # Should not raise an error
     DataGrid(df)
