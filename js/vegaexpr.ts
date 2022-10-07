@@ -1,16 +1,3 @@
-(((cell.value[1]=='berry')&&(cell.metadata.data['column 1']['key']==11))?'limegreen':'pink') vegaexpr.js:64
-
-(((cell.value[1]=='berry')&&((cell.row, 'column 1')['key']==11))?'limegreen':'pink') vegaexpr.js:70
-
-
-
-
-(((cell.value[1]=='berry')&&(cell.metadata.data['column 1']['key']==11))?'limegreen':'pink') vegaexpr.js:64
-
-(((cell.value[1]=='berry')&&(cell.metadata.data(cell.row, 'column 1')['key']==11))?'limegreen':'pink') vegaexpr.js:73
-
-
-
 // Copyright (c) Bloomberg
 // Distributed under the terms of the Modified BSD License.
 
