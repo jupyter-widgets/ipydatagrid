@@ -1,3 +1,16 @@
+(((cell.value[1]=='berry')&&(cell.metadata.data['column 1']['key']==11))?'limegreen':'pink') vegaexpr.js:64
+
+(((cell.value[1]=='berry')&&((cell.row, 'column 1')['key']==11))?'limegreen':'pink') vegaexpr.js:70
+
+
+
+
+(((cell.value[1]=='berry')&&(cell.metadata.data['column 1']['key']==11))?'limegreen':'pink') vegaexpr.js:64
+
+(((cell.value[1]=='berry')&&(cell.metadata.data(cell.row, 'column 1')['key']==11))?'limegreen':'pink') vegaexpr.js:73
+
+
+
 // Copyright (c) Bloomberg
 // Distributed under the terms of the Modified BSD License.
 
@@ -54,19 +67,19 @@ export class VegaExprModel extends WidgetModel {
     return this._function(config, defaultValue, vegaFunctions.functionContext);
   }
 
-  _processRegex(match: string): string {
-    const parsedMatch = match.match(/\[(.*?)\]/g)!;
+  _processRegex(match: string, data: string): string {
+    const parsedMatch = data.match(/\[(.*?)\]/g)!;
     const column = parsedMatch[0];
+    const columnMatch = column.match(/\[(.*?)\]/)![1];
 
-    // Column indexing for regular element.
     if (parsedMatch.length === 1) {
-      return `(cell.row, ${column.match(/\[(.*?)\]/)![1]})`;
+      // Column indexing for regular element.
+      return `cell.metadata.data(cell.row, ${columnMatch})`;
+    } else {
+      // Column indexing for a compound element.
+      const rest = parsedMatch.splice(1);
+      return `cell.metadata.data(cell.row, ${columnMatch})${rest.join('')}`;
     }
-
-    const rest = parsedMatch.splice(1);
-
-    // Column indexing for a compound element.
-    return `(cell.row, ${column.match(/\[(.*?)\]/)![1]})${rest.join('')}`;
   }
 
   /**
@@ -77,7 +90,9 @@ export class VegaExprModel extends WidgetModel {
   private _augmentExpression(parsedValue: ParsedVegaExpr): ParsedVegaExpr {
     let codeToProcess = parsedValue.code;
     codeToProcess = codeToProcess.replace(
-      /(?<=cell.metadata.data)(\[(.*?)\])+(?=)/g,
+      //  The original regex below is not compatible with safari (missing lookbehind)
+      // /(?<=cell.metadata.data)(?<data>(\[(.*?)\])+)(?=)/g,
+      /cell.metadata.data(?<data>(\[(.*?)\])+)/g,
       this._processRegex,
     );
     parsedValue.code = codeToProcess;
