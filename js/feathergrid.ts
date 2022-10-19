@@ -1,32 +1,29 @@
-import { PanelLayout, Widget } from '@lumino/widgets';
-import { Message, IMessageHandler, MessageLoop } from '@lumino/messaging';
+import { toArray } from '@lumino/algorithm';
+import { CommandRegistry } from '@lumino/commands';
 import {
-  BasicMouseHandler,
-  TextRenderer,
-  DataModel,
   BasicSelectionModel,
   CellRenderer,
+  DataGrid,
+  DataModel,
   RendererMap,
-  Private,
-  HyperlinkRenderer,
+  TextRenderer,
 } from '@lumino/datagrid';
-import { CommandRegistry } from '@lumino/commands';
-import { toArray } from '@lumino/algorithm';
-import { Signal, ISignal } from '@lumino/signaling';
-import { DataGrid } from '@lumino/datagrid';
-import { HeaderRenderer } from './core/headerRenderer';
+import { IMessageHandler, Message, MessageLoop } from '@lumino/messaging';
+import { ISignal, Signal } from '@lumino/signaling';
+import { PanelLayout, Widget } from '@lumino/widgets';
 import { InteractiveFilterDialog } from './core/filterMenu';
 import { FeatherGridContextMenu } from './core/gridContextMenu';
-import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
+import { HeaderRenderer } from './core/headerRenderer';
 import { Transform } from './core/transform';
-import { Theme } from './utils';
+import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
 import { KeyHandler } from './keyhandler';
+import { MouseHandler as FeatherGridMouseHandler } from './mousehandler';
+import { Theme } from './utils';
 
 import { DataGridModel as BackBoneModel } from './datagrid';
 
 import '@lumino/default-theme/style/datagrid.css';
 import '../style/feathergrid.css';
-import { Platform } from '@lumino/domutils';
 
 // Shorthand for a string->T mapping
 type Dict<T> = { [keys: string]: T };
@@ -109,138 +106,6 @@ const themeVariables: Map<string, string[]> = new Map([
   ['--ipydatagrid-filter-dlg-textcolor', ['black', 'white']],
   ['--ipydatagrid-filter-dlg-bgcolor', ['white', 'black']],
 ]);
-
-class FeatherGridMouseHandler extends BasicMouseHandler {
-  /**
-   * Construct a new datagrid mouse handler.
-   *
-   * @param grid - The FeatherGrid object for which mouse events are handled.
-   */
-  constructor(grid: FeatherGrid) {
-    super();
-
-    this._grid = grid;
-  }
-
-  /**
-   * Handle the mouse down event for the data grid.
-   *
-   * @param grid - The data grid of interest.
-   *
-   * @param event - The mouse down event of interest.
-   */
-  onMouseDown(grid: DataGrid, event: MouseEvent): void {
-    const hit = grid.hitTest(event.clientX, event.clientY);
-    const hitRegion = hit.region;
-    const buttonSize = HeaderRenderer.iconWidth * 1.5;
-    const buttonPadding = HeaderRenderer.buttonPadding;
-    const accel = Platform.accelKey(event);
-
-    this._mouseIsDown = true;
-
-    // Send cell clicked signal
-    if (hit.region !== 'void') {
-      this._cellClicked.emit(hit);
-    }
-
-    if (hitRegion === 'corner-header' || hitRegion === 'column-header') {
-      const columnWidth = grid.columnSize(
-        hitRegion === 'corner-header' ? 'row-header' : 'body',
-        hit.column,
-      );
-      const rowHeight = grid.rowSize('column-header', hit.row);
-
-      const isMenuRow =
-        (hit.region === 'column-header' &&
-          hit.row ==
-          this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
-        (hit.region === 'corner-header' && hit.row === 0);
-
-      const isMenuClick =
-        hit.x > columnWidth - buttonSize - buttonPadding &&
-        hit.x < columnWidth - buttonPadding &&
-        hit.y > rowHeight - buttonSize - buttonPadding &&
-        hit.y < rowHeight - buttonPadding &&
-        isMenuRow;
-
-      if (isMenuClick) {
-        this._grid.contextMenu.open(grid, {
-          ...hit,
-          x: event.clientX + window.scrollX,
-          y: event.clientY + window.scrollY,
-        });
-        return;
-      }
-    }
-    if (grid) {
-      // Create cell config object.
-      const config = Private.createCellConfigObject(grid, hit);
-
-      // Bail if no cell config object is defined for the region.
-      if (!config) {
-        return;
-      }
-
-      // Retrieve cell renderer.
-      const renderer = grid.cellRenderers.get(config!);
-
-      // Only process hyperlink renderers.
-      if (renderer instanceof HyperlinkRenderer) {
-        // Use the url param if it exists.
-        let url = CellRenderer.resolveOption(renderer.url, config!);
-        // Otherwise assume cell value is the URL.
-        if (!url) {
-          const format = TextRenderer.formatGeneric();
-          url = format(config!);
-        }
-
-        // Emit message to open the hyperlink only if user hit Ctrl+Click.
-        if (accel) {
-          // Emit event that will be caught in case window.open is blocked
-          window.postMessage(
-            {
-              id: 'ipydatagrid::hyperlinkclick',
-              url,
-            },
-            '*',
-          );
-          // Reset cursor default after clicking
-          const cursor = this.cursorForHandle('none');
-          grid.viewport.node.style.cursor = cursor;
-        }
-      }
-    }
-    super.onMouseDown(grid, event);
-  }
-
-  onMouseUp(grid: DataGrid, event: MouseEvent): void {
-    this._mouseIsDown = false;
-    super.onMouseUp(grid, event);
-  }
-
-  get mouseIsDown(): boolean {
-    return this._mouseIsDown;
-  }
-
-  get isResizing(): boolean {
-    return (
-      this.pressData !== null &&
-      (this.pressData.type == 'column-resize' ||
-        this.pressData.type == 'row-resize')
-    );
-  }
-
-  /**
-   * A signal emitted when a grid cell is clicked.
-   */
-  get cellClicked(): ISignal<this, DataGrid.HitTestResult> {
-    return this._cellClicked;
-  }
-
-  private _grid: FeatherGrid;
-  private _mouseIsDown = false;
-  private _cellClicked = new Signal<this, DataGrid.HitTestResult>(this);
-}
 
 export class FeatherGrid extends Widget {
   constructor(options: DataGrid.IOptions = {}) {
@@ -953,8 +818,8 @@ export class FeatherGrid extends Widget {
     return this._renderers.hasOwnProperty(columnName)
       ? this._renderers[columnName]
       : cellRegion === 'row-header'
-        ? this._rowHeaderRenderer
-        : this._defaultRenderer;
+      ? this._rowHeaderRenderer
+      : this._defaultRenderer;
   }
 
   private _updateGridRenderers() {
@@ -966,7 +831,8 @@ export class FeatherGrid extends Widget {
 
   private _updateColumnWidths() {
     const columnWidths = this._columnWidths;
-    const mouseHandler = this.grid.mouseHandler as FeatherGridMouseHandler | null;
+    const mouseHandler = this.grid
+      .mouseHandler as FeatherGridMouseHandler | null;
 
     // Check we have a mouse handler
     if (mouseHandler && mouseHandler.isResizing) {
