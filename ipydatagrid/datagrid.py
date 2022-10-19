@@ -412,7 +412,12 @@ class DataGrid(DOMWidget):
     @property
     def data(self):
         trimmed_primary_key = self._data["schema"]["primaryKey"][:-1]
-        df = pd.DataFrame(self._data["data"])
+        if self._data["data"]:
+            df = pd.DataFrame(self._data["data"])
+        else:
+            df = pd.DataFrame(
+                {value["name"]: [] for value in self._data["schema"]["fields"]}
+            )
         final_df = df.set_index(trimmed_primary_key)
         final_df = final_df[final_df.columns[:-1]]
         return final_df
