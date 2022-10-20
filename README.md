@@ -71,7 +71,8 @@ For a development installation:
 ```bash
 git clone https://github.com/Bloomberg/ipydatagrid.git
 cd ipydatagrid
-pip install -e ".[dev]"
+conda install ipywidgets=8 jupyterlab
+pip install -ve .
 ```
 
 Enabling development install for Jupyter notebook:
