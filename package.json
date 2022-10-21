@@ -38,7 +38,7 @@
     "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development True .",
     "build:lib": "tsc",
-    "build:nbextension": "webpack --mode=production",
+    "build:nbextension": "webpack --mode=production --no-devtool",
     "build:widget-examples": "cd widget-examples/basic && webpack --mode=production",
     "build:all": "yarn run build:labextension && yarn run build:nbextension && yarn run build:widget-examples",
     "clean": "rimraf dist && yarn run clean:lib && yarn run clean:labextension && yarn run clean:nbextension",
