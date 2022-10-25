@@ -153,9 +153,9 @@ export class InteractiveFilterDialog extends BoxPanel {
       this._mode === 'condition'
         ? <Transform.FilterValue>this._filterValue
         : this._uniqueValueStateManager.getValues(
-            this.region,
-            this._columnIndex,
-          );
+          this.region,
+          this._columnIndex,
+        );
 
     // Construct transform
     const transform: Transform.TransformSpec = {
@@ -461,6 +461,11 @@ export class InteractiveFilterDialog extends BoxPanel {
   protected _evtMouseDown(event: MouseEvent) {
     // Close the menu if a click is detected anywhere else
     if (!ElementExt.hitTest(this.node, event.clientX, event.clientY)) {
+      // FireFox will register a click event for an ephemeral Option element,
+      // and the hitTest will have x,y coordinates of (0,0).
+      if ((event.target as HTMLElement).tagName === 'OPTION') {
+        return;
+      }
       this.close();
     }
   }
@@ -590,8 +595,8 @@ export class InteractiveFilterDialog extends BoxPanel {
           background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
           visibility:
             this._filterOperator === 'empty' ||
-            this._filterOperator === 'notempty' ||
-            this._mode === 'value'
+              this._filterOperator === 'notempty' ||
+              this._mode === 'value'
               ? 'hidden'
               : 'visible',
         },
