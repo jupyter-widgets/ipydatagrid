@@ -460,12 +460,10 @@ export class InteractiveFilterDialog extends BoxPanel {
    */
   protected _evtMouseDown(event: MouseEvent) {
     // Close the menu if a click is detected anywhere else
-    if (!ElementExt.hitTest(this.node, event.clientX, event.clientY)) {
-      // FireFox will register a click event for an ephemeral Option element,
-      // and the hitTest will have x,y coordinates of (0,0).
-      if ((event.target as HTMLElement).tagName === 'OPTION') {
-        return;
-      }
+    if (
+      !ElementExt.hitTest(this.node, event.clientX, event.clientY) &&
+      !this.node.contains(event.target as HTMLElement)
+    ) {
       this.close();
     }
   }
