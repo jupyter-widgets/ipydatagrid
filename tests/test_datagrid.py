@@ -40,9 +40,26 @@ def test_selections(clear: bool, dataframe: pd.DataFrame) -> None:
         ]
 
 
-def test_data_getter(dataframe) -> None:
+@pytest.mark.parametrize("drop_rows", [True, False])
+def test_data_getter(drop_rows: bool, dataframe: pd.DataFrame) -> None:
+    """Testing data getter of DataGrid to check it can be called when there is
+    data and when there isn't data (i.e. all rows have been deleted in the
+    dataframe).
+
+    Args:
+        drop_rows (bool): boolean determining whether to drop rows in dataframe.
+        dataframe (pd.DataFrame): initial dataframe passed.
+    """
     grid = DataGrid(dataframe)
-    assert grid.data.equals(dataframe)
+    if drop_rows:
+        grid.data = grid.data.drop(["One", "Two", "Three"])  # Drop all rows
+        grid_data = grid.data  # calling data getter
+        assert list(grid_data.columns) == ["A", "B"]
+        assert grid_data.index.name == "key"
+        assert list(grid_data.values) == []
+    else:
+        grid_data = grid.data
+        assert grid_data.equals(dataframe)
 
 
 def test_data_setter(dataframe) -> None:
