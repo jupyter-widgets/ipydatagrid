@@ -8,8 +8,6 @@ import { DataModel } from '@lumino/datagrid';
 
 import { Signal, ISignal } from '@lumino/signaling';
 
-import { ElementExt } from '@lumino/domutils';
-
 import { Message, MessageLoop, ConflatableMessage } from '@lumino/messaging';
 
 import { BasicMouseHandler } from '@lumino/datagrid';
@@ -460,10 +458,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    */
   protected _evtMouseDown(event: MouseEvent) {
     // Close the menu if a click is detected anywhere else
-    if (
-      !ElementExt.hitTest(this.node, event.clientX, event.clientY) &&
-      !this.node.contains(event.target as HTMLElement)
-    ) {
+    if (!this.node.contains(event.target as HTMLElement)) {
       this.close();
     }
   }
