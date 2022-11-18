@@ -260,7 +260,7 @@ class DataGrid(DOMWidget):
         Dict to specify custom column sizes
         The keys (strings) indicate the names of the columns
         The values (integers) indicate the widths
-    auto_fit_columns : Bool (default: True)
+    auto_fit_columns : Bool (default: False)
         Specify whether column width should automatically be
         determined by the grid
     auto_fit_params : Dict. Specify column auto fit parameters.
