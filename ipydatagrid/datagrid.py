@@ -165,36 +165,37 @@ class SelectionHelper:
 
 
 # modified from ipywidgets original
-def _data_to_json(x, _obj):
+def _data_to_json(x):
     if isinstance(x, dict):
-        return {str(k): _data_to_json(v, _obj) for k, v in x.items()}
-    elif isinstance(x, (list, tuple)):
-        return [_data_to_json(v, _obj) for v in x]
-    else:
-        if isinstance(x, (float, int)):
-            if np.isnan(x):
-                return "$NaN$"
-            elif np.isposinf(x):
-                return "$Infinity$"
-            elif np.isneginf(x):
-                return "$NegInfinity$"
-            else:
-                return x
-        elif isinstance(x, decimal.Decimal):
-            return str(x)
-        elif isinstance(x, (datetime.datetime, datetime.date)):
-            return x.isoformat()
-        elif x is pd.NaT:
-            return "$NaT$"
-        elif pd.isna(x):
+        return {str(k): _data_to_json(v) for k, v in x.items()}
+    if isinstance(x, np.ndarray):
+        return _data_to_json(x.tolist())
+    if isinstance(x, (list, tuple)):
+        return [_data_to_json(v) for v in x]
+    if isinstance(x, int):
+        return x
+    if isinstance(x, float):
+        if np.isnan(x):
             return "$NaN$"
-        else:
-            return str(x)
+        if np.isposinf(x):
+            return "$Infinity$"
+        if np.isneginf(x):
+            return "$NegInfinity$"
+        return x
+    if isinstance(x, decimal.Decimal):
+        return str(x)
+    if isinstance(x, (datetime.datetime, datetime.date)):
+        return x.isoformat()
+    if x is pd.NaT:
+        return "$NaT$"
+    if pd.isna(x):
+        return "$NaN$"
+    return str(x)
 
 
 _data_serialization = {
     "from_json": widget_serialization["from_json"],
-    "to_json": _data_to_json,
+    "to_json": lambda x, _: _data_to_json(x),  # noqa: U101
 }
 
 

@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -295,9 +296,14 @@ def test_serialization():
                 Decimal(0.00),
                 datetime.date(2022, 8, 19),
                 datetime.datetime.now(),
+                [1, [2, 3], {4: 5}],
+                np.full((2, 3), {"foo": "bar"}),
+                np.full((3, 4, 5), 1.0),
             ]
         }
     )
 
     # Should not raise an error
-    DataGrid(df)
+    dg = DataGrid(df)
+
+    assert dg.data.to_json() == df.to_json()
