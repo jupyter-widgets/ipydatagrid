@@ -165,11 +165,11 @@ class SelectionHelper:
 
 
 # modified from ipywidgets original
-def _data_to_json(x, obj):
+def _data_to_json(x, _obj):
     if isinstance(x, dict):
-        return {str(k): _data_to_json(v, obj) for k, v in x.items()}
+        return {str(k): _data_to_json(v, _obj) for k, v in x.items()}
     elif isinstance(x, (list, tuple)):
-        return [_data_to_json(v, str(obj)) for v in x]
+        return [_data_to_json(v, _obj) for v in x]
     else:
         if isinstance(x, (float, int)):
             if np.isnan(x):
