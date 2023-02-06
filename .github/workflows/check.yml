@@ -110,13 +110,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipydatagrid-test-ipw7
+          environment-name: ipydatagrid-test-ipw7
           environment-file: test-environment-ipyw7.yaml
           python-version: 3.9
-          mamba-version: '*'
           auto-activate-base: false
           channels: conda-forge
 
@@ -159,13 +158,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipydatagrid-test-ipw8
+          environment-name:  ipydatagrid-test-ipw8
           environment-file: test-environment-ipyw8.yaml
           python-version: 3.9
-          mamba-version: '*'
           auto-activate-base: false
           channels: conda-forge
 
