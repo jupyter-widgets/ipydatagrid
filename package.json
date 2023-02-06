@@ -120,6 +120,42 @@
       "@jupyter-widgets/base": {
         "bundled": false,
         "singleton": true
+      },
+      "@lumino/algorithm": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/commands": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/coreutils": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/datagrid": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/default-theme": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/domutils": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/messaging": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/virtualdom": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@lumino/widgets": {
+        "bundled": false,
+        "singleton": true
       }
     }
   }
