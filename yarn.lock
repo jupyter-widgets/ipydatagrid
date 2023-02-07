@@ -1592,7 +1592,7 @@
   resolved "https://registry.yarnpkg.com/@lumino/algorithm/-/algorithm-1.9.2.tgz#b95e6419aed58ff6b863a51bfb4add0f795141d3"
   integrity sha512-Z06lp/yuhz8CtIir3PNTGnuk7909eXt4ukJsCzChsGuot2l5Fbs96RJ/FOHgwCedaX74CtxPjXHXoszFbUA+4A==
 
-"@lumino/application@^1.27.0", "@lumino/application@^1.6.0":
+"@lumino/application@^1.27.0":
   version "1.29.4"
   resolved "https://registry.yarnpkg.com/@lumino/application/-/application-1.29.4.tgz#4ee5aedb424c2dd0eade52c45c42a11a153aeecc"
   integrity sha512-yCBkG7Fk2tJ9OBwbzDzZyJUySGqzSGG+Fn/kQJ8kiPcEA7ajpoGrtI8/pd0TzASrih3A5PZnuoR8bRV6Dt2UbA==

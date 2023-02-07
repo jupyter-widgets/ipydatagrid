@@ -82,7 +82,6 @@
     "@babel/preset-env": "^7.6.3",
     "@babel/preset-typescript": "^7.6.0",
     "@jupyterlab/builder": "^3.0.1",
-    "@lumino/application": "^1.6.0",
     "@types/jest": "^27.4.1",
     "@types/node": "^10.11.6",
     "@types/webpack-env": "^1.13.6",
