@@ -6,7 +6,17 @@
 from bqplot import ColorScale, Scale
 from ipywidgets import Color, Widget, widget_serialization
 from py2vega import Variable, py2vega
-from traitlets import Any, Bool, Enum, Float, Instance, Unicode, Union, validate
+from traitlets import (
+    Any,
+    Bool,
+    Enum,
+    Float,
+    Instance,
+    Unicode,
+    Union,
+    default,
+    validate,
+)
 
 from ._frontend import module_name, module_version
 
@@ -68,11 +78,9 @@ class TextRenderer(CellRenderer):
     ).tag(sync=True, **widget_serialization)
     text_color = Union(
         (Color(), Instance(VegaExpr), Instance(ColorScale)),
-        default_value=Expr("default_value"),
     ).tag(sync=True, **widget_serialization)
     background_color = Union(
         (Color(), Instance(VegaExpr), Instance(ColorScale)),
-        default_value=Expr("default_value"),
     ).tag(sync=True, **widget_serialization)
     vertical_alignment = Union(
         (
@@ -97,6 +105,14 @@ class TextRenderer(CellRenderer):
         sync=True
     )
     missing = Unicode("").tag(sync=True)
+
+    @default("text_color")
+    def _default_text_color(self):
+        return Expr("default_value")
+
+    @default("background_color")
+    def _default_background_color(self):
+        return Expr("default_value")
 
 
 class BarRenderer(TextRenderer):
