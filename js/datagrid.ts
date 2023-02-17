@@ -18,8 +18,9 @@ import {
   DOMWidgetView,
   ICallbacks,
   ISerializers,
+  // @ts-ignore needed for ipywidgetx 8.x compatibility
   JupyterLuminoPanelWidget,
-  //@ts-ignore needed for ipywidgetx 7.x compatibility
+  // @ts-ignore needed for ipywidgetx 7.x compatibility
   JupyterPhosphorPanelWidget,
   resolvePromisesDict,
   unpack_models,
@@ -371,7 +372,7 @@ export class DataGridView extends DOMWidgetView {
   // ipywidgets 7 compatibility
   _processLuminoMessage(
     msg: Message,
-    _super: DOMWidgetView['processLuminoMessage'],
+    _super: any,
   ): void {
     _super.call(this, msg);
 
@@ -385,11 +386,12 @@ export class DataGridView extends DOMWidgetView {
   }
 
   processLuminoMessage(msg: Message): void {
+    // @ts-ignore needed for ipywidgets 8.x compatibility
     this._processLuminoMessage(msg, super.processLuminoMessage);
   }
 
   processPhosphorMessage(msg: Message): void {
-    //@ts-ignore needed for ipywidgets 7.x compatibility
+    // @ts-ignore needed for ipywidgets 7.x compatibility
     this._processLuminoMessage(msg, super.processPhosphorMessage);
   }
 
@@ -722,6 +724,7 @@ export class DataGridView extends DOMWidgetView {
   default_renderer: CellRendererView;
   header_renderer: CellRendererView;
   grid: FeatherGrid;
+  // @ts-ignore needed for ipywidgetx 8.x compatibility
   luminoWidget: JupyterLuminoPanelWidget;
   model: DataGridModel;
   backboneModel: DataGridModel;
@@ -766,7 +769,7 @@ export namespace DataGridModel {
  */
 namespace Private {
   export function getWidgetPanel(): any {
-    //@ts-ignore needed for ipywidget 7.x compatibility
+    // @ts-ignore needed for ipywidget 7.x compatibility
     return JupyterLuminoPanelWidget ?? JupyterPhosphorPanelWidget;
   }
 
