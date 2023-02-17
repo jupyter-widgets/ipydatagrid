@@ -348,7 +348,7 @@ export class DataGridView extends DOMWidgetView {
     return this.luminoWidget.node;
   }
 
-  // Added for ipywidgets 7.x compatibility
+  // @ts-ignore Added for ipywidgets 7.x compatibility
   get pWidget(): any {
     return this.luminoWidget;
   }
