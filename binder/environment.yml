@@ -8,5 +8,6 @@ dependencies:
   - nodejs
   - pandas
   - pip
+  - yarn=1
   - pip:
       - ..
