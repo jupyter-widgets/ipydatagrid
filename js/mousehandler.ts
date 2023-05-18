@@ -3,7 +3,6 @@ import {
   CellRenderer,
   DataGrid,
   HyperlinkRenderer,
-  Private,
   TextRenderer,
 } from '@lumino/datagrid';
 import { Platform } from '@lumino/domutils';
@@ -75,7 +74,7 @@ export class MouseHandler extends BasicMouseHandler {
     }
     if (grid) {
       // Create cell config object.
-      const config = Private.createCellConfigObject(grid, hit);
+      const config = MouseHandler.createCellConfigObject(grid, hit);
 
       // Bail if no cell config object is defined for the region.
       if (!config) {
@@ -136,6 +135,34 @@ export class MouseHandler extends BasicMouseHandler {
    */
   get cellClicked(): ISignal<this, DataGrid.HitTestResult> {
     return this._cellClicked;
+  }
+
+  /**
+  * Creates a CellConfig object from a hit region.
+  */
+  private static createCellConfigObject(
+    grid: DataGrid,
+    hit: DataGrid.HitTestResult
+  ): CellRenderer.CellConfig | undefined {
+    const { region, row, column } = hit;
+
+    // Terminate call if region is void.
+    if (region === 'void') {
+      return undefined;
+    }
+
+    // Augment hit region params with value and metadata.
+    const value = grid.dataModel!.data(region, row, column);
+    const metadata = grid.dataModel!.metadata(region, row, column);
+
+    // Create cell config object to retrieve cell renderer.
+    const config = {
+      ...hit,
+      value: value,
+      metadata: metadata
+    } as CellRenderer.CellConfig;
+
+    return config;
   }
 
   private _grid: FeatherGrid;
