@@ -96,7 +96,7 @@ build-function = "hatch_jupyter_builder.npm_builder"
 path = "."
 build_cmd = "build"
 npm = [
-    "yarn",
+    "jlpm",
 ]
 
 [tool.isort]

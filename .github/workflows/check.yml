@@ -129,7 +129,7 @@ jobs:
         working-directory: ui-tests-ipw7
 
       - name: Launch JupyterLab
-        run: yarn run start:detached
+        run: yarn run start:detached &
         working-directory: ui-tests-ipw7
 
       - name: Wait for JupyterLab
@@ -177,7 +177,7 @@ jobs:
         working-directory: ui-tests-ipw8
 
       - name: Launch JupyterLab
-        run: yarn run start:detached
+        run: yarn run start:detached &
         working-directory: ui-tests-ipw8
 
       - name: Wait for JupyterLab
