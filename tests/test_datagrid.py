@@ -9,14 +9,14 @@ from ipydatagrid.datagrid import _widgets_dict_serialization
 
 
 @pytest.fixture()
-def dataframe() -> None:
+def dataframe() -> pd.DataFrame:
     return pd.DataFrame(
         data={"A": [1, 2, 3], "B": [4, 5, 6]}, index=["One", "Two", "Three"]
     )
 
 
 @pytest.fixture()
-def datagrid(dataframe) -> None:
+def datagrid(dataframe) -> DataGrid:
     return DataGrid(dataframe)
 
 
