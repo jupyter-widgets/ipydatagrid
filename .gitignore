@@ -46,6 +46,8 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+**/playwright-report
+**/test-results
 
 # Translations
 *.mo
@@ -153,12 +155,18 @@ $RECYCLE.BIN/
 ipydatagrid/nbextension/index.*
 ipydatagrid/labextension/
 
+# Yarn
+**/.yarn
+
 # Coverage data
 # -------------
 **/coverage/
 
 # Packed lab extensions
 ipydatagrid/labextension
+
+# Type checking
+**/.pyre
 
 conda_out
 recipe
