@@ -11,3 +11,8 @@ HTMLCanvasElement.prototype.getContext = () => {
     stroke: () => { },
   };
 };
+
+// Polyfill DragEvent
+Object.defineProperty(window, 'DragEvent', {
+  value: class DragEvent {}
+});

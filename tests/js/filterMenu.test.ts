@@ -1,4 +1,4 @@
-import { InteractiveFilterDialog } from '../..//js/core/filterMenu';
+import { InteractiveFilterDialog } from '../../js/core/filterMenu';
 import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
 import { DataGenerator } from '../js/testUtils';
 import { Transform } from '../../js/core/transform';

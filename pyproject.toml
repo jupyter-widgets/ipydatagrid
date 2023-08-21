@@ -37,7 +37,7 @@ dependencies = [
     "pandas",
     "py2vega>=0.5.0",
 ]
-version = "1.1.16"
+version = "1.2.0"
 
 [project.license]
 file = "LICENSE.txt"
@@ -124,7 +124,7 @@ field = [
 ]
 
 [tool.tbump.version]
-current = "1.1.16"
+current = "1.2.0"
 regex = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)((?P<channel>a|b|rc|.dev)(?P<release>\\d+))?"
 
 [tool.tbump.git]

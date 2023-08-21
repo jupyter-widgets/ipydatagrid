@@ -189,10 +189,11 @@ export class DataGridModel extends DOMWidgetModel {
 
         this.synchingWithKernel = true;
 
-        const selectionIter = sender.selections().iter();
+        const selectionIter = sender.selections();
         const selections: any[] = [];
-        let selection = null;
-        while ((selection = selectionIter.next())) {
+        let selectionNode = null;
+        while ((selectionNode = selectionIter.next())) {
+          const selection = selectionNode.value;
           selections.push({
             r1: Math.min(selection.r1, selection.r2),
             r2: Math.max(selection.r1, selection.r2),
@@ -724,7 +725,6 @@ export class DataGridView extends DOMWidgetView {
   default_renderer: CellRendererView;
   header_renderer: CellRendererView;
   grid: FeatherGrid;
-  // @ts-ignore needed for ipywidgetx 8.x compatibility
   luminoWidget: JupyterLuminoPanelWidget;
   model: DataGridModel;
   backboneModel: DataGridModel;
