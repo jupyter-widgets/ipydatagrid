@@ -13,7 +13,7 @@ dependencies:
   - pandas >=1.0.0,<2.0.0
   - bqplot
   - scipy
-  - jupyterlab < 4
+  - jupyterlab
   - jupyter-packaging
   - pytest
   - nbval

@@ -3,14 +3,15 @@
 ### Tagging and creating a publishing environment
 
 1. Create a new release branch: `git checkout -n release_1.0.x` (**replace .x with the actual version**).
-2. Bump the version in `package.json` and `ipydatagrid/._version.py`.
-3. Save, sign and commit your changes: `git commit -s -m "Release 1.0.x"`.
-4. Open a PR with your release branch: `git push -u origin release_1.0.x`.
-5. Once your PR has been merged (!), pull the new main branch `git checkout main && git pull upstream main`.
-6. Add a new release tag: `git tag -a 1.0.x -m "Release 1.0.x"`.
-7. Push the new tag to GitHub: `git push upstream --tags`.
-8. Create a new conda environment: `conda create -n release_grid -c conda-forge python=3.8 python-build`.
-9. Activate the environment: `conda activate release_grid`.
+2. Install `tbump` with `pip install tbump`.
+3. Bump the version with `tbump --only-patch 1.0.x`
+4. Save, sign and commit your changes: `git commit -s -m "Release 1.0.x"`.
+5. Open a PR with your release branch: `git push -u origin release_1.0.x`.
+6. Once your PR has been merged (!), pull the new main branch `git checkout main && git pull upstream main`.
+7. Add a new release tag: `git tag -a 1.0.x -m "Release 1.0.x"`.
+8. Push the new tag to GitHub: `git push upstream --tags`.
+9. Create a new conda environment: `conda create -n release_grid -c conda-forge python=3.8 python-build`.
+10. Activate the environment: `conda activate release_grid`.
 
 ### Releasing on pypi
 

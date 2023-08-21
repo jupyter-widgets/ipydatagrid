@@ -4,7 +4,7 @@ channels:
 dependencies:
   - pip
   - python
-  - nodejs=14
+  - nodejs=20
   - yarn
   - ipywidgets >=7.6.0,<8
   - traitlets >=4.3.0
@@ -13,7 +13,7 @@ dependencies:
   - pandas >=1.0.0,<2.0.0
   - bqplot
   - scipy
-  - jupyterlab < 4
+  - jupyterlab
   - jupyter-packaging
   - pytest
   - nbval
