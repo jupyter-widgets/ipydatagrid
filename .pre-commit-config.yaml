@@ -55,3 +55,13 @@ repos:
           - flake8-unused-arguments==0.0.9
           - flake8-noqa==1.2.1
           - pep8-naming==0.12.1
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        exclude: ui-tests-ipw[78]\/.*
+        additional_dependencies:
+          - "pandas-stubs"
+          - "types-Pygments"
+          - "types-colorama"
+          - "types-setuptools"
