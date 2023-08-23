@@ -423,6 +423,21 @@ class DataGrid(DOMWidget):
         final_df = final_df[final_df.columns[:-1]]
         return final_df
 
+    @data.setter
+    def data(self, dataframe):
+        # Reference for the original frame column and index names
+        # This is used to when returning the view data model
+        self.__dataframe_reference_index_names = dataframe.index.names
+        self.__dataframe_reference_columns = dataframe.columns
+        dataframe = dataframe.copy()
+
+        # Primary key used
+        index_key = self.get_dataframe_index(dataframe)
+
+        self._data = self.generate_data_object(
+            dataframe, "ipydguuid", index_key
+        )
+
     @staticmethod
     def generate_data_object(dataframe, guid_key="ipydguuid", index_name="key"):
         dataframe[guid_key] = pd.RangeIndex(0, dataframe.shape[0])
@@ -479,21 +494,6 @@ class DataGrid(DOMWidget):
             "schema": schema,
             "fields": [{field["name"]: None} for field in schema["fields"]],
         }
-
-    @data.setter
-    def data(self, dataframe):
-        # Reference for the original frame column and index names
-        # This is used to when returning the view data model
-        self.__dataframe_reference_index_names = dataframe.index.names
-        self.__dataframe_reference_columns = dataframe.columns
-        dataframe = dataframe.copy()
-
-        # Primary key used
-        index_key = self.get_dataframe_index(dataframe)
-
-        self._data = self.generate_data_object(
-            dataframe, "ipydguuid", index_key
-        )
 
     def get_dataframe_index(self, dataframe):
         """Returns a primary key to be used in ipydatagrid's
