@@ -1,7 +1,8 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { expect, IJupyterLabPageFixture, test } from '@jupyterlab/galata';
+import { IJupyterLabPageFixture, test } from '@jupyterlab/galata';
+import { expect } from '@playwright/test';
 import * as path from 'path';
 const klaw = require('klaw-sync');
 
