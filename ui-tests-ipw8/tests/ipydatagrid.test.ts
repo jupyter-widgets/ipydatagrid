@@ -92,6 +92,10 @@ const testPlotUpdates = async (page: IJupyterLabPageFixture, tmpPath: string, th
 
 test.describe('ipydatagrid Visual Regression', () => {
   test.beforeEach(async ({ page, tmpPath }) => {
+    page.on("console", (message) => {
+      console.log('CONSOLE MSG ---', message.text());
+    });
+
     await page.contents.uploadDirectory(
       path.resolve(__dirname, './notebooks'),
       tmpPath
