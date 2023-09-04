@@ -146,7 +146,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: ui-test-output
+          name: ui-test-output-ipw7
           path: |
             ui-tests-ipw7/playwright-report
             ui-tests-ipw7/test-results
@@ -194,7 +194,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: ui-test-output
+          name: ui-test-output-ipw8
           path: |
             ui-tests-ipw8/playwright-report
             ui-tests-ipw8/test-results
