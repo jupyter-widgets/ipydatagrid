@@ -164,6 +164,8 @@ ipydatagrid/labextension/
 
 # Packed lab extensions
 ipydatagrid/labextension
+ipydatagrid/nbextension/*.svg
+ipydatagrid/nbextension/*.png
 
 # Type checking
 **/.pyre
