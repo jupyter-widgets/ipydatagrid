@@ -2,7 +2,7 @@
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
-    "module": "ES2015",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "noEmitOnError": true,
     "noUnusedLocals": true,
@@ -14,7 +14,7 @@
     "strict": true,
     // This allows us to initialize members in the "initialize" method
     "strictPropertyInitialization": false,
-    "target": "ES2017"
+    "target": "es2017"
   },
   "include": ["js/*.ts", "js/*.tsx", "js/core/*.ts", "js/core/*.tsx"]
 }
