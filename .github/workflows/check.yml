@@ -122,25 +122,22 @@ jobs:
       - name: Install the package
         run: pip install -vv .
 
-      - name: Install Galata
-        run: |
-          yarn install
-          yarn playwright install chromium
+      - name: Install dependencies
+        shell: bash -l {0}
+        working-directory: ui-tests-ipw7
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: jlpm install
+
+      - name: Install browser
+        shell: bash -l {0}
+        run: npx playwright install chromium
         working-directory: ui-tests-ipw7
 
-      - name: Launch JupyterLab
-        run: yarn run start:detached &
+      - name: Execute integration tests
+        shell: bash -l {0}
         working-directory: ui-tests-ipw7
-
-      - name: Wait for JupyterLab
-        uses: ifaxity/wait-on-action@v1
-        with:
-          resource: http-get://localhost:8888/api
-          timeout: 20000
-
-      - name: Run UI Tests
-        run: yarn run test
-        working-directory: ui-tests-ipw7
+        run: npx playwright test
 
       - name: Upload UI Test artifacts
         if: always()
@@ -170,25 +167,22 @@ jobs:
       - name: Install the package
         run: pip install -vv .
 
-      - name: Install Galata
-        run: |
-          yarn install
-          yarn playwright install chromium
+      - name: Install dependencies
+        shell: bash -l {0}
+        working-directory: ui-tests-ipw8
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: jlpm install
+
+      - name: Install browser
+        shell: bash -l {0}
+        run: npx playwright install chromium
         working-directory: ui-tests-ipw8
 
-      - name: Launch JupyterLab
-        run: yarn run start:detached &
+      - name: Execute integration tests
+        shell: bash -l {0}
         working-directory: ui-tests-ipw8
-
-      - name: Wait for JupyterLab
-        uses: ifaxity/wait-on-action@v1
-        with:
-          resource: http-get://localhost:8888/api
-          timeout: 20000
-
-      - name: Run UI Tests
-        run: yarn run test
-        working-directory: ui-tests-ipw8
+        run: npx playwright test
 
       - name: Upload UI Test artifacts
         if: always()
