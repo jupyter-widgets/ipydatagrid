@@ -516,6 +516,10 @@ class DataGrid(DOMWidget):
 
         Tuples should be used to index into multi-index columns."""
         row_indices = self._get_row_index_of_primary_key(primary_key_value)
+
+        if isinstance(column_name, list):
+            column_name = tuple(column_name)
+
         return [self._data["data"][row][column_name] for row in row_indices]
 
     def set_cell_value(self, column_name, primary_key_value, new_value):
@@ -529,6 +533,9 @@ class DataGrid(DOMWidget):
         if not row_indices:
             return False
 
+        if isinstance(column_name, list):
+            column_name = tuple(column_name)
+
         # Iterate over all indices
         outcome = True
         for row_index in row_indices:
@@ -539,6 +546,32 @@ class DataGrid(DOMWidget):
             else:
                 outcome = False
         return outcome
+
+    def set_row_value(self, primary_key_value, new_value):
+        """Sets the value for a row by and primary key.
+
+        Note: This method returns a boolean to indicate if the operation
+        was successful.
+        """
+        row_indices = self._get_row_index_of_primary_key(primary_key_value)
+        # Bail early if key could not be found
+        if not row_indices:
+            return False
+
+        # Iterate over all indices
+        for row_index in row_indices:
+            column_index = 0
+            column = DataGrid._column_index_to_name(self._data, column_index)
+            while column is not None:
+                self._data["data"][row_index][column] = new_value[column_index]
+
+                column_index = column_index + 1
+                column = DataGrid._column_index_to_name(
+                    self._data, column_index
+                )
+
+            self._notify_row_change(row_index, new_value)
+        return True
 
     def get_cell_value_by_index(self, column_name, row_index):
         """Gets the value for a single cell by column name and row index."""
@@ -577,6 +610,19 @@ class DataGrid(DOMWidget):
                     "row": row,
                     "column": column,
                     "column_index": column_index,
+                    "value": value,
+                },
+            }
+        )
+
+    def _notify_row_change(self, row, value):
+        # notify front-end
+        self.comm.send(
+            data={
+                "method": "custom",
+                "content": {
+                    "event_type": "row-changed",
+                    "row": row,
                     "value": value,
                 },
             }
