@@ -49,6 +49,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           server_url: http-get://localhost:8888/
           test_folder: ui-tests-ipw7
+
   update-reference-screenshots-ipw8:
     name: Update Galata References
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'update galata references') }}
@@ -80,8 +81,16 @@ jobs:
 
       - name: Install the package
         run: pip install -vv .
+
+      - name: Install dependencies
+        working-directory: ui-tests
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: jlpm install
+
       - uses: jupyterlab/maintainer-tools/.github/actions/update-snapshots@main
         with:
+          npm_client: jlpm
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          server_url: http-get://localhost:8888/
+          start_server_script: 'null'
           test_folder: ui-tests-ipw8
