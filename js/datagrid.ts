@@ -189,17 +189,47 @@ export class DataGridModel extends DOMWidgetModel {
 
         this.synchingWithKernel = true;
 
-        const selectionIter = sender.selections();
         const selections: any[] = [];
-        let selectionNode = null;
-        while ((selectionNode = selectionIter.next())) {
-          const selection = selectionNode.value;
-          selections.push({
-            r1: Math.min(selection.r1, selection.r2),
-            r2: Math.max(selection.r1, selection.r2),
-            c1: Math.min(selection.c1, selection.c2),
-            c2: Math.max(selection.c1, selection.c2),
-          });
+
+        let selectionIter = sender.selections();
+        // @ts-ignore
+        if (typeof selectionIter.iter === 'function') {
+          // Lumino 1 (JupyterLab 3)
+          let selection = null;
+
+          // @ts-ignore
+          selectionIter = selectionIter.iter()
+
+          while ((selection = selectionIter.next())) {
+            selections.push({
+              // @ts-ignore
+              r1: Math.min(selection.r1, selection.r2),
+              // @ts-ignore
+              r2: Math.max(selection.r1, selection.r2),
+              // @ts-ignore
+              c1: Math.min(selection.c1, selection.c2),
+              // @ts-ignore
+              c2: Math.max(selection.c1, selection.c2),
+            });
+          }
+        } else {
+          // Lumino 2 (JupyterLab 4)
+          let selectionNode = null;
+
+          while (selectionNode = selectionIter.next()) {
+            if (selectionNode.done) {
+              break;
+            }
+
+            const selection = selectionNode.value;
+
+            selections.push({
+              r1: Math.min(selection.r1, selection.r2),
+              r2: Math.max(selection.r1, selection.r2),
+              c1: Math.min(selection.c1, selection.c2),
+              c2: Math.max(selection.c1, selection.c2),
+            });
+          }
         }
 
         this.set('selections', selections);
