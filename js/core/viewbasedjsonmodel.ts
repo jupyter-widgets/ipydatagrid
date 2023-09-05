@@ -307,6 +307,34 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return true;
   }
 
+  /**
+   * Updates the row value of the currently displayed View.
+   *
+   * @param row - The row index of the cell of interest.
+   *
+   * @param value - The new value to update the indicated row with.
+   *
+   */
+  setRowData(
+    row: number,
+    value: any,
+  ): boolean {
+    this.updateRowValue({
+      row: row,
+      value: value,
+    });
+    this.emitChanged({
+      type: 'cells-changed',
+      region: 'body',
+      row,
+      column: 0,
+      rowSpan: 1,
+      columnSpan: 1,
+    });
+
+    return true;
+  }
+
   public columnNameToIndex(name: string): number {
     const schema = this.dataset.schema;
     const primaryKeysLength = schema.primaryKey.length - 1;
@@ -551,6 +579,36 @@ export class ViewBasedJSONModel extends MutableDataModel {
   }
 
   /**
+   * Updates a row in the full dataset of the model.
+   *
+   * @param options - The options for this function.
+   */
+  updateRowValue(options: ViewBasedJSONModel.IUpdateRowValuesOptions): void {
+    // Create new row and add it to new dataset
+    const newRow = { ...this._dataset.data[options.row] };
+    for (const columnIndex of Array(options.value.length).keys()) {
+      newRow[this.metadata('body', 0, columnIndex)['name']] = options.value[columnIndex];
+    }
+    const newData = Array.from(this._dataset.data);
+    newData[options.row] = newRow;
+
+    this._dataset = {
+      data: newData,
+      schema: this._dataset.schema,
+    };
+
+    if (options.syncData) {
+      this.dataSync.emit({
+        type: 'cell-updated',
+      });
+    }
+
+    // We need to rerun the transforms, as the changed cells may change the order
+    // or visibility of other rows
+    this.currentView = this._transformState.createView(this._dataset);
+  }
+
+  /**
    * A signal emitted when the data model has changes to sync to the kernel.
    */
   get dataSync(): Signal<this, ViewBasedJSONModel.IDataSyncEvent> {
@@ -697,6 +755,23 @@ export namespace ViewBasedJSONModel {
      * The new value to replace the old one.
      */
     value: any;
+
+    /**
+     * The flag to trigger full data sync with backend.
+     */
+    syncData?: boolean;
+  }
+
+  export interface IUpdateRowValuesOptions {
+    /**
+     * The index of the target row in the current view.
+     */
+    row: number;
+
+    /**
+     * The new value to replace the old one.
+     */
+    value: any[];
 
     /**
      * The flag to trigger full data sync with backend.
