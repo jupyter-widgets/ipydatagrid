@@ -93,6 +93,13 @@ export class DataGridModel extends DOMWidgetModel {
           content.value,
         );
       }
+
+      if (content.event_type === 'row-changed') {
+        this.data_model.setRowData(
+          content.row,
+          content.value,
+        );
+      }
     });
   }
 
