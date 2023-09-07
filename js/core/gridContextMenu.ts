@@ -158,8 +158,54 @@ export class FeatherGridContextMenu extends GridContextMenu {
         throw 'unreachable';
     }
 
+    // Get the current height of the main viewport.
+    const px = window.pageXOffset;
+    const py = window.pageYOffset;
+    const cw = document.documentElement.clientWidth;
+    const ch = document.documentElement.clientHeight;
+
     // Open context menu at location of the click event
-    this._menu.open(hit.x, hit.y);
+    this._menu.open(hit.x, 0); //Using 0 so it's at least at the bottom
+                               //of the parent div and not a mile down
+
+    // Now that it's open, move it to the correct position.
+    // Lumino won't allow a negative y-coordinate, but we
+    // need it to be negative with absolute positioning. This
+    // position-reposition thing isn't ideal, since there's a
+    // split-second that the menu is not where it ought to be,
+    // but in practice this is usually going to be so brief a
+    // moment that nobody will notice; it's functionally a
+    // performance hit in a spot where people likely won't notice
+    // a performance hit.
+
+    // We're going to do the full coordinate recalculation,
+    // since the conditions below are part of the Lumino
+    // menu's positioning math for a reason. They show up in
+    // ipydatagrid's InteractiveFilterDialog positioning math
+    // as well.
+
+    let node = this._menu.node;
+    let { width, height } = node.getBoundingClientRect();
+
+    let hitx = hit.x;
+    let hity = hit.y;
+
+    // Adjust the X position of the menu to fit on-screen.
+    if (hitx + width > px + cw) {
+      hitx = px + cw - width;
+    }
+
+    // Adjust the Y position of the menu to fit on-screen.
+    if (hity + height > py + ch) {
+      if (hity > py + ch) {
+        hity = py + ch - height;
+      } else {
+        hity = hity - height;
+      }
+    }
+
+    // Update the position of the menu to the computed position.
+    this._menu.node.style.transform = `translate(${Math.max(0, hitx)}px, ${hity-ch}px`;
   }
 }
 
