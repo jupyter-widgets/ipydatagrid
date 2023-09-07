@@ -5,7 +5,7 @@
 Information about the frontend package of the widgets.
 """
 
-from ._version import __frontend_version__
+from ._version import __version__
 
 module_name = "ipydatagrid"
-module_version = __frontend_version__
+module_version = f"^{__version__}"
