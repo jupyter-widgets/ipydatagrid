@@ -163,7 +163,8 @@ export class FeatherGridContextMenu extends GridContextMenu {
     const py = window.pageYOffset;
     const cw = document.documentElement.clientWidth;
     const ch = document.documentElement.clientHeight;
-    const bodyh = document.documentElement.scrollHeight;
+    const scrollh = document.documentElement.scrollHeight;
+    const bodyh = document.body.offsetHeight;
     var style = window.getComputedStyle(document.body);
     const extraspaceX = parseFloat(style.marginLeft)+parseFloat(style.paddingLeft)+parseFloat(style.borderLeftWidth);
     const extraspaceY = parseFloat(style.marginTop)+parseFloat(style.paddingTop)+parseFloat(style.borderTopWidth);
@@ -209,7 +210,13 @@ export class FeatherGridContextMenu extends GridContextMenu {
     }
 
     hitx = hitx - extraspaceX;
-    hity = hity - bodyh + extraspaceY;
+
+    // Following conditional branch accounts for incorrect math if body height is less than document height (no Y scrollbar)
+    if (scrollh == ch) {
+      hity = hity - bodyh;
+    } else {
+      hity = hity - scrollh + extraspaceY;
+    }
 
     // Update the position of the menu to the computed position.
     this._menu.node.style.transform = `translate(${Math.max(0, hitx)}px, ${hity}px`;
