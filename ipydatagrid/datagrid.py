@@ -512,7 +512,8 @@ class DataGrid(DOMWidget):
         return "key"
 
     def get_cell_value(self, column_name, primary_key_value):
-        """Gets the value for a single or multiple cells by column name and index name.
+        """Gets the value for a single or multiple cells by column name and
+         index name.
 
         Tuples should be used to index into multi-index columns."""
         row_indices = self._get_row_index_of_primary_key(primary_key_value)
