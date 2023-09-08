@@ -260,7 +260,7 @@ class DataGrid(DOMWidget):
         Dict to specify custom column sizes
         The keys (strings) indicate the names of the columns
         The values (integers) indicate the widths
-    auto_fit_columns : Bool (default: True)
+    auto_fit_columns : Bool (default: False)
         Specify whether column width should automatically be
         determined by the grid
     auto_fit_params : Dict. Specify column auto fit parameters.
@@ -512,7 +512,8 @@ class DataGrid(DOMWidget):
         return "key"
 
     def get_cell_value(self, column_name, primary_key_value):
-        """Gets the value for a single or multiple cells by column name and index name.
+        """Gets the value for a single or multiple cells by column name and
+         index name.
 
         Tuples should be used to index into multi-index columns."""
         row_indices = self._get_row_index_of_primary_key(primary_key_value)
