@@ -493,6 +493,7 @@ export class DataGridView extends DOMWidgetView {
 
     this.model.on('data-model-changed', () => {
       this.grid.dataModel = this.model.data_model;
+      this.handleColumnAutoFit();
     });
 
     this.model.on('change:base_row_size', () => {
