@@ -1,9 +1,11 @@
 name: check
 on:
+  workflow_dispatch:
   push:
+    branches: "main"
   pull_request:
   schedule:
-    - cron: '0 8 * * *'
+    - cron: "0 8 * * *"
 
 defaults:
   run:
