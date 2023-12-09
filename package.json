@@ -163,5 +163,6 @@
         "singleton": true
       }
     }
-  }
+  },
+  "packageManager": "yarn@3.7.0"
 }
