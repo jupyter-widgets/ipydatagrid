@@ -119,7 +119,7 @@ jobs:
       - name: build package
         run: python -m build --sdist --wheel . -o dist
       - name: Upload builds
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist ${{ github.run_number }}
           path: ./dist
@@ -172,7 +172,7 @@ jobs:
 
       - name: Upload UI Test artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ui-test-output-ipw7
           path: |
@@ -224,7 +224,7 @@ jobs:
 
       - name: Upload UI Test artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ui-test-output-ipw8
           path: |
