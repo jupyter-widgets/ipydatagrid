@@ -161,3 +161,34 @@ class HyperlinkRenderer(TextRenderer):
     url_name = Instance(VegaExpr, allow_none=False).tag(
         sync=True, **widget_serialization
     )
+
+
+class ImageRenderer(CellRenderer):
+    _model_name = Unicode("ImageRendererModel").tag(sync=True)
+    _view_name = Unicode("ImageRendererView").tag(sync=True)
+
+    background_color = Union(
+        (Color(), Instance(VegaExpr), Instance(ColorScale)),
+        allow_none=True,
+        default_value=None,
+    ).tag(sync=True, **widget_serialization)
+    placeholder = Union(
+        (Unicode(), Instance(VegaExpr), Instance(Scale)),
+        allow_none=True,
+        default_value="...",
+    ).tag(sync=True, **widget_serialization)
+    text_color = Union(
+        (Color(), Instance(VegaExpr), Instance(ColorScale)),
+        allow_none=True,
+        default_value="#000000",
+    ).tag(sync=True, **widget_serialization)
+    width = Union(
+        (Unicode(), Instance(VegaExpr), Instance(Scale)),
+        allow_none=True,
+        default_value="",
+    ).tag(sync=True, **widget_serialization)
+    height = Union(
+        (Unicode(), Instance(VegaExpr), Instance(Scale)),
+        allow_none=True,
+        default_value="100%",
+    ).tag(sync=True, **widget_serialization)

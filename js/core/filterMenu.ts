@@ -151,9 +151,9 @@ export class InteractiveFilterDialog extends BoxPanel {
       this._mode === 'condition'
         ? <Transform.FilterValue>this._filterValue
         : this._uniqueValueStateManager.getValues(
-          this.region,
-          this._columnIndex,
-        );
+            this.region,
+            this._columnIndex,
+          );
 
     // Construct transform
     const transform: Transform.TransformSpec = {
@@ -588,8 +588,8 @@ export class InteractiveFilterDialog extends BoxPanel {
           background: 'var(--ipydatagrid-filter-dlg-bgcolor,white)',
           visibility:
             this._filterOperator === 'empty' ||
-              this._filterOperator === 'notempty' ||
-              this._mode === 'value'
+            this._filterOperator === 'notempty' ||
+            this._mode === 'value'
               ? 'hidden'
               : 'visible',
         },
