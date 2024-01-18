@@ -53,7 +53,7 @@ export class MouseHandler extends BasicMouseHandler {
       const isMenuRow =
         (hit.region === 'column-header' &&
           hit.row ==
-          this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
+            this._grid.grid.dataModel!.rowCount('column-header') - 1) ||
         (hit.region === 'corner-header' && hit.row === 0);
 
       const isMenuClick =
@@ -138,11 +138,11 @@ export class MouseHandler extends BasicMouseHandler {
   }
 
   /**
-  * Creates a CellConfig object from a hit region.
-  */
+   * Creates a CellConfig object from a hit region.
+   */
   private static createCellConfigObject(
     grid: DataGrid,
-    hit: DataGrid.HitTestResult
+    hit: DataGrid.HitTestResult,
   ): CellRenderer.CellConfig | undefined {
     const { region, row, column } = hit;
 
@@ -159,7 +159,7 @@ export class MouseHandler extends BasicMouseHandler {
     const config = {
       ...hit,
       value: value,
-      metadata: metadata
+      metadata: metadata,
     } as CellRenderer.CellConfig;
 
     return config;

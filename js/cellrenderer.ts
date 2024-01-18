@@ -10,6 +10,7 @@ import {
   CellRenderer,
   TextRenderer,
   HyperlinkRenderer,
+  ImageRenderer,
 } from '@lumino/datagrid';
 
 import {
@@ -69,21 +70,20 @@ export abstract class CellRendererModel extends WidgetModel {
 }
 
 export abstract class CellRendererView extends WidgetView {
-  render() {
-    return this.initializeRenderer().then(() => {
-      this.updateRenderer();
+  async render() {
+    await this.initializeRenderer();
 
-      this.on('renderer-needs-update', this.updateRenderer.bind(this));
-    });
+    this.updateRenderer();
+
+    this.on('renderer-needs-update', this.updateRenderer.bind(this));
   }
 
   /**
    * Method that should be called when the theme has changed.
    */
-  onThemeChanged() {
-    return this.initializeRenderer().then(() => {
-      this.updateRenderer();
-    });
+  async onThemeChanged() {
+    await this.initializeRenderer();
+    return this.updateRenderer();
   }
 
   /**
@@ -91,7 +91,7 @@ export abstract class CellRendererView extends WidgetView {
    *
    * @return The promise to initialize the renderer
    */
-  protected initializeRenderer(): Promise<any> {
+  protected async initializeRenderer(): Promise<any> {
     const promises: Dict<PromiseLike<Processor>> = {};
     const attr_names = this.model
       .get_attrs()
@@ -109,9 +109,7 @@ export abstract class CellRendererView extends WidgetView {
       promises[name] = this.updateProcessor(name);
     }
 
-    return resolvePromisesDict(promises).then((processors: Dict<Processor>) => {
-      this.processors = processors;
-    });
+    this.processors = await resolvePromisesDict(promises);
   }
 
   private _on_some_processors_change(event: any) {
@@ -460,4 +458,61 @@ export class HyperlinkRendererView extends TextRendererView {
   renderer: HyperlinkRenderer;
 
   model: HyperlinkRendererModel;
+}
+
+export class ImageRendererModel extends CellRendererModel {
+  defaults() {
+    return {
+      ...super.defaults(),
+      _model_name: ImageRendererModel.model_name,
+      _view_name: ImageRendererModel.view_name,
+      background_color: {},
+      placeholder: {},
+      text_color: {},
+      width: {},
+      height: {},
+    };
+  }
+
+  get_attrs(): ICellRendererAttribute[] {
+    return [
+      {
+        name: 'background_color',
+        phosphorName: 'backgroundColor',
+        defaultValue: '',
+      },
+      { name: 'placeholder', phosphorName: 'placeholder', defaultValue: '...' },
+      {
+        name: 'text_color',
+        phosphorName: 'textColor',
+        defaultValue: '#000000',
+      },
+      { name: 'width', phosphorName: 'width', defaultValue: '' },
+      { name: 'height', phosphorName: 'height', defaultValue: '100%' },
+    ];
+  }
+
+  static serializers: ISerializers = {
+    ...TextRendererModel.serializers,
+    background_color: { deserialize: unpack_models as any },
+    placeholder: { deserialize: unpack_models as any },
+    text_color: { deserialize: unpack_models as any },
+    width: { deserialize: unpack_models as any },
+    height: { deserialize: unpack_models as any },
+  };
+
+  static model_name = 'ImageRendererModel';
+  static view_name = 'ImageRendererView';
+}
+
+export class ImageRendererView extends CellRendererView {
+  createRenderer(options: ImageRenderer.IOptions) {
+    return new ImageRenderer({
+      ...options,
+    });
+  }
+
+  renderer: ImageRenderer;
+
+  model: ImageRendererModel;
 }

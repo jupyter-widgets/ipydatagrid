@@ -315,10 +315,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param value - The new value to update the indicated row with.
    *
    */
-  setRowData(
-    row: number,
-    value: any,
-  ): boolean {
+  setRowData(row: number, value: any): boolean {
     this.updateRowValue({
       row: row,
       value: value,
@@ -587,7 +584,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
     // Create new row and add it to new dataset
     const newRow = { ...this._dataset.data[options.row] };
     for (const columnIndex of Array(options.value.length).keys()) {
-      newRow[this.metadata('body', 0, columnIndex)['name']] = options.value[columnIndex];
+      newRow[this.metadata('body', 0, columnIndex)['name']] =
+        options.value[columnIndex];
     }
     const newData = Array.from(this._dataset.data);
     newData[options.row] = newRow;

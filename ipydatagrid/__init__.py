@@ -7,6 +7,7 @@ from .cellrenderer import (
     CellRenderer,
     Expr,
     HyperlinkRenderer,
+    ImageRenderer,
     TextRenderer,
     VegaExpr,
 )
@@ -34,6 +35,7 @@ __all__ = [
     "CellRenderer",
     "Expr",
     "HyperlinkRenderer",
+    "ImageRenderer",
     "TextRenderer",
     "VegaExpr",
     "DataGrid",
