@@ -507,6 +507,14 @@ export class ImageRendererModel extends CellRendererModel {
 
 export class ImageRendererView extends CellRendererView {
   createRenderer(options: ImageRenderer.IOptions) {
+    if (!ImageRenderer) {
+      return new TextRenderer({
+        format: (config) => {
+          return 'ImageRenderer not available. Check that you are using JupyterLab>=4.1.';
+        },
+        wrapText: true,
+      });
+    }
     return new ImageRenderer({
       ...options,
     });
