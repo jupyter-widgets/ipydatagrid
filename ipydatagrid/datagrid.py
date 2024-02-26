@@ -9,6 +9,7 @@ from math import floor
 
 import numpy as np
 import pandas as pd
+from bqplot.traits import array_from_json, array_to_json
 from ipywidgets import CallbackDispatcher, DOMWidget, widget_serialization
 from traitlets import (
     Bool,
@@ -76,7 +77,6 @@ class SelectionIterator(Iterator):
 
 
 class SelectionHelper:
-
     """A Helper Class for processing selections. Provides an iterator
     to traverse selected cells.
     """
@@ -164,14 +164,13 @@ class SelectionHelper:
         return self._num_rows
 
 
-# modified from ipywidgets original
-def _data_to_json(x):
+def _data_to_json(x, _):
     if isinstance(x, dict):
-        return {str(k): _data_to_json(v) for k, v in x.items()}
+        return {str(k): _data_to_json(v, _) for k, v in x.items()}
     if isinstance(x, np.ndarray):
-        return _data_to_json(x.tolist())
+        return _data_to_json(x.tolist(), _)
     if isinstance(x, (list, tuple)):
-        return [_data_to_json(v) for v in x]
+        return [_data_to_json(v, _) for v in x]
     if isinstance(x, int):
         return x
     if isinstance(x, float):
@@ -193,9 +192,55 @@ def _data_to_json(x):
     return str(x)
 
 
+def _data_serialization_impl(data, _):
+    if not data:
+        return {}
+
+    serialized_data = {}
+    for column, value in data["data"].items():
+        arr = value.to_numpy()
+        if arr.size == 0:
+            serialized_data[str(column)] = {
+                "value": [],
+                "dtype": str(arr.dtype),
+                "shape": arr.shape,
+                "type": None,
+            }
+            continue
+        try:
+            serialized_data[str(column)] = array_to_json(arr)
+        except ValueError:
+            # Column is most likely heterogeneous, sending the column raw
+            serialized_data[str(column)] = {
+                "value": _data_to_json(arr, _),
+                "type": "raw",
+            }
+
+    return {
+        "data": serialized_data,
+        "schema": data["schema"],
+        "fields": _data_to_json(data["fields"], _),
+    }
+
+
+def _data_deserialization_impl(data, _):  # noqa: U101
+    if not data:
+        return {}
+
+    deserialized_data = {}
+    for column, value in data["data"].items():
+        deserialized_data[column] = array_from_json(value.to_numpy())
+
+    return {
+        "data": deserialized_data,
+        "schema": data["schema"],
+        "fields": data["fields"],
+    }
+
+
 _data_serialization = {
-    "from_json": widget_serialization["from_json"],
-    "to_json": lambda x, _: _data_to_json(x),  # noqa: U101
+    "from_json": _data_deserialization_impl,
+    "to_json": _data_serialization_impl,
 }
 
 
@@ -212,7 +257,6 @@ _widgets_dict_serialization = {
 
 
 class DataGrid(DOMWidget):
-
     """A Grid Widget with filter, sort and selection capabilities.
 
     Attributes
@@ -360,7 +404,7 @@ class DataGrid(DOMWidget):
     ).tag(sync=True)
     selections = List(Dict()).tag(sync=True)
     editable = Bool(False).tag(sync=True)
-    column_widths = Dict({}).tag(sync=True, **_data_serialization)
+    column_widths = Dict({}).tag(sync=True, to_json=_data_to_json)
     grid_style = Dict(allow_none=True).tag(
         sync=True, **_widgets_dict_serialization
     )
@@ -383,17 +427,15 @@ class DataGrid(DOMWidget):
     def __handle_custom_msg(self, _, content, buffers):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
             row = content["row"]
-            column = self._column_index_to_name(
-                self._data, content["column_index"]
-            )
+            column = content["column"]
             value = content["value"]
             # update data on kernel
-            self._data["data"][row][column] = value
+            self._data["data"].loc[row, column] = value
             # notify python listeners
             self._cell_change_handlers(
                 {
                     "row": row,
-                    "column": column,
+                    "column": content["column"],
                     "column_index": content["column_index"],
                     "value": value,
                 }
@@ -414,7 +456,7 @@ class DataGrid(DOMWidget):
     @property
     def data(self):
         trimmed_primary_key = self._data["schema"]["primaryKey"][:-1]
-        if self._data["data"]:
+        if "data" in self._data:
             df = pd.DataFrame(self._data["data"])
         else:
             df = pd.DataFrame(
@@ -460,7 +502,7 @@ class DataGrid(DOMWidget):
 
         schema = pd.io.json.build_table_schema(dataframe)
         reset_index_dataframe = dataframe.reset_index()
-        data = reset_index_dataframe.to_dict(orient="records")
+        data = reset_index_dataframe
 
         # Check for multiple primary keys
         key = reset_index_dataframe.columns[: dataframe.index.nlevels].tolist()
@@ -522,7 +564,7 @@ class DataGrid(DOMWidget):
         if isinstance(column_name, list):
             column_name = tuple(column_name)
 
-        return [self._data["data"][row][column_name] for row in row_indices]
+        return [self._data["data"][column_name][row] for row in row_indices]
 
     def set_cell_value(self, column_name, primary_key_value, new_value):
         """Sets the value for a single cell by column name and primary key.
@@ -541,9 +583,9 @@ class DataGrid(DOMWidget):
         # Iterate over all indices
         outcome = True
         for row_index in row_indices:
-            has_column = column_name in self._data["data"][row_index]
+            has_column = column_name in self._data["data"]
             if has_column and row_index is not None:
-                self._data["data"][row_index][column_name] = new_value
+                self._data["data"].loc[row_index, column_name] = new_value
                 self._notify_cell_change(row_index, column_name, new_value)
             else:
                 outcome = False
@@ -565,7 +607,9 @@ class DataGrid(DOMWidget):
             column_index = 0
             column = DataGrid._column_index_to_name(self._data, column_index)
             while column is not None:
-                self._data["data"][row_index][column] = new_value[column_index]
+                self._data["data"].loc[row_index, column] = new_value[
+                    column_index
+                ]
 
                 column_index = column_index + 1
                 column = DataGrid._column_index_to_name(
@@ -577,7 +621,7 @@ class DataGrid(DOMWidget):
 
     def get_cell_value_by_index(self, column_name, row_index):
         """Gets the value for a single cell by column name and row index."""
-        return self._data["data"][row_index][column_name]
+        return self._data["data"][column_name][row_index]
 
     def set_cell_value_by_index(self, column_name, row_index, new_value):
         """Sets the value for a single cell by column name and row index.
@@ -585,9 +629,9 @@ class DataGrid(DOMWidget):
         Note: This method returns a boolean to indicate if the operation
         was successful.
         """
-        has_column = column_name in self._data["data"][row_index]
-        if has_column and 0 <= row_index < len(self._data["data"]):
-            self._data["data"][row_index][column_name] = new_value
+        has_column = column_name in self._data["data"]
+        if has_column and 0 <= row_index < len(self._data["data"][column_name]):
+            self._data["data"].loc[row_index, column_name] = new_value
             self._notify_cell_change(row_index, column_name, new_value)
             return True
         return False
@@ -634,7 +678,7 @@ class DataGrid(DOMWidget):
         """Returns a dataframe of the current View."""
         data = deepcopy(self._data)
         if self._visible_rows:
-            data["data"] = [data["data"][i] for i in self._visible_rows]
+            data["data"] = data["data"].reindex(self._visible_rows)
 
         at = self._data["schema"]["primaryKey"]
         return_df = pd.DataFrame(data["data"]).set_index(at)
@@ -852,9 +896,10 @@ class DataGrid(DOMWidget):
                 "as the primary key."
             )
 
+        # TODO Is there a better way for this?
         row_indices = [
-            at
-            for at, row in enumerate(self._data["data"])
+            idx
+            for idx, row in self._data["data"].iterrows()
             if all(row[key[j]] == value[j] for j in range(len(key)))
         ]
         return row_indices
@@ -865,7 +910,7 @@ class DataGrid(DOMWidget):
         column = DataGrid._column_index_to_name(data, column_index)
         if column is None:
             return None
-        return data["data"][row_index][column]
+        return data["data"].loc[row_index, column]
 
     def _set_renderer_defaults(self):
         # Set sensible default values for renderers that are not completely

@@ -1,8 +1,9 @@
-import { ViewBasedJSONModel } from './viewbasedjsonmodel';
+import { Dict } from '@jupyter-widgets/base';
 
-import { toArray, filter } from '@lumino/algorithm';
+import { filter } from '@lumino/algorithm';
 
 import { Transform } from './transform';
+import { DataSource } from '../datasource';
 
 import * as moment from 'moment';
 
@@ -23,7 +24,7 @@ export namespace TransformExecutor {
   /**
    * A read only type for the input/output of .apply().
    */
-  export type IData = Readonly<ViewBasedJSONModel.IData>;
+  export type IData = Readonly<DataSource>;
 }
 
 /**
@@ -49,90 +50,91 @@ export class FilterExecutor extends TransformExecutor {
    * @param input - The data to be operated on.
    */
   public apply(input: TransformExecutor.IData): TransformExecutor.IData {
-    let filterFunc: any;
+    let filterFunc: (idx: number) => boolean;
+    const field = this._options.field;
     switch (this._options.operator) {
       case '>':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const value = moment.default.utc(this._options.value);
             return target.isAfter(value, 'day');
           }
-          return item[this._options.field] > this._options.value;
+          return input.data[field][idx] > this._options.value;
         };
         break;
       case '<':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const value = moment.default.utc(this._options.value);
             return target.isBefore(value, 'day');
           }
-          return item[this._options.field] < this._options.value;
+          return input.data[field][idx] < this._options.value;
         };
         break;
       case '<=':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const value = moment.default.utc(this._options.value);
             return target.isSameOrBefore(value, 'day');
           }
-          return item[this._options.field] <= this._options.value;
+          return input.data[field][idx] <= this._options.value;
         };
         break;
       case '>=':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const value = moment.default.utc(this._options.value);
             return target.isSameOrAfter(value, 'day');
           }
-          return item[this._options.field] >= this._options.value;
+          return input.data[field][idx] >= this._options.value;
         };
         break;
       case '=':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const value = moment.default.utc(this._options.value);
             return target.isSame(value);
           }
-          return item[this._options.field] == this._options.value;
+          return input.data[field][idx] == this._options.value;
         };
         break;
       case '!=':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const value = moment.default.utc(this._options.value);
             return !target.isSame(value);
           }
-          return item[this._options.field] !== this._options.value;
+          return input.data[field][idx] !== this._options.value;
         };
         break;
       case 'empty':
-        filterFunc = (item: any) => {
-          return item[this._options.field] === null;
+        filterFunc = (idx: number) => {
+          return input.data[field][idx] === null;
         };
         break;
       case 'notempty':
-        filterFunc = (item: any) => {
-          return item[this._options.field] !== null;
+        filterFunc = (idx: number) => {
+          return input.data[field][idx] !== null;
         };
         break;
       case 'in':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           const values = <any[]>this._options.value;
-          return values.includes(item[this._options.field]);
+          return values.includes(input.data[field][idx]);
         };
         break;
       case 'between':
-        filterFunc = (item: any) => {
+        filterFunc = (idx: number) => {
           const values = <any[]>this._options.value;
 
           if (['date', 'datetime', 'time'].includes(this._options.dType)) {
-            const target = moment.default.utc(item[this._options.field]);
+            const target = moment.default.utc(input.data[field][idx]);
             const lowValue = moment.default.utc(values[0]);
             const highValue = moment.default.utc(values[1]);
 
@@ -140,41 +142,41 @@ export class FilterExecutor extends TransformExecutor {
           }
 
           return (
-            item[this._options.field] > values[0] &&
-            item[this._options.field] < values[1]
+            input.data[field][idx] > values[0] &&
+            input.data[field][idx] < values[1]
           );
         };
         break;
       case 'startswith':
-        filterFunc = (item: any) => {
-          return item[this._options.field].startsWith(this._options.value);
+        filterFunc = (idx: number) => {
+          return input.data[field][idx].startsWith(this._options.value);
         };
         break;
       case 'endswith':
-        filterFunc = (item: any) => {
-          return item[this._options.field].endsWith(this._options.value);
+        filterFunc = (idx: number) => {
+          return input.data[field][idx].endsWith(this._options.value);
         };
         break;
       case 'stringContains':
-        filterFunc = (item: any) => {
-          return String(item[this._options.field])
+        filterFunc = (idx: number) => {
+          return String(input.data[field][idx])
             .toLowerCase()
             .includes(String(this._options.value).toLowerCase());
         };
         break;
       case 'contains':
-        filterFunc = (item: any) => {
-          return item[this._options.field].includes(this._options.value);
+        filterFunc = (idx: number) => {
+          return input.data[field][idx].includes(this._options.value);
         };
         break;
       case '!contains':
-        filterFunc = (item: any) => {
-          return !item[this._options.field].includes(this._options.value);
+        filterFunc = (idx: number) => {
+          return !input.data[field][idx].includes(this._options.value);
         };
         break;
       case 'isOnSameDay':
-        filterFunc = (item: any) => {
-          const target = moment.default.utc(item[this._options.field]);
+        filterFunc = (idx: number) => {
+          const target = moment.default.utc(input.data[field][idx]);
           const value = moment.default.utc(this._options.value);
           return target.isSame(value, 'day');
         };
@@ -183,10 +185,24 @@ export class FilterExecutor extends TransformExecutor {
         throw 'unreachable';
     }
 
-    return {
-      schema: input.schema,
-      data: toArray(filter(input.data, filterFunc)),
-    };
+    const data: Dict<any[]> = {};
+    const indices = Array.from(filter(Array(input.length).keys(), filterFunc));
+
+    // There is a better approach for this
+    // We don't need to copy the data
+    // We should always keep the datasource intact and
+    // create the "views" in the transform's apply methods
+    // The view would then keep the indices in memory and apply the sorting
+    // upon data request
+    for (const column of Object.keys(input.data)) {
+      let i = 0;
+      data[column] = [];
+      for (const idx of indices) {
+        data[column][i++] = input.data[column][idx];
+      }
+    }
+
+    return new DataSource(data, input.fields, input.schema);
   }
 
   protected _options: FilterExecutor.IOptions;
@@ -246,7 +262,7 @@ export class SortExecutor extends TransformExecutor {
    * @param input - The data to be operated on.
    */
   public apply(input: TransformExecutor.IData): TransformExecutor.IData {
-    let sortFunc: (a: any, b: any) => number;
+    let sortFunc: (a: number, b: number) => number;
     const field = this._options.field;
     const columnDataType = this._options.dType;
 
@@ -262,54 +278,73 @@ export class SortExecutor extends TransformExecutor {
       return value;
     };
 
+    const isNaNorNull = (value: any) => {
+      return (
+        value === null ||
+        (typeof value === 'number' && Number.isNaN(value)) ||
+        (value instanceof Date && Number.isNaN(value.getTime()))
+      );
+    };
+
+    const nanIndices = Array.from(
+      filter(Array(input.length).keys(), (idx: number) => {
+        return isNaNorNull(input.data[field][idx]);
+      }),
+    );
+    const nonNanIndices = Array.from(
+      filter(Array(input.length).keys(), (idx: number) => {
+        return !isNaNorNull(input.data[field][idx]);
+      }),
+    );
+
     if (columnDataType == 'string') {
       if (this._options.desc) {
-        sortFunc = (a: any, b: any): number => {
-          return stringifyIfNeeded(a[field]) < stringifyIfNeeded(b[field])
+        sortFunc = (a: number, b: number): number => {
+          return stringifyIfNeeded(input.data[field][a]) <
+            stringifyIfNeeded(input.data[field][b])
             ? 1
             : -1;
         };
       } else {
-        sortFunc = (a: any, b: any): number => {
-          return stringifyIfNeeded(a[field]) > stringifyIfNeeded(b[field])
+        sortFunc = (a: number, b: number): number => {
+          return stringifyIfNeeded(input.data[field][a]) >
+            stringifyIfNeeded(input.data[field][b])
             ? 1
             : -1;
         };
       }
     } else {
       if (this._options.desc) {
-        sortFunc = (a: any, b: any): number => {
-          return a[field] < b[field] ? 1 : -1;
+        sortFunc = (a: number, b: number): number => {
+          return input.data[field][a] < input.data[field][b] ? 1 : -1;
         };
       } else {
-        sortFunc = (a: any, b: any): number => {
-          return a[field] > b[field] ? 1 : -1;
+        sortFunc = (a: number, b: number): number => {
+          return input.data[field][a] > input.data[field][b] ? 1 : -1;
         };
       }
     }
 
-    const data = input.data.slice(0);
-    const sortables: any[] = [],
-      notSortables: any[] = [];
+    const data: Dict<any[]> = {};
 
-    data.forEach((value: any) => {
-      const cellValue = value[field];
-      const notSortable =
-        cellValue === null ||
-        (typeof cellValue === 'number' && Number.isNaN(cellValue)) ||
-        (cellValue instanceof Date && Number.isNaN(cellValue.getTime()));
+    let indices = nonNanIndices.sort(sortFunc);
+    indices = indices.concat(nanIndices);
 
-      if (notSortable) {
-        notSortables.push(value);
-      } else {
-        sortables.push(value);
+    // There is a better approach for this
+    // We don't need to copy the data
+    // We should always keep the datasource intact and
+    // create the "views" in the transform's apply methods
+    // The view would then keep the indices in memory and apply the sorting
+    // upon data request
+    for (const column of Object.keys(input.data)) {
+      let i = 0;
+      data[column] = [];
+      for (const idx of indices) {
+        data[column][i++] = input.data[column][idx];
       }
-    });
+    }
 
-    return {
-      schema: input.schema,
-      data: sortables.sort(sortFunc).concat(notSortables),
-    };
+    return new DataSource(data, input.fields, input.schema);
   }
 
   protected _options: SortExecutor.IOptions;

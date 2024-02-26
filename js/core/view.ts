@@ -6,10 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 
-import { ReadonlyJSONObject } from '@lumino/coreutils';
+// import { ReadonlyJSONObject } from '@lumino/coreutils';
 
 import { DataModel } from '@lumino/datagrid';
-import { ViewBasedJSONModel } from './viewbasedjsonmodel';
+import { DataSource } from '../datasource';
 
 /**
  * A View implementation for immutable in-memory JSON data.
@@ -21,14 +21,14 @@ export class View {
   /**
    * Create a view with static JSON data.
    *
-   * @param options - The options for initializing the view.
+   * @param datasource - The datasource for initializing the view.
    */
-  constructor(options: View.IOptions) {
-    const split = Private.splitFields(options.schema);
-    this._data = options.data;
+  constructor(datasource: DataSource | Readonly<DataSource>) {
+    const split = Private.splitFields(datasource.schema);
+    this._data = datasource;
     this._bodyFields = split.bodyFields;
     this._headerFields = split.headerFields;
-    this._missingValues = Private.createMissingMap(options.schema);
+    this._missingValues = Private.createMissingMap(datasource.schema);
   }
 
   /**
@@ -97,14 +97,14 @@ export class View {
   data(region: DataModel.CellRegion, row: number, column: number): any {
     // Set up the field and value variables.
 
-    let field: ViewBasedJSONModel.IField;
+    let field: DataSource.IField;
     let value: any;
 
     // Look up the field and value for the region.
     switch (region) {
       case 'body':
         field = this._bodyFields[column];
-        value = this._data[row][field.name];
+        value = this._data.data[field.name][row];
         break;
       case 'column-header':
         field = this._bodyFields[column];
@@ -112,7 +112,7 @@ export class View {
         break;
       case 'row-header':
         field = this._headerFields[column];
-        value = this._data[row][field.name];
+        value = this._data.data[field.name][row];
         break;
       case 'corner-header':
         field = this._headerFields[column];
@@ -135,7 +135,7 @@ export class View {
   /**
    * Returns a reference to the dataset from this View.
    */
-  get dataset(): View.DataSource {
+  get dataset(): DataSource | Readonly<DataSource> {
     return this._data;
   }
 
@@ -160,23 +160,14 @@ export class View {
    *
    * @param columnIndex - The index to retrieve unique values for.
    */
-  async uniqueValues(
-    region: DataModel.CellRegion,
-    columnIndex: number,
-  ): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const columnName = this.metadata(region, 0, columnIndex)['name'];
-      const uniqueVals = new Set();
-      for (const row of this.dataset) {
-        uniqueVals.add(row[columnName]);
-      }
-      resolve(Array.from(uniqueVals));
-    });
+  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
+    const columnName = this.metadata(region, 0, columnIndex)['name'];
+    return Array.from(new Set(this.dataset.data[columnName]));
   }
 
-  private readonly _data: View.DataSource;
-  private readonly _bodyFields: ViewBasedJSONModel.IField[];
-  private readonly _headerFields: ViewBasedJSONModel.IField[];
+  private readonly _data: DataSource | Readonly<DataSource>;
+  private readonly _bodyFields: DataSource.IField[];
+  private readonly _headerFields: DataSource.IField[];
   private readonly _missingValues: Private.MissingValuesMap | null;
 }
 
@@ -185,68 +176,9 @@ export class View {
  */
 export namespace View {
   /**
-   * An object which describes a column of data in the view.
-   *
-   * #### Notes
-   * This is based on the JSON Table Schema specification:
-   * https://specs.frictionlessdata.io/table-schema/
-   */
-
-  /**
-   * An object when specifies the schema for a view.
-   *
-   * #### Notes
-   * This is based on the JSON Table Schema specification:
-   * https://specs.frictionlessdata.io/table-schema/
-   */
-  export interface ISchema {
-    /**
-     * The fields which describe the view columns.
-     *
-     * Primary key fields are rendered as row header columns.
-     */
-    readonly fields: ViewBasedJSONModel.IField[];
-
-    /**
-     * The values to treat as "missing" data.
-     *
-     * Missing values are automatically converted to `null`.
-     */
-    readonly missingValues?: string[];
-
-    /**
-     * The field names which act as primary keys.
-     *
-     * Primary key fields are rendered as row header columns.
-     */
-    readonly primaryKey?: string | string[];
-
-    /**
-     * The name of the unique identifier in the primary key array
-     */
-    readonly primaryKeyUuid: string;
-  }
-
-  /**
-   * A type alias for a data source for a JSON data model.
-   *
-   * A data source is an array of JSON object records which represent
-   * the rows of the table. The keys of the records correspond to the
-   * field names of the columns.
-   */
-  export type DataSource = ReadonlyArray<ReadonlyJSONObject>;
-
-  /**
    * An options object for initializing a view.
    */
   export interface IOptions {
-    /**
-     * The schema for the for the view.
-     *
-     * The schema should be treated as an immutable object.
-     */
-    schema: ISchema;
-
     /**
      * The data source for the view.
      *
@@ -267,18 +199,18 @@ namespace Private {
     /**
      * The non-primary key fields to use for the grid body.
      */
-    bodyFields: ViewBasedJSONModel.IField[];
+    bodyFields: DataSource.IField[];
 
     /**
      * The primary key fields to use for the grid headers.
      */
-    headerFields: ViewBasedJSONModel.IField[];
+    headerFields: DataSource.IField[];
   }
 
   /**
    * Split the schema fields into header and body fields.
    */
-  export function splitFields(schema: View.ISchema): ISplitFieldsResult {
+  export function splitFields(schema: DataSource.ISchema): ISplitFieldsResult {
     // Normalize the primary keys.
     let primaryKeys: string[];
     if (schema.primaryKey === undefined) {
@@ -289,8 +221,8 @@ namespace Private {
       primaryKeys = schema.primaryKey;
     }
     // Separate the fields for the body and header.
-    const bodyFields: ViewBasedJSONModel.IField[] = [];
-    const headerFields: ViewBasedJSONModel.IField[] = [];
+    const bodyFields: DataSource.IField[] = [];
+    const headerFields: DataSource.IField[] = [];
     for (const field of schema.fields) {
       // Skipping the primary key unique identifier so
       // it is not rendered.
@@ -319,7 +251,7 @@ namespace Private {
    * This returns `null` if there are no missing values.
    */
   export function createMissingMap(
-    schema: View.ISchema,
+    schema: DataSource.ISchema,
   ): MissingValuesMap | null {
     // Bail early if there are no missing values.
     if (!schema.missingValues || schema.missingValues.length === 0) {

@@ -1,8 +1,9 @@
 import { SortExecutor, FilterExecutor } from '../../js/core/transformExecutors';
 import { DataGenerator } from '../js/testUtils';
-import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
 import { ReadonlyJSONValue } from '@lumino/coreutils';
 import { Transform } from '../../js/core/transform';
+import { DataGridModel } from '../../js';
+import { DataSource } from '../../js/datasource';
 
 const INVALID_DATE = new Date('INVALID');
 
@@ -438,7 +439,7 @@ namespace Private {
   export function getDataByField(
     options: IGetDataByFieldOptions,
   ): ReadonlyJSONValue[] {
-    return options.data.data.map((row) => row[options.field]);
+    return options.data.data[options.field];
   }
 
   /**
@@ -454,7 +455,7 @@ namespace Private {
       dType: options.dType,
       desc: options.desc,
     });
-    const result = testObject.apply(options.data);
+    const result = testObject.apply(options.data.data);
     return Private.getDataByField({ data: result, field: options.field });
   }
 
@@ -472,7 +473,7 @@ namespace Private {
       operator: options.operator,
       value: options.value,
     });
-    const result = testObject.apply(options.data);
+    const result = testObject.apply(options.data.data);
     return Private.getDataByField({ data: result, field: options.field });
   }
 
@@ -483,7 +484,7 @@ namespace Private {
     /**
      * The table to operate on.
      */
-    data: ViewBasedJSONModel.IData;
+    data: Readonly<DataSource>;
 
     /**
      * The name of the field to operate on.
@@ -498,7 +499,7 @@ namespace Private {
     /**
      * The table to operate on.
      */
-    data: ViewBasedJSONModel.IData;
+    data: DataGridModel.IData;
 
     /**
      * The name of the field to operate on.
@@ -523,7 +524,7 @@ namespace Private {
     /**
      * The table to operate on.
      */
-    data: ViewBasedJSONModel.IData;
+    data: DataGridModel.IData;
 
     /**
      * The name of the field to operate on.

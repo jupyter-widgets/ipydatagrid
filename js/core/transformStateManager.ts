@@ -2,8 +2,6 @@ import { Transform } from './transform';
 
 import { View } from './view';
 
-import { ViewBasedJSONModel } from './viewbasedjsonmodel';
-
 import {
   SortExecutor,
   FilterExecutor,
@@ -15,6 +13,7 @@ import { each } from '@lumino/algorithm';
 import { JSONExt } from '@lumino/coreutils';
 
 import { Signal, ISignal } from '@lumino/signaling';
+import { DataSource } from '../datasource';
 
 /**
  * A state manager for tracking the active transformations of a model.
@@ -94,7 +93,7 @@ export class TransformStateManager {
    *
    * @param data - The dataset to operate on.
    */
-  createView(data: Readonly<ViewBasedJSONModel.IData>): View {
+  createView(data: Readonly<DataSource>): View {
     const executors = this._createExecutors(data);
     let transformedData = data;
     each(executors, (transform: TransformExecutor) => {
@@ -108,9 +107,7 @@ export class TransformStateManager {
    *
    * @param data - The dataset to operate on.
    */
-  private _createExecutors(
-    data: ViewBasedJSONModel.IData,
-  ): TransformExecutor[] {
+  private _createExecutors(data: Readonly<DataSource>): TransformExecutor[] {
     const sortExecutors: SortExecutor[] = [];
     const filterExecutors: FilterExecutor[] = [];
 

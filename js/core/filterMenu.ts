@@ -19,6 +19,7 @@ import { VirtualDOM, VirtualElement, h } from '@lumino/virtualdom';
 import { FilterValueRenderer } from './valueRenderer';
 
 import { Theme } from '../utils';
+import { DataSource } from '../datasource';
 
 /**
  * An interactive widget to add filter transformations to the data model.
@@ -252,41 +253,33 @@ export class InteractiveFilterDialog extends BoxPanel {
   /**
    * Displays the unique values of a column.
    */
-  async _renderUniqueVals() {
+  _renderUniqueVals() {
     const uniqueVals = this._model.uniqueValues(
       this._region,
       this._columnIndex,
     );
-
-    uniqueVals.then((value) => {
-      const items = value.map((val, i) => {
-        return { index: i, uniqueVals: val };
-      });
-
-      const data: ViewBasedJSONModel.IData = {
-        schema: {
-          fields: [
-            { name: 'index', type: 'integer', rows: [] },
-            { name: 'uniqueVals', type: 'number', rows: [] },
-          ],
-          primaryKey: ['index'],
-          primaryKeyUuid: 'index',
-        },
-        data: items,
-      };
-      this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
-
-      const sortTransform: Transform.Sort = {
-        type: 'sort',
-        columnIndex: this.model.getSchemaIndex(this._region, 0),
-        desc: false,
-      };
-
-      // Sort items in filter-by-value menu in ascending order
-      (<ViewBasedJSONModel>this._uniqueValueGrid.dataModel).addTransform(
-        sortTransform,
-      );
-    });
+    const data = new DataSource(
+      { index: [...uniqueVals.keys()], uniqueVals },
+      [{ index: null }, { uniqueVals: null }],
+      {
+        fields: [
+          { name: 'index', type: 'integer', rows: [] },
+          { name: 'uniqueVals', type: 'number', rows: [] },
+        ],
+        primaryKey: ['index'],
+        primaryKeyUuid: 'index',
+      },
+    );
+    this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
+    const sortTransform: Transform.Sort = {
+      type: 'sort',
+      columnIndex: this.model.getSchemaIndex(this._region, 0),
+      desc: false,
+    };
+    // Sort items in filter-by-value menu in ascending order
+    (<ViewBasedJSONModel>this._uniqueValueGrid.dataModel).addTransform(
+      sortTransform,
+    );
   }
 
   /**
@@ -307,24 +300,22 @@ export class InteractiveFilterDialog extends BoxPanel {
       this._columnIndex,
     );
 
-    uniqueVals.then((values) => {
-      let showAsChecked = true;
-      for (const value of values) {
-        // If there is a unique value which is not present in the state then it is
-        // not ticked, and therefore we should not tick the "Select all" checkbox.
-        if (
-          !this._uniqueValueStateManager.has(
-            this._region,
-            this._columnIndex,
-            value,
-          )
-        ) {
-          showAsChecked = false;
-          break;
-        }
+    let showAsChecked = true;
+    for (const value of uniqueVals) {
+      // If there is a unique value which is not present in the state then it is
+      // not ticked, and therefore we should not tick the "Select all" checkbox.
+      if (
+        !this._uniqueValueStateManager.has(
+          this._region,
+          this._columnIndex,
+          value,
+        )
+      ) {
+        showAsChecked = false;
+        break;
       }
-      this._selectAllCheckbox.checked = showAsChecked;
-    });
+    }
+    this._selectAllCheckbox.checked = showAsChecked;
   }
 
   /**
@@ -737,7 +728,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    * values of a column.
    */
   protected async createUniqueValueNodes(): Promise<VirtualElement> {
-    const uniqueVals = await this._model.uniqueValues(
+    const uniqueVals = this._model.uniqueValues(
       this._region,
       this._columnIndex,
     );
@@ -1149,26 +1140,24 @@ export class InteractiveFilterDialog extends BoxPanel {
     ];
   }
 
-  async addRemoveAllUniqueValuesToState(add: boolean) {
+  addRemoveAllUniqueValuesToState(add: boolean) {
     const uniqueVals = this.model.uniqueValues(this._region, this._columnIndex);
 
-    return uniqueVals.then((values) => {
-      for (const value of values) {
-        if (add) {
-          this._uniqueValueStateManager.add(
-            this._region,
-            this._columnIndex,
-            value,
-          );
-        } else {
-          this._uniqueValueStateManager.remove(
-            this._region,
-            this._columnIndex,
-            value,
-          );
-        }
+    for (const value of uniqueVals) {
+      if (add) {
+        this._uniqueValueStateManager.add(
+          this._region,
+          this._columnIndex,
+          value,
+        );
+      } else {
+        this._uniqueValueStateManager.remove(
+          this._region,
+          this._columnIndex,
+          value,
+        );
       }
-    });
+    }
   }
 
   /**
@@ -1547,10 +1536,9 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
       !this._filterDialog.hasFilter &&
       !this._filterDialog.userInteractedWithDialog
     ) {
-      this._filterDialog.addRemoveAllUniqueValuesToState(true).then(() => {
-        this._filterDialog.userInteractedWithDialog = true;
-        updateCheckState();
-      });
+      this._filterDialog.addRemoveAllUniqueValuesToState(true);
+      this._filterDialog.userInteractedWithDialog = true;
+      updateCheckState();
     } else {
       updateCheckState();
     }

@@ -95,7 +95,7 @@ describe('Test .createView()', () => {
       data: [1, 2, 3],
     });
     const tsm = new TransformStateManager();
-    const view = tsm.createView(data);
+    const view = tsm.createView(data.data);
     expect(view).toBeInstanceOf(View);
   });
   test('View() has transformed data - filter', () => {
@@ -107,8 +107,8 @@ describe('Test .createView()', () => {
     const tsm = new TransformStateManager();
     const transform = Private.simpleFilter();
     tsm.add(transform);
-    const view = tsm.createView(data);
-    const testData = view.dataset.map((val) => val['test']);
+    const view = tsm.createView(data.data);
+    const testData = view.dataset.data['test'];
     expect(testData).toEqual([-1, -2]);
   });
   test('View() has transformed data - sort', () => {
@@ -120,8 +120,8 @@ describe('Test .createView()', () => {
     const tsm = new TransformStateManager();
     const transform = Private.simpleSort();
     tsm.add(transform);
-    const view = tsm.createView(data);
-    const testData = view.dataset.map((val) => val['test']);
+    const view = tsm.createView(data.data);
+    const testData = view.dataset.data['test'];
     expect(testData).toEqual([7, 4, 3, 2]);
   });
 });

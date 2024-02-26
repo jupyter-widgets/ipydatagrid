@@ -1,5 +1,6 @@
 const d3Color: any = require('d3-color');
 import { CellGroup } from '@lumino/datagrid';
+import { DataSource } from './datasource';
 
 export namespace ArrayUtils {
   /**
@@ -80,10 +81,12 @@ export namespace ArrayUtils {
    * @returns index-based locations of all mutli-index rows.
    */
   export function generateRowMergedCellLocations(model: any): number[][][][] {
+    const dataset = model._dataset as DataSource;
+
     // Removing internal primary key identifier.
-    const primaryKey = model._dataset.schema.primaryKey.slice(
+    const primaryKey = dataset.schema.primaryKey.slice(
       0,
-      model._dataset.schema.primaryKey.length - 1,
+      dataset.schema.primaryKey.length - 1,
     );
 
     // Terminate if we're not dealing with nested row headers.
@@ -91,15 +94,15 @@ export namespace ArrayUtils {
       return [];
     }
 
-    const data = model._dataset.data;
+    const data = dataset.data;
     const retArr = [];
     let curCol = [];
 
     let prevVal = undefined;
     for (let i = 0; i < primaryKey.length; i++) {
       let curMergedRange: any = [];
-      for (let j = 0; j < data.length; j++) {
-        const curVal = data[j][primaryKey[i]];
+      for (let j = 0; j < dataset.length; j++) {
+        const curVal = data[primaryKey[i]][j];
         if (curMergedRange.length == 0 || prevVal == curVal) {
           curMergedRange.push([j, i]);
         } else {

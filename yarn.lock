@@ -6317,11 +6317,13 @@ __metadata:
     fs-extra: ^7.0.0
     jest: ^28.1.3
     jest-environment-jsdom: ^28.1.3
+    jest-raw-loader: ^1.0.1
     lint-staged: ^10.2.11
     mkdirp: ^0.5.1
     moment: ^2.24.0
     npm-run-all: ^4.1.3
     prettier: ^2.0.5
+    raw-loader: ^4.0.2
     rimraf: ^2.6.2
     source-map-loader: ^0.2.4
     style-loader: ^3.3.3
@@ -6975,6 +6977,13 @@ __metadata:
     jest-resolve:
       optional: true
   checksum: db1a8ab2cb97ca19c01b1cfa9a9c8c69a143fde833c14df1fab0766f411b1148ff0df878adea09007ac6a2085ec116ba9a996a6ad104b1e58c20adbf88eed9b2
+  languageName: node
+  linkType: hard
+
+"jest-raw-loader@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "jest-raw-loader@npm:1.0.1"
+  checksum: 0f1e2c650a0dd46cdb6c7b678b384170d41737cc17fca2f776a57af57827bf73bd37e6d0f6625d7912f126ea0dce09b1db2b26424cc1468f08e10e59c7ba1a70
   languageName: node
   linkType: hard
 
@@ -8704,6 +8713,18 @@ __metadata:
   dependencies:
     safe-buffer: "npm:^5.1.0"
   checksum: d779499376bd4cbb435ef3ab9a957006c8682f343f14089ed5f27764e4645114196e75b7f6abf1cbd84fd247c0cb0651698444df8c9bf30e62120fbbc52269d6
+  languageName: node
+  linkType: hard
+
+"raw-loader@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "raw-loader@npm:4.0.2"
+  dependencies:
+    loader-utils: ^2.0.0
+    schema-utils: ^3.0.0
+  peerDependencies:
+    webpack: ^4.0.0 || ^5.0.0
+  checksum: 51cc1b0d0e8c37c4336b5318f3b2c9c51d6998ad6f56ea09612afcfefc9c1f596341309e934a744ae907177f28efc9f1654eacd62151e82853fcc6d37450e795
   languageName: node
   linkType: hard
 

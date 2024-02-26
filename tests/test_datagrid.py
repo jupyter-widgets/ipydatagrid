@@ -146,11 +146,14 @@ def test_get_cell_value_by_numerical_index(
 def test_data_object_generation(dataframe: pd.DataFrame) -> None:
     data_object = DataGrid.generate_data_object(dataframe, "ipydguuid", "key")
     expected_output = {
-        "data": [
-            {"key": "One", "A": 1, "B": 4, "ipydguuid": 0},
-            {"key": "Two", "A": 2, "B": 5, "ipydguuid": 1},
-            {"key": "Three", "A": 3, "B": 6, "ipydguuid": 2},
-        ],
+        "data": pd.DataFrame(
+            data={
+                "key": ["One", "Two", "Three"],
+                "A": [1, 2, 3],
+                "B": [4, 5, 6],
+                "ipydguuid": [0, 1, 2],
+            }
+        ),
         "schema": {
             "fields": [
                 {"name": "key", "type": "string"},
@@ -173,7 +176,9 @@ def test_data_object_generation(dataframe: pd.DataFrame) -> None:
     # Pin pandas version to avoid potential errors due to differing versions
     data_object["schema"]["pandas_version"] = "0.20.0"
 
-    assert data_object == expected_output
+    assert data_object["data"].equals(expected_output["data"])
+    assert data_object["schema"] == expected_output["schema"]
+    assert data_object["fields"] == expected_output["fields"]
 
 
 def test_selected_cell_values(monkeypatch, datagrid, dataframe):
