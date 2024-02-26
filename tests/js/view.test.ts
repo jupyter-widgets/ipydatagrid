@@ -11,7 +11,7 @@ describe('Test .metadata()', () => {
       { name: 'col2', type: 'boolean', data: [true, false, true] },
     ],
   });
-  const view = new View(testData);
+  const view = new View(testData.data);
   const testCases: Private.MetadataTestCase[] = [
     { region: 'column-header', column: 0, expected: 'col1' },
     { region: 'column-header', column: 1, expected: 'col2' },
@@ -32,7 +32,7 @@ describe('Test .rowCount()', () => {
     length: 3,
     data: [{ name: 'string', type: 'string', data: ['A', 'B', 'C'] }],
   });
-  const testView = new View(testData);
+  const testView = new View(testData.data);
   test('cellregion-body', () => {
     expect(testView.rowCount('body')).toBe(3);
   });
@@ -88,7 +88,7 @@ describe('Test .rowCount() nestedColumns', () => {
     },
     "('ipydguuid', '')",
   );
-  const testView = new View(testData);
+  const testView = new View(testData.data);
   test('cellregion-body', () => {
     expect(testView.rowCount('body')).toBe(4);
   });
@@ -105,7 +105,7 @@ describe('Test .columnCount()', () => {
       { name: 'boolean', type: 'boolean', data: [true, false, true] },
     ],
   });
-  const testView = new View(testData);
+  const testView = new View(testData.data);
   test('cellregion-body', () => {
     expect(testView.columnCount('body')).toBe(1);
   });
@@ -161,7 +161,7 @@ describe('Test .columnCount() nestedColumns', () => {
     },
     "('ipydguuid', '')",
   );
-  const testView = new View(testData);
+  const testView = new View(testData.data);
   test('cellregion-body', () => {
     expect(testView.columnCount('body')).toBe(6);
   });
@@ -179,7 +179,7 @@ describe('Test .data()', () => {
       { name: 'col2', type: 'boolean', data: [true, false, true] },
     ],
   });
-  const view = new View(testData);
+  const view = new View(testData.data);
   const testCases: Private.DataTestCase[] = [
     { region: 'body', row: 0, column: 0, expected: 10 },
     { region: 'body', row: 1, column: 0, expected: 20 },
@@ -243,7 +243,7 @@ describe('Test .data() nestedColumns', () => {
     },
     "('ipydguuid', '')",
   );
-  const testView = new View(testData);
+  const testView = new View(testData.data);
   const testCases: Private.DataTestCase[] = [
     { region: 'body', row: 0, column: 0, expected: 41.0 },
     { region: 'body', row: 1, column: 3, expected: 37.1 },

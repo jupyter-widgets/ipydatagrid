@@ -133,9 +133,9 @@ describe('Test .uniqueValues()', () => {
       { name: 'col3', type: 'number', data: [100, 200, 100, 300, 200] },
     ],
   });
-  const testModel = new ViewBasedJSONModel(testData);
+  const testModel = new ViewBasedJSONModel(testData.data);
   test('cellregion-column-header-0', () => {
-    expect(testModel.uniqueValues('column-header', 0)).resolves.toEqual([
+    expect(testModel.uniqueValues('column-header', 0)).toEqual([
       10,
       20,
       30,
@@ -144,20 +144,20 @@ describe('Test .uniqueValues()', () => {
     ]);
   });
   test('cellregion-column-header-1', () => {
-    expect(testModel.uniqueValues('column-header', 1)).resolves.toEqual([
+    expect(testModel.uniqueValues('column-header', 1)).toEqual([
       true,
       false,
     ]);
   });
   test('cellregion-column-header-2', () => {
-    expect(testModel.uniqueValues('column-header', 2)).resolves.toEqual([
+    expect(testModel.uniqueValues('column-header', 2)).toEqual([
       100,
       200,
       300,
     ]);
   });
   test('cellregion-corner-header-0', () => {
-    expect(testModel.uniqueValues('corner-header', 0)).resolves.toEqual([
+    expect(testModel.uniqueValues('corner-header', 0)).toEqual([
       'A',
       'C',
       'B',
@@ -172,7 +172,7 @@ namespace Private {
       type: 'number',
       data: [1, 2, 3, 4],
     });
-    const model = new ViewBasedJSONModel(testData);
+    const model = new ViewBasedJSONModel(testData.data);
     return model;
   }
 }

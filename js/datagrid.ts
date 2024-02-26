@@ -14,6 +14,7 @@ import { Message, MessageLoop } from '@lumino/messaging';
 import { Widget } from '@lumino/widgets';
 
 import {
+  Dict,
   DOMWidgetModel,
   DOMWidgetView,
   ICallbacks,
@@ -27,6 +28,8 @@ import {
   WidgetModel,
 } from '@jupyter-widgets/base';
 
+import { array_or_json_serializer } from 'bqplot';
+
 import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
@@ -34,12 +37,64 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 import { CellRendererModel, CellRendererView } from './cellrenderer';
 import { FeatherGrid } from './feathergrid';
 import { Theme } from './utils';
+import { DataSource } from './datasource';
 
 // Import CSS
 import '../style/jupyter-widget.css';
 
-// Shorthand for a string->T mapping
-type Dict<T> = { [keys: string]: T };
+function unpack_raw_data(
+  value: any | Dict<unknown> | string | (Dict<unknown> | string)[],
+): any {
+  if (Array.isArray(value)) {
+    const unpacked: any[] = [];
+    value.forEach((sub_value, key) => {
+      unpacked.push(unpack_raw_data(sub_value));
+    });
+    return unpacked;
+  } else if (value instanceof Object && typeof value !== 'string') {
+    const unpacked: { [key: string]: any } = {};
+    Object.keys(value).forEach((key) => {
+      unpacked[key] = unpack_raw_data(value[key]);
+    });
+    return unpacked;
+  } else if (value === '$NaN$') {
+    return Number.NaN;
+  } else if (value === '$Infinity$') {
+    return Number.POSITIVE_INFINITY;
+  } else if (value === '$NegInfinity$') {
+    return Number.NEGATIVE_INFINITY;
+  } else if (value === '$NaT$') {
+    return new Date('INVALID');
+  } else {
+    return value;
+  }
+}
+
+function serialize_data(data: DataSource, manager: any): any {
+  const serialized_data: any = {};
+  for (const column of Object.keys(data.data)) {
+    serialized_data[column] = array_or_json_serializer.serialize(
+      data.data[column],
+      manager,
+    );
+  }
+  return { data: serialized_data, fields: data.fields, schema: data.schema };
+}
+
+function deserialize_data(data: any, manager: any): DataSource {
+  const deserialized_data: any = {};
+  for (const column of Object.keys(data.data)) {
+    if (data.data[column].type == 'raw') {
+      deserialized_data[column] = unpack_raw_data(data.data[column].value);
+    } else {
+      deserialized_data[column] = array_or_json_serializer.deserialize(
+        data.data[column],
+        manager,
+      );
+    }
+  }
+  return new DataSource(deserialized_data, data.fields, data.schema, true);
+}
 
 export class DataGridModel extends DOMWidgetModel {
   defaults() {
@@ -106,14 +161,10 @@ export class DataGridModel extends DOMWidgetModel {
         this.set('_visible_rows', msg.indices);
         this.save_changes();
         break;
-      case 'cell-updated':
-        this.set('_data', this.data_model.dataset);
-        this.save_changes();
-        break;
       case 'cell-edit-event':
         // Update data in widget model
-        const newData = this.get('_data');
-        newData.data[msg.row][msg.columnIndex] = msg.value;
+        const newData = this.get('_data') as DataSource;
+        newData.data[msg.column][msg.row] = msg.value;
         this.set('_data', newData);
 
         this.send(
@@ -121,6 +172,7 @@ export class DataGridModel extends DOMWidgetModel {
             event_type: 'cell-changed',
             region: msg.region,
             row: msg.row,
+            column: msg.column,
             column_index: msg.columnIndex,
             value: msg.value,
           },
@@ -139,18 +191,14 @@ export class DataGridModel extends DOMWidgetModel {
 
   updateData() {
     const data = this.data;
-    const schema = Private.createSchema(data);
 
     if (this.data_model) {
-      this.data_model.updateDataset({ data: data.data, schema: schema });
+      this.data_model.updateDataset(data);
       this.data_model.transformStateChanged.disconnect(this.syncTransformState);
       this.data_model.dataSync.disconnect(this.updateDataSync);
     }
 
-    this.data_model = new ViewBasedJSONModel({
-      data: data.data,
-      schema: schema,
-    });
+    this.data_model = new ViewBasedJSONModel(this.data);
 
     this.data_model.transformStateChanged.connect(this.syncTransformState);
     this.data_model.dataSync.connect(this.updateDataSync);
@@ -270,7 +318,7 @@ export class DataGridModel extends DOMWidgetModel {
     this.synchingWithKernel = false;
   }
 
-  get data(): DataGridModel.IData {
+  get data(): DataSource {
     return this.get('_data');
   }
 
@@ -281,7 +329,10 @@ export class DataGridModel extends DOMWidgetModel {
     corner_renderer: { deserialize: unpack_models as any },
     default_renderer: { deserialize: unpack_models as any },
     header_renderer: { deserialize: unpack_models as any },
-    _data: { deserialize: unpack_data as any },
+    _data: {
+      deserialize: deserialize_data,
+      serialize: serialize_data,
+    },
     grid_style: { deserialize: unpack_style as any },
   };
 
@@ -341,36 +392,6 @@ function unpack_style(
       // returning the color formatting function from VegaExprModel.
       return model._function;
     });
-  } else {
-    return Promise.resolve(value);
-  }
-}
-
-// modified from ipywidgets original
-function unpack_data(
-  value: any | Dict<unknown> | string | (Dict<unknown> | string)[],
-  manager: any,
-): Promise<WidgetModel | Dict<WidgetModel> | WidgetModel[] | any> {
-  if (Array.isArray(value)) {
-    const unpacked: any[] = [];
-    value.forEach((sub_value, key) => {
-      unpacked.push(unpack_data(sub_value, manager));
-    });
-    return Promise.all(unpacked);
-  } else if (value instanceof Object && typeof value !== 'string') {
-    const unpacked: { [key: string]: any } = {};
-    Object.keys(value).forEach((key) => {
-      unpacked[key] = unpack_data(value[key], manager);
-    });
-    return resolvePromisesDict(unpacked);
-  } else if (value === '$NaN$') {
-    return Promise.resolve(Number.NaN);
-  } else if (value === '$Infinity$') {
-    return Promise.resolve(Number.POSITIVE_INFINITY);
-  } else if (value === '$NegInfinity$') {
-    return Promise.resolve(Number.NEGATIVE_INFINITY);
-  } else if (value === '$NaT$') {
-    return Promise.resolve(new Date('INVALID'));
   } else {
     return Promise.resolve(value);
   }
@@ -778,22 +799,19 @@ export {
 export { VegaExprModel, VegaExprView } from './vegaexpr';
 
 export namespace DataGridModel {
-  /**
-   * An options object for initializing the data model.
-   */
   export interface IData {
-    data: ViewBasedJSONModel.DataSource;
+    data: DataSource;
     schema: ISchema;
     fields: { [key: string]: null }[];
   }
   export interface IField {
-    readonly name: string | any[];
+    readonly name: string;
     readonly type: string;
     readonly rows: any[];
   }
   export interface ISchema {
     readonly fields: IField[];
-    readonly primaryKey: string[];
+    readonly primaryKey: string | string[];
     readonly primaryKeyUuid: string;
   }
 }
@@ -805,51 +823,5 @@ namespace Private {
   export function getWidgetPanel(): any {
     // @ts-ignore needed for ipywidget 7.x compatibility
     return JupyterLuminoPanelWidget ?? JupyterPhosphorPanelWidget;
-  }
-
-  /**
-   * Creates a valid JSON Table Schema from the schema provided by pandas.
-   *
-   * @param data - The data that has been synced from the kernel.
-   */
-  export function createSchema(
-    data: DataGridModel.IData,
-  ): ViewBasedJSONModel.ISchema {
-    // Construct a new array of schema fields based on the keys in data.fields
-    // Note: this accounts for how tuples/lists may be serialized into strings
-    // in the case of multiIndex columns.
-    const fields: ViewBasedJSONModel.IField[] = [];
-    data.fields.forEach((val: { [key: string]: null }, i: number) => {
-      const rows = Array.isArray(data.schema.fields[i].name)
-        ? <any[]>data.schema.fields[i].name
-        : <string[]>[data.schema.fields[i].name];
-      const field = {
-        name: Object.keys(val)[0],
-        type: data.schema.fields[i].type,
-        rows: rows,
-      };
-      fields.push(field);
-    });
-
-    // Updating the primary key to account for a multiIndex primary key.
-    const primaryKey = data.schema.primaryKey.map((key: string) => {
-      for (let i = 0; i < data.schema.fields.length; i++) {
-        const curFieldKey = Array.isArray(key)
-          ? data.schema.fields[i].name[0]
-          : data.schema.fields[i].name;
-        const newKey = Array.isArray(key) ? key[0] : key;
-
-        if (curFieldKey == newKey) {
-          return Object.keys(data.fields[i])[0];
-        }
-      }
-      return 'unreachable';
-    });
-
-    return {
-      primaryKey: primaryKey,
-      primaryKeyUuid: data.schema.primaryKeyUuid,
-      fields: fields,
-    };
   }
 }

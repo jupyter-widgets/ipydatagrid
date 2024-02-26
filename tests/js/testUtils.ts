@@ -1,5 +1,3 @@
-import { ViewBasedJSONModel } from '../../js/core/viewbasedjsonmodel';
-
 import {
   IClassicComm,
   ICallbacks,
@@ -8,6 +6,8 @@ import {
 } from '@jupyter-widgets/base';
 
 import { JSONObject } from '@lumino/coreutils';
+import { DataGridModel } from '../../js/datagrid';
+import { DataSource } from '../../js/datasource';
 
 /**
  * A namespace for functions that generate tables for testing.
@@ -27,53 +27,53 @@ export namespace DataGenerator {
    */
   export function singleCol(
     options: ISingleColOptions,
-  ): ViewBasedJSONModel.IData {
-    const data = options.data.map((val: any, i: number) => {
-      const row: { [key: string]: any } = { index: i, IPYDG_UUID: i };
-      row[options.name] = val;
-      return row;
-    });
+  ): DataGridModel.IData {
+    const schema = {
+      fields: [
+        { name: 'index', type: 'integer', rows: ['index'] },
+        { name: options.name, type: options.type, rows: [options.name] },
+        { name: IPYDG_UUID, type: 'integer', rows: [IPYDG_UUID] },
+      ],
+      primaryKey: ['index', IPYDG_UUID],
+      primaryKeyUuid: IPYDG_UUID,
+    };
+
+    const data: {[key: string]: any} = {};
+    data["index"] = [...Array(options.data.length).keys()];
+    data[options.name] = options.data;
+    data[IPYDG_UUID] = [...Array(options.data.length).keys()];
+
     return {
-      schema: {
-        fields: [
-          { name: 'index', type: 'integer', rows: ['index'] },
-          { name: options.name, type: options.type, rows: [options.name] },
-          { name: IPYDG_UUID, type: 'integer', rows: [IPYDG_UUID] },
-        ],
-        primaryKey: ['index', IPYDG_UUID],
-        primaryKeyUuid: IPYDG_UUID,
-      },
-      data: data,
+      fields: [],
+      schema: schema,
+      data: new DataSource(data, [], schema),
     };
   }
 
   export function multiCol(
     options: IMultiColOptions,
-  ): ViewBasedJSONModel.IData {
-    const fields = options.data.map((val) => {
-      return { name: val.name, type: val.type, rows: [val.name] };
-    });
-    const rows = [];
+  ): DataGridModel.IData {
+    const schema = {
+      fields: [
+        ...options.data.map((val) => {
+          return { name: val.name, type: val.type, rows: [val.name] };
+        }),
+        { name: IPYDG_UUID, type: 'integer', rows: [IPYDG_UUID] },
+      ],
+      primaryKey: ['index', IPYDG_UUID],
+      primaryKeyUuid: IPYDG_UUID,
+    };
 
-    for (let i = 0; i < options.length; i++) {
-      const row: { [key: string]: any } = {};
-      options.data.forEach((col) => {
-        row[col.name] = col.data[i];
-      });
-      row[IPYDG_UUID] = i;
-      rows.push(row);
-    }
+    const data: {[key: string]: any} = {};
+    options.data.forEach((col) => {
+      data[col.name] = col.data;
+    });
+    data[IPYDG_UUID] = [...Array(options.length).keys()];
 
     return {
-      schema: {
-        fields: [
-          ...fields,
-          { name: IPYDG_UUID, type: 'integer', rows: [IPYDG_UUID] },
-        ],
-        primaryKey: ['index', IPYDG_UUID],
-        primaryKeyUuid: IPYDG_UUID,
-      },
-      data: rows,
+      fields: [],
+      schema: schema,
+      data: new DataSource(data, [], schema),
     };
   }
 
@@ -85,35 +85,32 @@ export namespace DataGenerator {
   export function multiIndexCol(
     options: IMultiIndexColOptions,
     primaryKeyUuid: string,
-  ): ViewBasedJSONModel.IData {
-    const fields = options.data.map((val) => {
-      return {
-        name: val.name,
-        type: val.type,
-        rows:
-          typeof val.name === 'number'
-            ? [val.name]
-            : val.name.replace(/[^\w\s]/gi, '').split(' '),
-      };
-    });
-    const rows = [];
+  ): DataGridModel.IData {
+    const schema = {
+      fields: options.data.map((val) => {
+        return {
+          name: val.name,
+          type: val.type,
+          rows:
+            typeof val.name === 'number'
+              ? [val.name]
+              : val.name.replace(/[^\w\s]/gi, '').split(' '),
+        };
+      }),
+      primaryKey: options.primaryKeyData,
+      primaryKeyUuid: primaryKeyUuid,
+    };
 
-    for (let i = 0; i < options.length; i++) {
-      const row: { [key: string]: any } = {};
-      options.data.forEach((col) => {
-        row[col.name] = col.data[i];
-      });
-      row[primaryKeyUuid] = i;
-      rows.push(row);
-    }
+    const data: {[key: string]: any} = {};
+    options.data.forEach((col) => {
+      data[col.name] = col.data;
+    });
+    data[IPYDG_UUID] = [...Array(options.length).keys()];
 
     return {
-      schema: {
-        fields: fields,
-        primaryKey: options.primaryKeyData,
-        primaryKeyUuid: primaryKeyUuid,
-      },
-      data: rows,
+      fields: [],
+      schema: schema,
+      data: new DataSource(data, [], schema),
     };
   }
 

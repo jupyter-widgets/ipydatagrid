@@ -22,18 +22,17 @@ describe('Test trait: data', () => {
   test('Data model is updated on trait update', async () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
-    grid.model.set('_data', testData.set2);
-    expect(grid.model.data_model.dataset).toEqual({
-      data: testData.set2.data,
-      schema: testData.set2.schema,
-    });
+    grid.model.set('_data', testData.set2.data);
+    expect(grid.model.data_model.dataset.data).toEqual(
+      testData.set2.data.data,
+    );
   });
 
   test('Comm message sent to backend on frontend cell update', async () => {
     const testData = Private.createBasicTestData();
     const grid = await Private.createGridWidget({ data: testData.set1 });
     let dataModel = grid.model.data_model;
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
     dataModel = grid.model.data_model
     const mock = jest.spyOn((grid.model.comm as IClassicComm), 'send');
     dataModel.setData('body', 1, 0, 1.23);
@@ -46,7 +45,7 @@ describe('Test trait: data', () => {
     const row = 1,
       column = 0;
     const value = 1.23;
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
 
     return new Promise<void>((resolve, reject) => {
       grid.model.on('msg:custom', (content) => {
@@ -73,7 +72,7 @@ describe('Test trait: data', () => {
     const row = 1,
       column = 0;
     const value = 1.23;
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
 
     return new Promise<void>((resolve, reject) => {
       grid.model.data_model.changed.connect(
@@ -102,7 +101,7 @@ describe('Test trait: data', () => {
     const grid = await Private.createGridWidget({ data: testData.set1 });
     const row = 1;
     const value = [1.23];
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
 
     return new Promise<void>((resolve, reject) => {
       grid.model.data_model.changed.connect(
@@ -131,7 +130,7 @@ describe('Test trait: data', () => {
       modelAttributes: { selection_mode: 'cell' },
     });
     const oldSelectionModel = grid.model.selectionModel;
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
     expect(grid.model.selectionModel).not.toBe(oldSelectionModel);
   });
 
@@ -152,7 +151,7 @@ describe('Test trait: data', () => {
     const oldTransforms = grid.model.data_model.transformMetadata(
       transform.columnIndex,
     );
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
     expect(
       grid.model.data_model.transformMetadata(transform.columnIndex),
     ).toEqual(oldTransforms);
@@ -168,7 +167,7 @@ describe('Test trait: data', () => {
     const columnCellConfig = Private.createCellConfig('column-header');
     const oldCornerHead = grid.view.grid.cellRenderers.get(cornerCellConfig);
     const oldColHead = grid.view.grid.cellRenderers.get(columnCellConfig);
-    grid.model.set('_data', testData.set2);
+    grid.model.set('_data', testData.set2.data);
     expect(grid.view.grid.cellRenderers.get(cornerCellConfig)).toBe(
       oldCornerHead,
     );
@@ -318,7 +317,7 @@ namespace Private {
     const set1: DataGridModel.IData = {
       data: data1.data,
       schema: data1.schema,
-      fields: data1.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+      fields: data1.schema.fields.map((field: DataGridModel.IField) => {
         let tempObject: { [key: string]: null } = {};
         tempObject[field.name] = null;
         return tempObject;
@@ -328,7 +327,7 @@ namespace Private {
     const set2: DataGridModel.IData = {
       data: data2.data,
       schema: data2.schema,
-      fields: data2.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+      fields: data2.schema.fields.map((field: DataGridModel.IField) => {
         let tempObject: { [key: string]: null } = {};
         tempObject[field.name] = null;
         return tempObject;
@@ -365,7 +364,7 @@ namespace Private {
     const set1: DataGridModel.IData = {
       data: data1.data,
       schema: data1.schema,
-      fields: data1.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+      fields: data1.schema.fields.map((field: DataGridModel.IField) => {
         let tempObject: { [key: string]: null } = {};
         tempObject[field.name] = null;
         return tempObject;
@@ -389,7 +388,7 @@ namespace Private {
     const set2: DataGridModel.IData = {
       data: data2.data,
       schema: data2.schema,
-      fields: data2.schema.fields.map((field: ViewBasedJSONModel.IField) => {
+      fields: data2.schema.fields.map((field: DataGridModel.IField) => {
         let tempObject: { [key: string]: null } = {};
         tempObject[field.name] = null;
         return tempObject;

@@ -1,12 +1,6 @@
 import { CellGroup, DataModel, MutableDataModel } from '@lumino/datagrid';
 
-import { each } from '@lumino/algorithm';
-
-import {
-  ReadonlyJSONObject,
-  ReadonlyJSONValue,
-  JSONExt,
-} from '@lumino/coreutils';
+import { ReadonlyJSONValue } from '@lumino/coreutils';
 
 import { ISignal, Signal } from '@lumino/signaling';
 
@@ -17,6 +11,7 @@ import { View } from './view';
 import { TransformStateManager } from './transformStateManager';
 
 import { ArrayUtils } from '../utils';
+import { DataSource } from '../datasource';
 
 /**
  * A view based data model implementation for in-memory JSON data.
@@ -27,7 +22,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @param data - The dataset for initializing the data model.
    */
-  constructor(data: ViewBasedJSONModel.IData) {
+  constructor(data: DataSource) {
     super();
     this.updateDataset(data);
 
@@ -76,7 +71,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
    *
    * @param data - The data to be set on this data model
    */
-  updateDataset(data: ViewBasedJSONModel.IData): void {
+  updateDataset(data: DataSource): void {
     this._dataset = data;
     this._updatePrimaryKeyMap();
     const view = new View(this._dataset);
@@ -90,12 +85,12 @@ export class ViewBasedJSONModel extends MutableDataModel {
   private _updatePrimaryKeyMap(): void {
     this._primaryKeyMap.clear();
 
-    const primaryKey = this._dataset.schema.primaryKey;
+    const primaryKey = this._dataset.schema.primaryKey as string[];
 
-    each(this._dataset.data, (rowData, index) => {
-      const keys = primaryKey.map((key) => rowData[key]);
-      this._primaryKeyMap.set(JSON.stringify(keys), index);
-    });
+    for (let idx = 0; idx < this._dataset.length; idx++) {
+      const keys = primaryKey.map((key) => this._dataset.data[key][idx]);
+      this._primaryKeyMap.set(JSON.stringify(keys), idx);
+    }
   }
 
   areCellsMerged(cell1: number[], cell2: number[]): boolean {
@@ -194,13 +189,15 @@ export class ViewBasedJSONModel extends MutableDataModel {
   }
 
   /**
-   * Get the metadata for a column in the data model.
+   * Get the metadata for a cell in the data model.
    *
    * @param region - The cell region of interest.
    *
+   * @param row - The index of the row of interest.
+   *
    * @param column - The index of the column of interest.
    *
-   * @returns The metadata for the column.
+   * @returns The metadata for the cell.
    */
   metadata(
     region: DataModel.CellRegion,
@@ -211,7 +208,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
     if (region == 'body') {
       md.row = row;
       md.column = column;
-      md.data = (row: number, column: number) => {
+      md.data = (row: number, column: string) => {
         const columnIndex = this.columnNameToIndex(column.toString());
         return this.data('body', row, columnIndex);
       };
@@ -386,18 +383,23 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   protected set currentView(view: View) {
     this._currentView = view;
+
     this.emitChanged({ type: 'model-reset' });
 
     const primaryKey = !Array.isArray(this._dataset.schema.primaryKey)
       ? [this._dataset.schema.primaryKey]
       : this._dataset.schema.primaryKey;
 
-    const indices: number[] = view.dataset.map((val, i) => {
-      const lookupVal = JSON.stringify(primaryKey.map((key) => val[key]));
+    const indices: number[] = [];
+
+    for (let idx = 0; idx < view.dataset.length; idx++) {
+      const lookupVal = JSON.stringify(
+        primaryKey.map((key) => view.dataset.data[key][idx]),
+      );
       const retrievedVal = this._primaryKeyMap.get(lookupVal);
 
-      return typeof retrievedVal === 'undefined' ? i : retrievedVal;
-    });
+      indices.push(typeof retrievedVal === 'undefined' ? idx : retrievedVal);
+    }
 
     this.dataSync.emit({
       type: 'row-indices-updated',
@@ -460,18 +462,9 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * @param region - The CellRegion to retrieve unique values for.
    * @param columnIndex - The index to retrieve unique values for.
    */
-  async uniqueValues(
-    region: DataModel.CellRegion,
-    columnIndex: number,
-  ): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const columnName = this.metadata(region, 0, columnIndex)['name'];
-      const uniqueVals = new Set();
-      for (const row of this.dataset.data) {
-        uniqueVals.add(row[columnName]);
-      }
-      resolve(Array.from(uniqueVals));
-    });
+  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
+    const columnName = this.metadata(region, 0, columnIndex)['name'];
+    return Array.from(new Set(this.dataset.data[columnName]));
   }
 
   /**
@@ -522,7 +515,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
       : [this._dataset.schema.primaryKey];
 
     const keyValues = primaryKey.map(
-      (key) => this._currentView.dataset[row][key],
+      (key) => this._currentView.dataset.data[key][row],
     );
 
     const lookupIndex: number = this._primaryKeyMap.get(
@@ -543,33 +536,18 @@ export class ViewBasedJSONModel extends MutableDataModel {
     if (options.region !== 'body') {
       return;
     }
-
-    // Create new row and add it to new dataset
-    const newRow = { ...this._dataset.data[options.row] };
-    newRow[this.metadata('body', 0, options.column)['name']] = options.value;
-    const newData = Array.from(this._dataset.data);
-    newData[options.row] = newRow;
-
-    this._dataset = {
-      data: newData,
-      schema: this._dataset.schema,
-    };
-
-    if (options.syncData) {
-      this.dataSync.emit({
-        type: 'cell-updated',
-      });
-    }
+    const columnName = this.metadata('body', 0, options.column)['name'];
+    this._dataset.data[columnName][options.row] = options.value;
 
     // Notify listeners of the cell change event
     this.dataSync.emit({
       type: 'cell-edit-event',
+      column: columnName,
       columnIndex: options.column,
       row: options.row,
       region: options.region,
       value: options.value,
     });
-
     // We need to rerun the transforms, as the changed cell may change the order
     // or visibility of other rows
     this.currentView = this._transformState.createView(this._dataset);
@@ -582,25 +560,10 @@ export class ViewBasedJSONModel extends MutableDataModel {
    */
   updateRowValue(options: ViewBasedJSONModel.IUpdateRowValuesOptions): void {
     // Create new row and add it to new dataset
-    const newRow = { ...this._dataset.data[options.row] };
     for (const columnIndex of Array(options.value.length).keys()) {
-      newRow[this.metadata('body', 0, columnIndex)['name']] =
-        options.value[columnIndex];
+      const columnName = this.metadata('body', 0, columnIndex)['name'];
+      this._dataset.data[columnName][options.row] = options.value[columnIndex];
     }
-    const newData = Array.from(this._dataset.data);
-    newData[options.row] = newRow;
-
-    this._dataset = {
-      data: newData,
-      schema: this._dataset.schema,
-    };
-
-    if (options.syncData) {
-      this.dataSync.emit({
-        type: 'cell-updated',
-      });
-    }
-
     // We need to rerun the transforms, as the changed cells may change the order
     // or visibility of other rows
     this.currentView = this._transformState.createView(this._dataset);
@@ -616,7 +579,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
   /**
    * Returns the current full dataset.
    */
-  get dataset(): ViewBasedJSONModel.IData {
+  get dataset(): DataSource {
     return this._dataset;
   }
 
@@ -631,38 +594,6 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return this.currentView.getSchemaIndex(region, index);
   }
 
-  /**
-   * Deep copies data object and mutates it before
-   * returning a ViewBasedJSONModel of the data.
-   * ts-ignores are added since the properties to be mutated
-   * are readonly
-   *
-   * @param data - Data passed in to be transformed
-   *
-   */
-  static fromJsonData(data: ViewBasedJSONModel.IData): ViewBasedJSONModel {
-    const primaryKeyUuid = 'ipydguuid';
-
-    const newData = <ViewBasedJSONModel.IData>(
-      (<unknown>JSONExt.deepCopy(<ReadonlyJSONObject>(<unknown>data)))
-    );
-
-    //@ts-ignore
-    newData.schema.primaryKeyUuid = primaryKeyUuid;
-
-    for (const field of newData.schema.fields) {
-      //@ts-ignore
-      field.rows = [field.name];
-    }
-    let count = 0;
-    for (const row of newData.data) {
-      //@ts-ignore
-      row[primaryKeyUuid] = count++;
-    }
-
-    return new ViewBasedJSONModel(newData);
-  }
-
   private _currentView: View;
   private _transformSignal = new Signal<this, TransformStateManager.IEvent>(
     this,
@@ -672,7 +603,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
   );
   private _primaryKeyMap: Map<ReadonlyJSONValue, number> = new Map();
 
-  protected _dataset: ViewBasedJSONModel.IData;
+  protected _dataset: DataSource;
   protected readonly _transformState: TransformStateManager;
   private _mergedColumnCellLocations: any[];
   private _rowCellGroups: CellGroup[];
@@ -683,56 +614,6 @@ export class ViewBasedJSONModel extends MutableDataModel {
  * The namespace for the `ViewBasedJSONModel` class statics.
  */
 export namespace ViewBasedJSONModel {
-  /**
-   * An object which describes a column of data in the model.
-   *
-   * #### Notes
-   * This is based on the JSON Table Schema specification:
-   * https://specs.frictionlessdata.io/table-schema/
-   */
-  export interface IField {
-    /**
-     * The name of the column.
-     *
-     * This is used as the key to extract a value from a data record.
-     */
-    readonly name: string;
-
-    /**
-     * The type of data held in the column.
-     */
-    readonly type: string;
-
-    /**
-     * An array of the column labels per header row.
-     */
-    readonly rows: any[];
-  }
-
-  /**
-   * An object when specifies the schema for a data model.
-   *
-   * #### Notes
-   * This is based on the JSON Table Schema specification:
-   * https://specs.frictionlessdata.io/table-schema/
-   */
-  export interface ISchema {
-    /**
-     * The fields which describe the data model columns.
-     *
-     * Primary key fields are rendered as row header columns.
-     */
-    readonly fields: IField[];
-
-    /**
-     * The field names which act as primary keys.
-     *
-     * Primary key fields are rendered as row header columns.
-     */
-    readonly primaryKey: string[];
-    readonly primaryKeyUuid: string;
-  }
-
   export interface IUpdateCellValuesOptions {
     /**
      * The `CellRegion` of the cell to be updated.
@@ -753,11 +634,6 @@ export namespace ViewBasedJSONModel {
      * The new value to replace the old one.
      */
     value: any;
-
-    /**
-     * The flag to trigger full data sync with backend.
-     */
-    syncData?: boolean;
   }
 
   export interface IUpdateRowValuesOptions {
@@ -770,51 +646,10 @@ export namespace ViewBasedJSONModel {
      * The new value to replace the old one.
      */
     value: any[];
-
-    /**
-     * The flag to trigger full data sync with backend.
-     */
-    syncData?: boolean;
   }
 
-  /**
-   * A type alias for a data source for a JSON data model.
-   *
-   * A data source is an array of JSON object records which represent
-   * the rows of the table. The keys of the records correspond to the
-   * field names of the columns.
-   */
-  export type DataSource = ReadonlyArray<ReadonlyJSONObject>;
+  export type IDataSyncEvent = ISyncRowIndices | ICellEditEvent;
 
-  /**
-   * An options object for initializing the data model.
-   */
-  export interface IData {
-    /**
-     * The schema for the for the data model.
-     *
-     * The schema should be treated as an immutable object.
-     */
-    schema: ISchema;
-
-    /**
-     * The data source for the data model.
-     *
-     * The data model takes full ownership of the data source.
-     */
-    data: DataSource;
-  }
-  export type IDataSyncEvent = ISyncCell | ISyncRowIndices | ICellEditEvent;
-
-  /**
-   * An event that indicates a needed change to the kernel-side dataset.
-   */
-  export interface ISyncCell {
-    /**
-     * The discriminated type of the args object.
-     */
-    type: 'cell-updated';
-  }
   export interface ISyncRowIndices {
     /**
      * The discriminated type of the args object.
@@ -845,6 +680,12 @@ export namespace ViewBasedJSONModel {
     row: number;
 
     /**
+     * The column name associated with this change.
+     */
+    column: string;
+
+    /**
+     * TODO Deprecate this
      * The column index associated with this change.
      */
     columnIndex: number;
