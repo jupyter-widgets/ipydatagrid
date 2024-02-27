@@ -42,7 +42,7 @@ export class View {
     if (region === 'body') {
       return this._data.length;
     } else {
-      return this._bodyFields[0].rows.length;
+      return this._bodyFields[0]?.rows.length ?? 1;
     }
   }
 
