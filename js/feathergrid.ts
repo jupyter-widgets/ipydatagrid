@@ -871,15 +871,6 @@ export class FeatherGrid extends Widget {
     });
   }
 
-  _isSelectionSelected(): boolean {
-    if (this.grid.selectionModel && !this.grid.selectionModel.isEmpty) {
-      return true;
-    } else {
-      return false;
-    }
-    // return this.grid.selectionModel && this.grid.selectionModel.isEmpty;
-  }
-
   private _createCommandRegistry(): CommandRegistry {
     const commands = new CommandRegistry();
     commands.addCommand(FeatherGridContextMenu.CommandID.SortAscending, {
@@ -995,7 +986,10 @@ export class FeatherGrid extends Widget {
         label: 'Copy Selection to Clipboard',
         mnemonic: -1,
         isEnabled: () => {
-          return this._isSelectionSelected();
+          return (
+            this.grid.selectionModel !== null &&
+            !this.grid.selectionModel.isEmpty
+          );
         },
         execute: () => {
           this.grid.copyToClipboard();
@@ -1006,7 +1000,9 @@ export class FeatherGrid extends Widget {
       label: 'Download Selection as CSV',
       mnemonic: -1,
       isEnabled: () => {
-        return this._isSelectionSelected();
+        return (
+          this.grid.selectionModel !== null && !this.grid.selectionModel.isEmpty
+        );
       },
       execute: () => {
         this.downloadAsCsv(true);
