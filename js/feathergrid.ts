@@ -1,4 +1,3 @@
-import { toArray } from '@lumino/algorithm';
 import { CommandRegistry } from '@lumino/commands';
 import {
   BasicSelectionModel,
@@ -434,10 +433,6 @@ export class FeatherGrid extends Widget {
       commands: this._createCommandRegistry(),
     });
 
-    // Replace method of copying to clipboard with one that allows
-    // a ClipboardEvent to reach document.body
-    this.grid.copyToClipboard = this.copyToClipboard.bind(this.grid);
-
     this.grid.dataModel = this._dataModel;
     this.grid.keyHandler = new KeyHandler();
     const mouseHandler = new FeatherGridMouseHandler(this);
@@ -586,8 +581,14 @@ export class FeatherGrid extends Widget {
     this._updateHeaderRenderer();
   }
 
-  copyToClipboard(): void {
-    const grid = <DataGrid>(<unknown>this);
+  downloadAsCsv(isSelection: boolean): void {
+    let rowCount, colCount;
+    let r1 = 0,
+      c1 = 0,
+      r2,
+      c2;
+
+    const grid = this.grid;
     // Fetch the data model.
     const dataModel = grid.dataModel;
 
@@ -596,93 +597,86 @@ export class FeatherGrid extends Widget {
       return;
     }
 
-    // Fetch the selection model.
-    const selectionModel = grid.selectionModel;
-
-    // Bail early if there is no selection model.
-    if (!selectionModel) {
-      return;
-    }
-
-    // Coerce the selections to an array.
-    const selections = toArray(selectionModel.selections());
-
-    // Bail early if there are no selections.
-    if (selections.length === 0) {
-      return;
-    }
-
-    // Alert that multiple selections cannot be copied.
-    if (selections.length > 1) {
-      alert('Cannot copy multiple grid selections.');
-      return;
-    }
-
     // Fetch the model counts.
     const br = dataModel.rowCount('body');
     const bc = dataModel.columnCount('body');
 
-    // Bail early if there is nothing to copy.
+    // Bail early if there is nothing to save.
     if (br === 0 || bc === 0) {
       return;
     }
-
-    // Unpack the selection.
-    let { r1, c1, r2, c2 } = selections[0];
-
-    // Clamp the selection to the model bounds.
-    r1 = Math.max(0, Math.min(r1, br - 1));
-    c1 = Math.max(0, Math.min(c1, bc - 1));
-    r2 = Math.max(0, Math.min(r2, br - 1));
-    c2 = Math.max(0, Math.min(c2, bc - 1));
-
-    // Ensure the limits are well-orderd.
-    if (r2 < r1) [r1, r2] = [r2, r1];
-    if (c2 < c1) [c1, c2] = [c2, c1];
 
     // Fetch the header counts.
     let rhc = dataModel.columnCount('row-header');
     let chr = dataModel.rowCount('column-header');
 
     // Unpack the copy config.
-    const separator = grid.copyConfig.separator;
     const format = grid.copyConfig.format;
     const headers = grid.copyConfig.headers;
-    const warningThreshold = grid.copyConfig.warningThreshold;
 
-    // Compute the number of cells to be copied.
-    let rowCount = r2 - r1 + 1;
-    let colCount = c2 - c1 + 1;
-    switch (headers) {
-      case 'none':
-        rhc = 0;
-        chr = 0;
-        break;
-      case 'row':
-        chr = 0;
-        colCount += rhc;
-        break;
-      case 'column':
-        rhc = 0;
-        rowCount += chr;
-        break;
-      case 'all':
-        rowCount += chr;
-        colCount += rhc;
-        break;
-      default:
-        throw 'unreachable';
-    }
+    if (isSelection) {
+      // Fetch the selection model.
+      const selectionModel = grid.selectionModel;
 
-    // Compute the total cell count.
-    const cellCount = rowCount * colCount;
-
-    // Allow the user to cancel a large copy request.
-    if (cellCount > warningThreshold) {
-      const msg = `Copying ${cellCount} cells may take a while. Continue?`;
-      if (!window.confirm(msg)) {
+      // Bail early if there is no selection model.
+      if (!selectionModel) {
         return;
       }
+
+      // Coerce the selections to an array.
+      const selections = Array.from(selectionModel.selections());
+
+      // Bail early if there are no selections.
+      if (selections.length === 0) {
+        return;
+      }
+
+      // Alert that multiple selections cannot be saved.
+      if (selections.length > 1) {
+        alert('Cannot save multiple grid selections.');
+        return;
+      }
+
+      // Unpack the selection.
+      ({ r1, c1, r2, c2 } = selections[0]);
+
+      // Clamp the selection to the model bounds.
+      r1 = Math.max(0, Math.min(r1, br - 1));
+      c1 = Math.max(0, Math.min(c1, bc - 1));
+      r2 = Math.max(0, Math.min(r2, br - 1));
+      c2 = Math.max(0, Math.min(c2, bc - 1));
+
+      // Ensure the limits are well-orderd.
+      if (r2 < r1) [r1, r2] = [r2, r1];
+      if (c2 < c1) [c1, c2] = [c2, c1];
+
+      // Compute the number of cells to be saved.
+      rowCount = r2 - r1 + 1;
+      colCount = c2 - c1 + 1;
+      switch (headers) {
+        case 'none':
+          rhc = 0;
+          chr = 0;
+          break;
+        case 'row':
+          chr = 0;
+          colCount += rhc;
+          break;
+        case 'column':
+          rhc = 0;
+          rowCount += chr;
+          break;
+        case 'all':
+          rowCount += chr;
+          colCount += rhc;
+          break;
+        default:
+          throw 'unreachable';
+      }
+    } else {
+      // Saving all the cells, headers included
+      rowCount = br + chr;
+      colCount = bc + rhc;
     }
 
     // Set up the format args.
@@ -744,28 +738,20 @@ export class FeatherGrid extends Widget {
     }
 
     // Convert the cells into lines.
-    const lines = rows.map((cells) => cells.join(separator));
+    const lines = rows.map((cells) => cells.join(','));
 
     // Convert the lines into text.
     const text = lines.join('\n');
 
-    // Copy the text to the clipboard.
-    const textArea = document.createElement('textarea');
-    textArea.innerHTML = text;
+    const blob = new Blob([text], { type: 'text/csv' });
 
-    // Text area has to be visible on page for copy without Clipboard API,
-    // So we create an "invisible" element, add it to the body, then remove
-    // when no longer needed.
-
-    textArea.style.height = '0px';
-    textArea.style.width = '0px';
-    textArea.style.overflow = 'hidden';
-    textArea.id = 'ipydatagrid-textarea';
-    textArea.style.position = 'absolute';
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
+    // Create a link element, simulate a click, and remove link element
+    const a = document.createElement('a');
+    a.download = 'out.csv';
+    a.href = window.URL.createObjectURL(blob);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   /**
@@ -885,6 +871,15 @@ export class FeatherGrid extends Widget {
     });
   }
 
+  _isSelectionSelected(): boolean {
+    if (this.grid.selectionModel && !this.grid.selectionModel.isEmpty) {
+      return true;
+    } else {
+      return false;
+    }
+    // return this.grid.selectionModel && this.grid.selectionModel.isEmpty;
+  }
+
   private _createCommandRegistry(): CommandRegistry {
     const commands = new CommandRegistry();
     commands.addCommand(FeatherGridContextMenu.CommandID.SortAscending, {
@@ -994,6 +989,56 @@ export class FeatherGrid extends Widget {
         },
       },
     );
+    commands.addCommand(
+      FeatherGridContextMenu.CommandID.CopySelectionToClipboard,
+      {
+        label: 'Copy Selection to Clipboard',
+        mnemonic: -1,
+        isEnabled: () => {
+          return this._isSelectionSelected();
+        },
+        execute: () => {
+          this.grid.copyToClipboard();
+        },
+      },
+    );
+    commands.addCommand(FeatherGridContextMenu.CommandID.SaveSelectionAsCsv, {
+      label: 'Download Selection as CSV',
+      mnemonic: -1,
+      isEnabled: () => {
+        return this._isSelectionSelected();
+      },
+      execute: () => {
+        this.downloadAsCsv(true);
+      },
+    });
+    commands.addCommand(FeatherGridContextMenu.CommandID.SaveAllAsCsv, {
+      label: 'Download All as CSV',
+      mnemonic: -1,
+      execute: () => {
+        this.downloadAsCsv(false);
+      },
+    });
+    commands.addCommand(FeatherGridContextMenu.CommandID.SortClear, {
+      label: 'No Sort',
+      mnemonic: 1,
+      execute: (args) => {
+        const commandArgs = <FeatherGridContextMenu.CommandArgs>args;
+        const schemaIndex: number = this._dataModel.getSchemaIndex(
+          commandArgs.region,
+          commandArgs.columnIndex,
+        );
+        this._dataModel.removeTransform(schemaIndex, 'sort');
+      },
+    });
+    commands.addCommand(FeatherGridContextMenu.CommandID.ClearSelection, {
+      label: 'Clear Selection',
+      mnemonic: -1,
+      execute: () => {
+        this.grid.selectionModel?.clear();
+      },
+    });
+
     return commands;
   }
 
