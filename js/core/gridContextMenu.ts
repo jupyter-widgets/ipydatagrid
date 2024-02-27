@@ -106,6 +106,13 @@ export class FeatherGridContextMenu extends GridContextMenu {
           args: args,
         });
         this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.SortClear,
+          args: args,
+        });
+        this._menu.addItem({
+          type: 'separator',
+        });
+        this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog,
           args: args,
         });
@@ -114,11 +121,22 @@ export class FeatherGridContextMenu extends GridContextMenu {
           args: args,
         });
         this._menu.addItem({
+          type: 'separator',
+        });
+        this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.ClearSelection,
+          args: args,
+        });
+        this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.ClearThisFilter,
           args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.ClearFiltersInAllColumns,
+          args: args,
+        });
+        this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.CopyToClipboard,
           args: args,
         });
         break;
@@ -132,11 +150,40 @@ export class FeatherGridContextMenu extends GridContextMenu {
           args: args,
         });
         this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.SortClear,
+          args: args,
+        });
+        this._menu.addItem({
+          type: 'separator',
+        });
+        this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByConditionDialog,
           args: args,
         });
         this._menu.addItem({
           command: FeatherGridContextMenu.CommandID.OpenFilterByValueDialog,
+          args: args,
+        });
+        this._menu.addItem({
+          type: 'separator',
+        });
+        this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.CopySelectionToClipboard,
+          args: args,
+        });
+        this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.SaveSelectionAsCsv,
+          args: args,
+        });
+        this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.SaveAllAsCsv,
+          args: args,
+        });
+        this._menu.addItem({
+          type: 'separator',
+        });
+        this._menu.addItem({
+          command: FeatherGridContextMenu.CommandID.ClearSelection,
           args: args,
         });
         this._menu.addItem({
@@ -188,11 +235,17 @@ export namespace FeatherGridContextMenu {
   export enum CommandID {
     SortAscending = 'sort:Asc',
     SortDescending = 'sort:Desc',
+    SortClear = 'sort:Clear',
     OpenFilterByConditionDialog = 'filterCondition:openDialog',
     OpenFilterByValueDialog = 'filterValue:openDialog',
     RevertGrid = 'grid:reset',
     ClearThisFilter = 'filter:clearCurrentColumn',
     ClearFiltersInAllColumns = 'filter:clearAllColumns',
+    CopyToClipboard = 'copyToClipboard',
+    CopySelectionToClipboard = 'copySelectionToClipboard',
+    SaveSelectionAsCsv = 'saveSelectionAsCsv',
+    SaveAllAsCsv = 'saveAllAsCsv',
+    ClearSelection = 'clearSelection',
   }
 
   /**
