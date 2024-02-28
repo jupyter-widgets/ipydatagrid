@@ -14,7 +14,7 @@ defaults:
 
 jobs:
   update-reference-screenshots-ipw7:
-    name: Update Galata References
+    name: Update Galata References - ipywidgets 7
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'update galata references') }}
     runs-on: ubuntu-latest
 
@@ -35,15 +35,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipydatagrid-test-ipw7
+          environment-name: ipydatagrid-test-ipw7
           environment-file: test-environment-ipyw7.yaml
-          python-version: 3.9
-          mamba-version: '*'
-          auto-activate-base: false
-          channels: conda-forge
 
       - name: Install the package
         run: pip install -vv .
@@ -54,7 +50,7 @@ jobs:
           test_folder: ui-tests-ipw7
 
   update-reference-screenshots-ipw8:
-    name: Update Galata References
+    name: Update Galata References - ipywidgets 8
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'update galata references') }}
     runs-on: ubuntu-latest
 
@@ -75,15 +71,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipydatagrid-test-ipw8
+          environment-name: ipydatagrid-test-ipw8
           environment-file: test-environment-ipyw8.yaml
-          python-version: 3.9
-          mamba-version: '*'
-          auto-activate-base: false
-          channels: conda-forge
 
       - name: Install the package
         run: pip install -vv .

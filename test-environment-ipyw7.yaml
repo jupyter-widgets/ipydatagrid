@@ -5,7 +5,7 @@ dependencies:
   - pip
   - python
   - nodejs=20
-  - yarn
+  - yarn=3
   - ipywidgets >=7.6.0,<8
   - traitlets >=4.3.0
   - traittypes >=0.0.6
