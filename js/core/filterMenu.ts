@@ -351,7 +351,7 @@ export class InteractiveFilterDialog extends BoxPanel {
 
     this.userInteractedWithDialog = false;
 
-    // Determines whether we should or not tick the "Select all" chekcbox
+    // Determines whether we should or not tick the "Select all" checkbox
     this.updateSelectAllCheckboxState();
 
     // Update styling on unique value grid

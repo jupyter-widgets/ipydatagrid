@@ -300,7 +300,7 @@ export class DataGridModel extends DOMWidgetModel {
 }
 
 /**
- * Helper function to conver snake_case strings to camelCase.
+ * Helper function to convert snake_case strings to camelCase.
  * Assumes all strings are valid snake_case (all lowercase).
  * @param string snake_case string
  * @returns camelCase string

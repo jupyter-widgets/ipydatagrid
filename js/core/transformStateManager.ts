@@ -104,7 +104,7 @@ export class TransformStateManager {
   }
 
   /**
-   * Creates an optimzed list of TransformExecutors for the provided data.
+   * Creates an optimized list of TransformExecutors for the provided data.
    *
    * @param data - The dataset to operate on.
    */

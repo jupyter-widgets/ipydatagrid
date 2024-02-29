@@ -29,7 +29,7 @@ export namespace Transform {
    */
   export type Filter = {
     /**
-     * A type alias for this trasformation.
+     * A type alias for this transformation.
      */
     type: 'filter';
 
@@ -39,7 +39,7 @@ export namespace Transform {
     columnIndex: number;
 
     /**
-     * The operator for this trasformation.
+     * The operator for this transformation.
      */
     operator: FilterOperator;
 

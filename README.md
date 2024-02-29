@@ -89,7 +89,6 @@ jupyter labextension develop . --overwrite
 ```
 
 Note for developers: the `--symlink` argument on Linux or OS X allows one to modify the JavaScript code in-place. This feature is not available with Windows.
-`
 
 ## Contributions
 
