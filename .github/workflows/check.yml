@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - uses: pre-commit/action@v3.0.0
 
   test:
@@ -32,18 +32,18 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - '3.12'
           - '3.11'
           - '3.10'
           - '3.9'
           - '3.8'
-          - '3.7'
-          - pypy3.7
+          - pypy3.9
     steps:
       - uses: actions/checkout@v4
       - name: setup python for tox
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: install tox
         run: python -m pip install tox
       - name: setup python for test ${{ matrix.py }}
@@ -76,10 +76,10 @@ jobs:
           - dev
     steps:
       - uses: actions/checkout@v4
-      - name: setup Python 3.11
+      - name: setup Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: install tox
         run: python -m pip install tox
       - name: run check for ${{ matrix.tox_env }}
@@ -93,7 +93,7 @@ jobs:
       - name: setup python to build package
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: install build
         run: python -m pip install build
       - uses: actions/checkout@v4
@@ -112,7 +112,7 @@ jobs:
       - name: setup python to build package
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: install build
         run: python -m pip install build
       - uses: actions/checkout@v4
