@@ -125,7 +125,7 @@ export class VegaExprView extends WidgetView {
 
 export interface ParsedVegaExpr {
   /**
-   * A JavaScript soring literal describing
+   * A JavaScript storing literal describing
    * the converted vega expression
    */
   code: string;

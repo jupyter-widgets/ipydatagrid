@@ -316,7 +316,7 @@ class DataGrid(DOMWidget):
         cursor_fill_color : fill color of cursor
         cursor_border_color : border color of cursor
         scroll_shadow : Dict of color parameters for scroll shadow (vertical and
-            horizontal). Takes three paramaters:
+            horizontal). Takes three parameters:
             size : size of shadow in pixels
             color1 : gradient color 1
             color2 : gradient color 2

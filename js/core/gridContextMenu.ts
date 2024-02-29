@@ -25,7 +25,7 @@ export abstract class GridContextMenu {
   }
 
   /**
-   * Opens the context menu in reponse to the `cellClick` signal of the
+   * Opens the context menu in response to the `cellClick` signal of the
    * data grid.
    *
    * @param grid - The "sender" of the signal.
@@ -74,7 +74,7 @@ export namespace GridContextMenu {
  */
 export class FeatherGridContextMenu extends GridContextMenu {
   /**
-   * Opens the context menu in reponse to the `cellClick` signal of the
+   * Opens the context menu in response to the `cellClick` signal of the
    * data grid.
    *
    * @param grid - The "sender" of the signal.
