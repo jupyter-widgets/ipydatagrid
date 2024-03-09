@@ -60,10 +60,13 @@ export class ViewBasedJSONModel extends MutableDataModel {
 
     // Creating merged row cell groups
     let mergedRowLocations = ArrayUtils.generateRowMergedCellLocations(this);
-    if (!ArrayUtils.validateMergingHierarchy(mergedColumnLocations)) {
+    if (!ArrayUtils.validateMergingHierarchy(mergedRowLocations)) {
       mergedRowLocations = [];
     }
-    this._rowCellGroups = ArrayUtils.generateRowCellGroups(mergedRowLocations);
+    this._mergedRowCellLocations = mergedRowLocations;
+    this._rowCellGroups = ArrayUtils.generateRowCellGroups(
+      this._mergedRowCellLocations,
+    );
   }
 
   /**
@@ -606,6 +609,7 @@ export class ViewBasedJSONModel extends MutableDataModel {
   protected _dataset: DataSource;
   protected readonly _transformState: TransformStateManager;
   private _mergedColumnCellLocations: any[];
+  private _mergedRowCellLocations: any[];
   private _rowCellGroups: CellGroup[];
   private _columnCellGroups: CellGroup[];
 }
