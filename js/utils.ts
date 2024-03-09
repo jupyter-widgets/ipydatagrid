@@ -98,12 +98,22 @@ export namespace ArrayUtils {
     const retArr = [];
     let curCol = [];
 
-    let prevVal = undefined;
     for (let i = 0; i < primaryKey.length; i++) {
+      let prevVal = undefined;
       let curMergedRange: any = [];
       for (let j = 0; j < dataset.length; j++) {
         const curVal = data[primaryKey[i]][j];
-        if (curMergedRange.length == 0 || prevVal == curVal) {
+        // if (curMergedRange.length == 0 || prevVal == curVal) {
+        const [parentGroupStart, parentGroupEnd] = getParentGroupPosition(
+            retArr,
+            j,
+            i,
+          );
+        if (
+            curMergedRange.length == 0 || (prevVal == curVal) &&
+            curMergedRange[0][0] >= parentGroupStart &&
+            j <= parentGroupEnd
+          ) {
           curMergedRange.push([j, i]);
         } else {
           curCol.push(curMergedRange);
@@ -117,6 +127,33 @@ export namespace ArrayUtils {
     }
 
     return retArr;
+  }
+
+  /**
+   * Returns [startRow, endRow] of parent column at the same row position.
+   * The 0th row will be the top level group, and the n-th will be the last.
+   * @param retArr array of merge cellgroups in all previous columns
+   * @param rowNum current row number
+   * @param colNum current column number
+   * @returns.[startRow, endRow] of previous column
+   */
+  function getParentGroupPosition(
+    retArr: any,
+    rowNum: number,
+    colNum: number,
+  ): number[] {
+    if (colNum === 0) {return [0, rowNum]};
+    for (let i = 0; i < retArr[colNum-1].length; i++) {
+      // iterate mergegroups of previous row
+      const curMergedGroup = retArr[colNum-1][i];
+      const curMergedGroupLen = curMergedGroup.length;
+      const firstRow = curMergedGroup[0][0];
+      const lastRow = curMergedGroup[curMergedGroupLen - 1][0];
+      if (rowNum >= firstRow && rowNum <= lastRow) {
+        return [firstRow!, lastRow!];
+      }
+    }
+    return [];
   }
 
   /**
