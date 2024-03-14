@@ -23,7 +23,7 @@ from traitlets import (
 )
 
 from ._frontend import module_name, module_version
-from .cellrenderer import CellRenderer, TextRenderer
+from .cellrenderer import BarRenderer, CellRenderer, TextRenderer
 
 
 class SelectionIterator(Iterator):
@@ -378,6 +378,7 @@ class DataGrid(DOMWidget):
         self._cell_click_handlers = CallbackDispatcher()
         self._cell_change_handlers = CallbackDispatcher()
         self.on_msg(self.__handle_custom_msg)
+        self._set_renderer_defaults()
 
     def __handle_custom_msg(self, _, content, buffers):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
@@ -865,3 +866,47 @@ class DataGrid(DOMWidget):
         if column is None:
             return None
         return data["data"][row_index][column]
+
+    def _set_renderer_defaults(self):
+        # Set sensible default values for renderers that are not completely
+        # specified, such as missing a min or max value.
+
+        data = None  # Only read data once, and only if necessary.
+
+        for name, renderer in self.renderers.items():
+            if isinstance(renderer, BarRenderer):
+                from bqplot import DateScale, LinearScale, Scale
+
+                if renderer.bar_value is None:
+                    # If BarRenderer.bar_value is not specified, create an
+                    # appropriate Scale based on the column data type.
+                    col_schema = next(
+                        filter(
+                            lambda x: x["name"] == name,
+                            self._data["schema"]["fields"],
+                        )
+                    )
+                    is_date = col_schema["type"] in ("date", "time", "datetime")
+                    if is_date:
+                        renderer.bar_value = DateScale()
+                    else:
+                        renderer.bar_value = LinearScale()
+
+                scale = renderer.bar_value
+                if (
+                    isinstance(scale, Scale)
+                    and scale.has_trait("min")
+                    and scale.has_trait("max")
+                    and (scale.min is None or scale.max is None)
+                ):
+                    # Set min and/or max from column data.
+                    if data is None:
+                        data = self.data  # Only want to get the data once
+                    column_data = data[name]
+                    is_date = isinstance(scale, DateScale)
+                    if scale.min is None:
+                        min = column_data.min()
+                        scale.min = min if is_date else float(min)
+                    if scale.max is None:
+                        max = column_data.max()
+                        scale.max = max if is_date else float(max)

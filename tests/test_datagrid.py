@@ -3,8 +3,9 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
+from bqplot import DateScale, LinearScale, LogScale
 
-from ipydatagrid import DataGrid, TextRenderer
+from ipydatagrid import BarRenderer, DataGrid, TextRenderer
 from ipydatagrid.datagrid import _widgets_dict_serialization
 
 
@@ -12,6 +13,13 @@ from ipydatagrid.datagrid import _widgets_dict_serialization
 def dataframe() -> pd.DataFrame:
     return pd.DataFrame(
         data={"A": [1, 2, 3], "B": [4, 5, 6]}, index=["One", "Two", "Three"]
+    )
+
+
+@pytest.fixture()
+def dataframe_with_datetime(dataframe) -> pd.DataFrame:
+    return dataframe.assign(
+        dates=pd.to_datetime(["2024-03-05", "2024-03-06", "2024-03-07"])
     )
 
 
@@ -307,3 +315,39 @@ def test_serialization():
     dg = DataGrid(df)
 
     assert dg.data.to_json() == df.to_json()
+
+
+@pytest.mark.parametrize(
+    ("column", "bar_value", "expected_min", "expected_max"),
+    [
+        ("B", None, 4.0, 6.0),
+        ("B", LinearScale(), 4.0, 6.0),
+        ("B", LinearScale(min=2.2), 2.2, 6.0),
+        ("B", LinearScale(max=4.4), 4.0, 4.4),
+        ("B", LogScale(), 4.0, 6.0),
+        (
+            "dates",
+            DateScale(),
+            pd.Timestamp("2024-03-05"),
+            pd.Timestamp("2024-03-07"),
+        ),
+    ],
+)
+def test_bar_renderer_defaults(
+    dataframe_with_datetime,
+    column,
+    bar_value,
+    expected_min,
+    expected_max,
+):
+    expected_type = type(bar_value) if bar_value else LinearScale
+
+    grid = DataGrid(
+        dataframe_with_datetime,
+        renderers={column: BarRenderer(bar_value=bar_value)},
+    )
+
+    actual_bar_value = grid.renderers[column].bar_value
+    assert isinstance(actual_bar_value, expected_type)
+    assert actual_bar_value.min == expected_min
+    assert actual_bar_value.max == expected_max
