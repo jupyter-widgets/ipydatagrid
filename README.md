@@ -90,6 +90,16 @@ jupyter labextension develop . --overwrite
 
 Note for developers: the `--symlink` argument on Linux or OS X allows one to modify the JavaScript code in-place. This feature is not available with Windows.
 
+If you are changing TypeScript code you can watch for code changes and automatically rebuild using
+```bash
+jlpm watch
+```
+in one terminal and
+```bash
+jupyter lab
+```
+(or `jupyter notebook` or similar) in another.
+
 ## Contributions
 
 We :heart: contributions.
