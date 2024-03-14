@@ -120,7 +120,8 @@ class BarRenderer(TextRenderer):
     _view_name = Unicode("BarRendererView").tag(sync=True)
 
     bar_value = Union(
-        (Float(), Instance(VegaExpr), Instance(Scale)), default_value=0.0
+        (Float(allow_none=True), Instance(VegaExpr), Instance(Scale)),
+        default_value=0.0,
     ).tag(sync=True, **widget_serialization)
     bar_color = Union(
         (Color(), Instance(VegaExpr), Instance(ColorScale)),
