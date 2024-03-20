@@ -1,7 +1,5 @@
 import { Dict } from '@jupyter-widgets/base';
 
-import { filter } from '@lumino/algorithm';
-
 import { Transform } from './transform';
 import { DataSource } from '../datasource';
 
@@ -186,7 +184,7 @@ export class FilterExecutor extends TransformExecutor {
     }
 
     const data: Dict<any[]> = {};
-    const indices = Array.from(filter(Array(input.length).keys(), filterFunc));
+    const indices = Array.from(Array(input.length).keys()).filter(filterFunc);
 
     // There is a better approach for this
     // We don't need to copy the data
@@ -286,17 +284,16 @@ export class SortExecutor extends TransformExecutor {
       );
     };
 
-    const nanIndices = Array.from(
-      filter(Array(input.length).keys(), (idx: number) => {
+    const nanIndices = Array.from(Array(input.length).keys()).filter(
+      (idx: number) => {
         return isNaNorNull(input.data[field][idx]);
-      }),
+      },
     );
-    const nonNanIndices = Array.from(
-      filter(Array(input.length).keys(), (idx: number) => {
+    const nonNanIndices = Array.from(Array(input.length).keys()).filter(
+      (idx: number) => {
         return !isNaNorNull(input.data[field][idx]);
-      }),
+      },
     );
-
     if (columnDataType == 'string') {
       if (this._options.desc) {
         sortFunc = (a: number, b: number): number => {
