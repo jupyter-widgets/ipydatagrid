@@ -193,7 +193,7 @@ export class HtmlRenderer extends AsyncCellRenderer {
       gc.clip();
     }
 
-    gc.drawImage(img, config.x, config.y, config.width, config.height);
+    gc.drawImage(img, config.x, config.y);
   }
 
   htmlToSvg(config: CellRenderer.CellConfig): string {
