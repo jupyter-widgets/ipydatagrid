@@ -896,13 +896,10 @@ class DataGrid(DOMWidget):
                 "as the primary key."
             )
 
-        # TODO Is there a better way for this?
-        row_indices = [
-            idx
-            for idx, row in self._data["data"].iterrows()
-            if all(row[key[j]] == value[j] for j in range(len(key)))
-        ]
-        return row_indices
+        df = self._data["data"]
+        return pd.RangeIndex(len(df))[
+            (df[key] == value).all(axis="columns")
+        ].to_list()
 
     @staticmethod
     def _get_cell_value_by_numerical_index(data, column_index, row_index):
