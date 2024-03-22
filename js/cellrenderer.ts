@@ -5,6 +5,7 @@ const d3Format: any = require('d3-format');
 const d3TimeFormat: any = require('d3-time-format');
 
 import {
+  AsyncCellRenderer,
   CellRenderer,
   HyperlinkRenderer,
   ImageRenderer,
@@ -582,6 +583,14 @@ export class HtmlRendererModel extends CellRendererModel {
 
 export class HtmlRendererView extends CellRendererView {
   createRenderer(options: HtmlRenderer.IOptions) {
+    if (!AsyncCellRenderer) {
+      return new TextRenderer({
+        format: (config) => {
+          return 'AsyncCellRenderer not available. Check that you are using JupyterLab>=4.1.';
+        },
+        wrapText: true,
+      });
+    }
     const htmRenderer = new HtmlRenderer({
       ...options,
       // format: this.getFormatter(),
