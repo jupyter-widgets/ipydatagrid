@@ -27,7 +27,7 @@ import { BarRenderer } from './core/barrenderer';
 
 import { VegaExprView } from './vegaexpr';
 
-import { HtmlRenderer } from './core/htmlRenderer';
+import { HtmlRenderer, exportedClass } from './core/htmlRenderer';
 import { Scalar, Theme } from './utils';
 
 // Temporary, will be removed when the scales are exported from bqplot
@@ -583,29 +583,32 @@ export class HtmlRendererModel extends CellRendererModel {
 
 export class HtmlRendererView extends CellRendererView {
   createRenderer(options: HtmlRenderer.IOptions) {
+    // Workaround for Jupyter Lab 3 / ipywidget 7 compatibility
+    let htmRenderer: any;
+
     if (!AsyncCellRenderer) {
-      return new TextRenderer({
+      htmRenderer = new TextRenderer({
         format: (config) => {
           return 'AsyncCellRenderer not available. Check that you are using JupyterLab>=4.1.';
         },
         wrapText: true,
       });
+    } else {
+      htmRenderer = new exportedClass({
+        ...options,
+      });
+      htmRenderer.imageLoaded.connect(() => {
+        setTimeout(() => {
+          this.trigger('renderer-needs-update');
+        }, 0);
+      });
     }
-    const htmRenderer = new HtmlRenderer({
-      ...options,
-      // format: this.getFormatter(),
-    });
-
-    htmRenderer.imageLoaded.connect(() => {
-      setTimeout(() => {
-        this.trigger('renderer-needs-update');
-      }, 0);
-    });
 
     return htmRenderer;
   }
 
-  renderer: HtmlRenderer;
+  // Workaround for Jupyter Lab 3 / ipywidget 7 compatibility
+  renderer: any;
 
   model: HtmlRendererModel;
 }
