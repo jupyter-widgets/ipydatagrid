@@ -122,6 +122,8 @@ export class DataGridModel extends DOMWidgetModel {
       grid_style: {},
       editable: false,
       column_widths: {},
+      zebra_rows: false,
+      zebra_columns: false,
     };
   }
 
@@ -455,6 +457,18 @@ export class DataGridView extends DOMWidgetView {
       window.removeEventListener('resize', this.manageResizeEvent);
     });
 
+    const grid_style = this.model.get('grid_style');
+    if (this.model.get('zebra_rows') || this.model.get('zebra_columns')) {
+      const index = this.model.get('zebra_rows')
+        ? 'rowBackgroundColor'
+        : 'columnBackgroundColor';
+      grid_style[index] = (index: number): string => {
+        return index % 2 === 0
+          ? Theme.getBackgroundColor(1)
+          : Theme.getBackgroundColor(2);
+      };
+    }
+
     this.grid = new FeatherGrid({
       defaultSizes: {
         rowHeight: this.model.get('base_row_size'),
@@ -463,7 +477,7 @@ export class DataGridView extends DOMWidgetView {
         columnHeaderHeight: this.model.get('base_column_header_size'),
       },
       headerVisibility: this.model.get('header_visibility'),
-      style: this.model.get('grid_style'),
+      style: grid_style,
     });
 
     this.grid.columnWidths = this.model.get('column_widths');
@@ -781,6 +795,9 @@ export class DataGridView extends DOMWidgetView {
   luminoWidget: JupyterLuminoPanelWidget;
   model: DataGridModel;
   backboneModel: DataGridModel;
+
+  zebra_rows: boolean;
+  zebra_columns: boolean;
 
   // keep undefined since widget initializes before constructor
   private _isLightTheme: boolean;
