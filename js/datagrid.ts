@@ -122,8 +122,8 @@ export class DataGridModel extends DOMWidgetModel {
       grid_style: {},
       editable: false,
       column_widths: {},
-      zebra_rows: false,
-      zebra_columns: false,
+      horizontal_stripes: false,
+      vertical_stripes: false,
     };
   }
 
@@ -458,8 +458,8 @@ export class DataGridView extends DOMWidgetView {
     });
 
     const grid_style = this.model.get('grid_style');
-    if (this.model.get('zebra_rows') || this.model.get('zebra_columns')) {
-      const index = this.model.get('zebra_rows')
+    if (this.model.get('horizontal_stripes') || this.model.get('vertical_stripes')) {
+      const index = this.model.get('horizontal_stripes')
         ? 'rowBackgroundColor'
         : 'columnBackgroundColor';
       grid_style[index] = (index: number): string => {
@@ -796,8 +796,8 @@ export class DataGridView extends DOMWidgetView {
   model: DataGridModel;
   backboneModel: DataGridModel;
 
-  zebra_rows: boolean;
-  zebra_columns: boolean;
+  horizontal_stripes: boolean;
+  vertical_stripes: boolean;
 
   // keep undefined since widget initializes before constructor
   private _isLightTheme: boolean;
