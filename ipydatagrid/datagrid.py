@@ -321,10 +321,10 @@ class DataGrid(DOMWidget):
     index_name : str (default: "key")
         String to specify the index column name. **Only set when the grid
         is constructed and is not an observable traitlet**
-    zebra_rows : bool (default: False)
-        Enable "zebra striping" of the grid rows.
-    zebra_columns : bool (default: False)
-        Enable "zebra striping" of the grid columns.
+    horizontal_stripes : bool (default: False)
+        Enable themed coloring of alternate grid rows
+    vertical_stripes : bool (default: False)
+        Enable themed coloring of alternate grid columns
 
     Accessors (not observable traitlets)
     ---------
@@ -416,8 +416,8 @@ class DataGrid(DOMWidget):
     auto_fit_params = Dict(
         {"area": "all", "padding": 30, "numCols": None}, allow_none=False
     ).tag(sync=True)
-    zebra_rows = Bool(False).tag(sync=True)
-    zebra_columns = Bool(False).tag(sync=True)
+    horizontal_stripes = Bool(False).tag(sync=True)
+    vertical_stripes = Bool(False).tag(sync=True)
 
     def __init__(self, dataframe, index_name=None, **kwargs):
         # Setting default index name if not explicitly
