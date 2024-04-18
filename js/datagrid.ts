@@ -84,13 +84,22 @@ function serialize_data(data: DataSource, manager: any): any {
 function deserialize_data(data: any, manager: any): DataSource {
   const deserialized_data: any = {};
   for (const column of Object.keys(data.data)) {
+    deserialized_data[column] = [];
+
+    if (Array.isArray(data.data[column])) {
+      deserialized_data[column] = data.data[column];
+      continue;
+    }
+
     if (data.data[column].type == 'raw') {
       deserialized_data[column] = unpack_raw_data(data.data[column].value);
     } else {
-      deserialized_data[column] = array_or_json_serializer.deserialize(
-        data.data[column],
-        manager,
-      );
+      if (data.data[column].value.length !== 0) {
+        deserialized_data[column] = array_or_json_serializer.deserialize(
+          data.data[column],
+          manager,
+        );
+      }
     }
   }
   return new DataSource(deserialized_data, data.fields, data.schema, true);
