@@ -83,6 +83,30 @@ function serialize_data(data: DataSource, manager: any): any {
 
 function deserialize_data(data: any, manager: any): DataSource {
   const deserialized_data: any = {};
+
+  // Backward compatibility for when data.data was an array of rows
+  // (should be removed in ipydatagrid 2.x?)
+  if (Array.isArray(data.data)) {
+    if (data.data.length === 0) {
+      return new DataSource(deserialized_data, data.fields, data.schema, true);
+    }
+
+    const unpacked = unpack_raw_data(data.data);
+    // Turn array of rows (old approach) into a dictionary of columns as arrays (new approach)
+    for (const column of Object.keys(unpacked[0])) {
+      const columnData = new Array(unpacked.length);
+      let rowIdx = 0;
+
+      for (const row of unpacked) {
+        columnData[rowIdx++] = row[column];
+      }
+
+      deserialized_data[column] = columnData;
+    }
+
+    return new DataSource(deserialized_data, data.fields, data.schema, true);
+  }
+
   for (const column of Object.keys(data.data)) {
     deserialized_data[column] = [];
 
@@ -467,7 +491,10 @@ export class DataGridView extends DOMWidgetView {
     });
 
     const grid_style = this.model.get('grid_style');
-    if (this.model.get('horizontal_stripes') || this.model.get('vertical_stripes')) {
+    if (
+      this.model.get('horizontal_stripes') ||
+      this.model.get('vertical_stripes')
+    ) {
       const index = this.model.get('horizontal_stripes')
         ? 'rowBackgroundColor'
         : 'columnBackgroundColor';
