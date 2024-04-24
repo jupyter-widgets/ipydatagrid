@@ -4,7 +4,7 @@ import { DataModel } from '@lumino/datagrid';
 
 import { CommandRegistry } from '@lumino/commands';
 
-import { Menu } from '@lumino/widgets';
+import { Menu, Widget } from '@lumino/widgets';
 
 /**
  * An object which provides context menus for the data grid.
@@ -207,6 +207,15 @@ export class FeatherGridContextMenu extends GridContextMenu {
 
     // Open context menu at location of the click event
     this._menu.open(hit.x, hit.y);
+
+    // Issue 422: menu should be first child of document.body not last child to work on all of
+    // Jupyter Lab, Notebook < 7, NbClassic and Voila. Until this is available in lumino/widgets,
+    // detach and reattach the menu here.
+    const bodyFirstChild = document.body.firstElementChild;
+    if (this._menu.node.parentElement == document.body && bodyFirstChild != this._menu.node) {
+      Widget.detach(this._menu);
+      Widget.attach(this._menu, document.body, bodyFirstChild as HTMLElement);
+    }
   }
 }
 
