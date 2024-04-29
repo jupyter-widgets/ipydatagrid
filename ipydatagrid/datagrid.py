@@ -760,11 +760,11 @@ class DataGrid(DOMWidget):
         return SelectionHelper(
             self._data, self.selections, self.selection_mode
         ).all()
-
+        
     @property
-    def selected_cell_values(self):
+    def selected_visible_cell_iterator(self):
         """
-        List of values for all selected cells.
+        An iterator to traverse selected visible cells one by one.
         """
         # Copy of the front-end data model
         view_data = self.get_visible_data()
@@ -776,10 +776,14 @@ class DataGrid(DOMWidget):
         view_data_object = self.generate_data_object(
             view_data, "ipydguuid", index_key
         )
+        return SelectionHelper(view_data_object, self.selections, self.selection_mode)
 
-        return SelectionHelper(
-            view_data_object, self.selections, self.selection_mode
-        ).all_values()
+    @property
+    def selected_cell_values(self):
+        """
+        List of values for all selected cells.
+        """
+        return self.selected_visible_cell_iterator.all_values()
 
     @property
     def selected_cell_iterator(self):
