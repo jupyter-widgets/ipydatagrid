@@ -472,6 +472,7 @@ class DataGrid(DOMWidget):
             )
         final_df = df.set_index(trimmed_primary_key)
         final_df = final_df[final_df.columns[:-1]]
+        final_df.drop(columns=["ipydguuid"], inplace=True, errors="ignore")
         return final_df
 
     @data.setter
