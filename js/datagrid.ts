@@ -219,7 +219,6 @@ export class DataGridModel extends DOMWidgetModel {
             event_type: 'cell-changed',
             region: msg.region,
             row: msg.row,
-            column: msg.column,
             column_index: msg.columnIndex,
             value: msg.value,
           },
