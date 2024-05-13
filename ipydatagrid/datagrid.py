@@ -760,7 +760,7 @@ class DataGrid(DOMWidget):
         return SelectionHelper(
             self._data, self.selections, self.selection_mode
         ).all()
-        
+
     @property
     def selected_visible_cell_iterator(self):
         """
