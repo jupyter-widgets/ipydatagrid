@@ -433,7 +433,9 @@ class DataGrid(DOMWidget):
     def __handle_custom_msg(self, _, content, buffers):  # noqa: U101,U100
         if content["event_type"] == "cell-changed":
             row = content["row"]
-            column = content["column"]
+            column = self._column_index_to_name(
+                self._data, content["column_index"]
+            )
             value = content["value"]
             # update data on kernel
             self._data["data"].loc[row, column] = value
@@ -441,7 +443,7 @@ class DataGrid(DOMWidget):
             self._cell_change_handlers(
                 {
                     "row": row,
-                    "column": content["column"],
+                    "column": column,
                     "column_index": content["column_index"],
                     "value": value,
                 }
