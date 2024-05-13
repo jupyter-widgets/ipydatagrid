@@ -776,7 +776,9 @@ class DataGrid(DOMWidget):
         view_data_object = self.generate_data_object(
             view_data, "ipydguuid", index_key
         )
-        return SelectionHelper(view_data_object, self.selections, self.selection_mode)
+        return SelectionHelper(
+            view_data_object, self.selections, self.selection_mode
+        )
 
     @property
     def selected_cell_values(self):
