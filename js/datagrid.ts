@@ -119,10 +119,22 @@ function deserialize_data(data: any, manager: any): DataSource {
       deserialized_data[column] = unpack_raw_data(data.data[column].value);
     } else {
       if (data.data[column].value.length !== 0) {
-        deserialized_data[column] = array_or_json_serializer.deserialize(
+        let deserialized_array = array_or_json_serializer.deserialize(
           data.data[column],
           manager,
         );
+
+        // Turning back float32 dates into isoformat
+        if (deserialized_array.type === 'date') {
+          const float32Array = deserialized_array;
+          deserialized_array = [];
+
+          for (let i = 0; i < float32Array.length; i++) {
+            deserialized_array[i] = new Date(float32Array[i]).toISOString();
+          }
+        }
+
+        deserialized_data[column] = deserialized_array;
       }
     }
   }
