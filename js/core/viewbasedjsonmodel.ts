@@ -377,14 +377,14 @@ export class ViewBasedJSONModel extends MutableDataModel {
   /**
    * Get the current View for the model.
    */
-  protected get currentView(): View {
+  get currentView(): View {
     return this._currentView;
   }
 
   /**
    * Sets the provided View as the current View, then emits a changed signal.
    */
-  protected set currentView(view: View) {
+  set currentView(view: View) {
     this._currentView = view;
 
     this.emitChanged({ type: 'model-reset' });
@@ -422,12 +422,12 @@ export class ViewBasedJSONModel extends MutableDataModel {
   /**
    * Removes the provided transformation from the active state.
    *
-   * @param columnIndex - The index of the column state to be removed.
+   * @param column - The column state to be removed.
    *
    * @param transformType - The type of the transform to be removed from state.
    */
-  removeTransform(columnIndex: number, transformType: string): void {
-    this._transformState.remove(columnIndex, transformType);
+  removeTransform(column: string, transformType: string): void {
+    this._transformState.remove(column, transformType);
   }
 
   /**
@@ -450,12 +450,10 @@ export class ViewBasedJSONModel extends MutableDataModel {
   /**
    * Returns the transform metadata for the provided column.
    *
-   * @param columnIndex - The column index of the metadata to be retrieved.
+   * @param column - The column of the metadata to be retrieved.
    */
-  transformMetadata(
-    columnIndex: number,
-  ): TransformStateManager.IColumn | undefined {
-    return this._transformState.metadata(columnIndex);
+  transformMetadata(column: string): TransformStateManager.IColumn | undefined {
+    return this._transformState.metadata(column);
   }
 
   /**
@@ -463,11 +461,10 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * the provided column index.
    *
    * @param region - The CellRegion to retrieve unique values for.
-   * @param columnIndex - The index to retrieve unique values for.
+   * @param column - The column to retrieve unique values for.
    */
-  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
-    const columnName = this.metadata(region, 0, columnIndex)['name'];
-    return Array.from(new Set(this.dataset.data[columnName]));
+  uniqueValues(region: DataModel.CellRegion, column: string): any[] {
+    return Array.from(new Set(this.dataset.data[column]));
   }
 
   /**
@@ -475,13 +472,13 @@ export class ViewBasedJSONModel extends MutableDataModel {
    * the provided column index after all transforms have been applied.
    *
    * @param region - The CellRegion to retrieve unique values for.
-   * @param columnIndex - The index to retrieve unique values for.
+   * @param column - The column to retrieve unique values for.
    */
   async uniqueValuesVisible(
     region: DataModel.CellRegion,
-    columnIndex: number,
+    column: string,
   ): Promise<any[]> {
-    return this._currentView.uniqueValues(region, columnIndex);
+    return this._currentView.uniqueValues(region, column);
   }
 
   get transformStateChanged(): ISignal<this, TransformStateManager.IEvent> {
@@ -495,8 +492,8 @@ export class ViewBasedJSONModel extends MutableDataModel {
     return this._transformState.activeTransforms;
   }
 
-  getFilterTransform(columnIndex: number): Transform.TransformSpec | undefined {
-    return this._transformState.getFilterTransform(columnIndex);
+  getFilterTransform(column: string): Transform.TransformSpec | undefined {
+    return this._transformState.getFilterTransform(column);
   }
 
   /**

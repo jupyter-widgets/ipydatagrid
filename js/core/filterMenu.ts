@@ -89,6 +89,10 @@ export class InteractiveFilterDialog extends BoxPanel {
     this.addWidget(this._applyWidget);
   }
 
+  get column(): string {
+    return this._column;
+  }
+
   /**
    * Connects to the "Select All" widget signal and
    * toggles checking all/none of the unique elements
@@ -151,15 +155,12 @@ export class InteractiveFilterDialog extends BoxPanel {
     const value =
       this._mode === 'condition'
         ? <Transform.FilterValue>this._filterValue
-        : this._uniqueValueStateManager.getValues(
-            this.region,
-            this._columnIndex,
-          );
+        : this._uniqueValueStateManager.getValues(this.region, this._column);
 
     // Construct transform
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: this.model.getSchemaIndex(this._region, this._columnIndex),
+      column: this._column,
       operator: this._filterOperator,
       value: value,
     };
@@ -172,11 +173,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    * Updates the DOM elements with transform state from the linked data model.
    */
   updateDialog(): void {
-    const lookupColumn = this.model.getSchemaIndex(
-      this._region,
-      this._columnIndex,
-    );
-    const columnState = this._model.transformMetadata(lookupColumn);
+    const columnState = this._model.transformMetadata(this._column);
 
     // Update state with transform metadata, if present
     if (columnState && columnState.filter) {
@@ -254,10 +251,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    * Displays the unique values of a column.
    */
   _renderUniqueVals() {
-    const uniqueVals = this._model.uniqueValues(
-      this._region,
-      this._columnIndex,
-    );
+    const uniqueVals = this._model.uniqueValues(this._region, this._column);
     const data = new DataSource(
       { index: [...uniqueVals.keys()], uniqueVals },
       [{ index: null }, { uniqueVals: null }],
@@ -273,6 +267,7 @@ export class InteractiveFilterDialog extends BoxPanel {
     this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
     const sortTransform: Transform.Sort = {
       type: 'sort',
+      column: 'uniqueVals',
       columnIndex: this.model.getSchemaIndex(this._region, 0),
       desc: false,
     };
@@ -295,21 +290,14 @@ export class InteractiveFilterDialog extends BoxPanel {
       return;
     }
 
-    const uniqueVals = this._model.uniqueValues(
-      this._region,
-      this._columnIndex,
-    );
+    const uniqueVals = this._model.uniqueValues(this._region, this._column);
 
     let showAsChecked = true;
     for (const value of uniqueVals) {
       // If there is a unique value which is not present in the state then it is
       // not ticked, and therefore we should not tick the "Select all" checkbox.
       if (
-        !this._uniqueValueStateManager.has(
-          this._region,
-          this._columnIndex,
-          value,
-        )
+        !this._uniqueValueStateManager.has(this._region, this._column, value)
       ) {
         showAsChecked = false;
         break;
@@ -325,20 +313,17 @@ export class InteractiveFilterDialog extends BoxPanel {
    */
   open(options: InteractiveFilterDialog.IOpenOptions): void {
     // Update state with the metadata of the event that opened the menu.
-    this._columnIndex = options.columnIndex;
+    this._column = options.column;
     this._columnDType = this._model.metadata(
       options.region,
       0,
-      options.columnIndex,
+      this._model.columnNameToIndex(this._column),
     )['type'];
     this._region = options.region;
     this._mode = options.mode;
 
     // Setting filter flag
-    this.hasFilter =
-      this._model.getFilterTransform(
-        this.model.getSchemaIndex(this._region, this._columnIndex),
-      ) !== undefined;
+    this.hasFilter = this._model.getFilterTransform(this._column) !== undefined;
 
     this.userInteractedWithDialog = false;
 
@@ -524,8 +509,7 @@ export class InteractiveFilterDialog extends BoxPanel {
           const value = <Transform.FilterValue>this._textInputFilterValue;
           const transform: Transform.TransformSpec = {
             type: 'filter',
-            // This is a separate data grid for the dialog box
-            // which will always have two columns.
+            column: this._column,
             columnIndex: 1,
             operator: 'stringContains',
             value: value,
@@ -728,10 +712,7 @@ export class InteractiveFilterDialog extends BoxPanel {
    * values of a column.
    */
   protected async createUniqueValueNodes(): Promise<VirtualElement> {
-    const uniqueVals = this._model.uniqueValues(
-      this._region,
-      this._columnIndex,
-    );
+    const uniqueVals = this._model.uniqueValues(this._region, this._column);
     const optionElems = uniqueVals.map((val) => {
       return h.option({ value: val }, String(val));
     });
@@ -1141,21 +1122,13 @@ export class InteractiveFilterDialog extends BoxPanel {
   }
 
   addRemoveAllUniqueValuesToState(add: boolean) {
-    const uniqueVals = this.model.uniqueValues(this._region, this._columnIndex);
+    const uniqueVals = this.model.uniqueValues(this._region, this._column);
 
     for (const value of uniqueVals) {
       if (add) {
-        this._uniqueValueStateManager.add(
-          this._region,
-          this._columnIndex,
-          value,
-        );
+        this._uniqueValueStateManager.add(this._region, this._column, value);
       } else {
-        this._uniqueValueStateManager.remove(
-          this._region,
-          this._columnIndex,
-          value,
-        );
+        this._uniqueValueStateManager.remove(this._region, this._column, value);
       }
     }
   }
@@ -1196,13 +1169,6 @@ export class InteractiveFilterDialog extends BoxPanel {
   }
 
   /**
-   * Returns the active Cellregion.
-   */
-  get columnIndex(): number {
-    return this._columnIndex;
-  }
-
-  /**
    * Returns the active column dtype.
    */
   get columnDType(): string {
@@ -1213,7 +1179,7 @@ export class InteractiveFilterDialog extends BoxPanel {
 
   // Cell metadata
   private _columnDType = 'number';
-  private _columnIndex = 0;
+  private _column: string;
   private _region: DataModel.CellRegion = 'column-header';
 
   // Menu state
@@ -1417,6 +1383,12 @@ export namespace InteractiveFilterDialog {
     region: DataModel.CellRegion;
 
     /**
+     * The column of the `cellClick` that triggered this call.
+     */
+    column: string;
+
+    /**
+     * (deprecated)
      * The column index of the `cellClick` that triggered this call.
      */
     columnIndex: number;
@@ -1449,17 +1421,17 @@ export class UniqueValueStateManager {
     this._grid = options.grid;
   }
 
-  has(region: DataModel.CellRegion, columnIndex: number, value: any): boolean {
-    const key = this.getKeyName(region, columnIndex);
+  has(region: DataModel.CellRegion, column: string, value: any): boolean {
+    const key = this.getKeyName(region, column);
     return this._state.hasOwnProperty(key) && this._state[key].has(value);
   }
 
-  getKeyName(region: DataModel.CellRegion, columnIndex: number): string {
-    return `${region}:${columnIndex}`;
+  getKeyName(region: DataModel.CellRegion, column: string): string {
+    return `${region}:${column}`;
   }
 
-  add(region: DataModel.CellRegion, columnIndex: number, value: any): void {
-    const key = this.getKeyName(region, columnIndex);
+  add(region: DataModel.CellRegion, column: string, value: any): void {
+    const key = this.getKeyName(region, column);
     if (this._state.hasOwnProperty(key)) {
       this._state[key].add(value);
     } else {
@@ -1470,8 +1442,8 @@ export class UniqueValueStateManager {
     MessageLoop.postMessage(this._grid.viewport, msg);
   }
 
-  remove(region: DataModel.CellRegion, columnIndex: number, value: any): void {
-    const key = this.getKeyName(region, columnIndex);
+  remove(region: DataModel.CellRegion, column: string, value: any): void {
+    const key = this.getKeyName(region, column);
 
     if (this._state.hasOwnProperty(key)) {
       this._state[key].delete(value);
@@ -1480,8 +1452,8 @@ export class UniqueValueStateManager {
     MessageLoop.postMessage(this._grid.viewport, msg);
   }
 
-  getValues(region: DataModel.CellRegion, columnIndex: number): any[] {
-    const key = this.getKeyName(region, columnIndex);
+  getValues(region: DataModel.CellRegion, column: string): any[] {
+    const key = this.getKeyName(region, column);
     if (this._state.hasOwnProperty(key)) {
       return Array.from(this._state[key]);
     } else {
@@ -1516,7 +1488,7 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
       return;
     }
     const row = hit.row;
-    const colIndex = this._filterDialog.columnIndex;
+    const colIndex = this._filterDialog.column;
     const region = this._filterDialog.region;
     const value = grid.dataModel!.data('body', row, 0);
 

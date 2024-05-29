@@ -879,14 +879,19 @@ export class FeatherGrid extends Widget {
       iconClass:
         'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortAsc',
       execute: (args): void => {
-        const cellClick: FeatherGridContextMenu.CommandArgs =
+        const command: FeatherGridContextMenu.CommandArgs =
           args as FeatherGridContextMenu.CommandArgs;
+
         const colIndex = this._dataModel.getSchemaIndex(
-          cellClick.region,
-          cellClick.columnIndex,
+          command.region,
+          command.columnIndex,
         );
+
+        const column = this.dataModel.currentView.dataset.columns[colIndex];
+
         this._dataModel.addTransform({
           type: 'sort',
+          column,
           columnIndex: colIndex,
           desc: false,
         });
@@ -898,14 +903,19 @@ export class FeatherGrid extends Widget {
       iconClass:
         'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-sortDesc',
       execute: (args) => {
-        const cellClick: FeatherGridContextMenu.CommandArgs =
+        const command: FeatherGridContextMenu.CommandArgs =
           args as FeatherGridContextMenu.CommandArgs;
+
         const colIndex = this._dataModel.getSchemaIndex(
-          cellClick.region,
-          cellClick.columnIndex,
+          command.region,
+          command.columnIndex,
         );
+
+        const column = this.dataModel.currentView.dataset.columns[colIndex];
+
         this._dataModel.addTransform({
           type: 'sort',
+          column,
           columnIndex: colIndex,
           desc: true,
         });
@@ -915,12 +925,16 @@ export class FeatherGrid extends Widget {
       label: 'Clear This Filter',
       mnemonic: -1,
       execute: (args) => {
-        const commandArgs = <FeatherGridContextMenu.CommandArgs>args;
-        const schemaIndex: number = this._dataModel.getSchemaIndex(
-          commandArgs.region,
-          commandArgs.columnIndex,
+        const command = <FeatherGridContextMenu.CommandArgs>args;
+
+        const colIndex = this._dataModel.getSchemaIndex(
+          command.region,
+          command.columnIndex,
         );
-        this._dataModel.removeTransform(schemaIndex, 'filter');
+
+        const column = this.dataModel.currentView.dataset.columns[colIndex];
+
+        this._dataModel.removeTransform(column, 'filter');
       },
     });
     commands.addCommand(
@@ -947,10 +961,19 @@ export class FeatherGrid extends Widget {
           'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
         execute: (args) => {
           const commandArgs = <FeatherGridContextMenu.CommandArgs>args;
+
+          const colIndex = this._dataModel.getSchemaIndex(
+            commandArgs.region,
+            commandArgs.columnIndex,
+          );
+
+          const column = this.dataModel.currentView.dataset.columns[colIndex];
+
           this._filterDialog.open({
             x: commandArgs.clientX,
             y: commandArgs.clientY,
             region: commandArgs.region,
+            column,
             columnIndex: commandArgs.columnIndex,
             forceX: false,
             forceY: false,
@@ -968,10 +991,19 @@ export class FeatherGrid extends Widget {
           'ipydatagrid-filterMenuIcon ipydatagrid-filterMenuIcon-filter',
         execute: (args) => {
           const commandArgs = <FeatherGridContextMenu.CommandArgs>args;
+
+          const colIndex = this._dataModel.getSchemaIndex(
+            commandArgs.region,
+            commandArgs.columnIndex,
+          );
+
+          const column = this.dataModel.currentView.dataset.columns[colIndex];
+
           this._filterDialog.open({
             x: commandArgs.clientX,
             y: commandArgs.clientY,
             region: commandArgs.region,
+            column,
             columnIndex: commandArgs.columnIndex,
             forceX: false,
             forceY: false,
@@ -1020,11 +1052,15 @@ export class FeatherGrid extends Widget {
       mnemonic: 1,
       execute: (args) => {
         const commandArgs = <FeatherGridContextMenu.CommandArgs>args;
-        const schemaIndex: number = this._dataModel.getSchemaIndex(
+
+        const colIndex = this._dataModel.getSchemaIndex(
           commandArgs.region,
           commandArgs.columnIndex,
         );
-        this._dataModel.removeTransform(schemaIndex, 'sort');
+
+        const column = this.dataModel.currentView.dataset.columns[colIndex];
+
+        this._dataModel.removeTransform(column, 'sort');
       },
     });
     commands.addCommand(FeatherGridContextMenu.CommandID.ClearSelection, {

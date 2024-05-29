@@ -5,8 +5,8 @@ import { View } from '../../js/core/view';
 
 describe('Test .add()', () => {
   const testCases: Transform.TransformSpec[] = [
-    { type: 'sort', columnIndex: 3, desc: true },
-    { type: 'filter', columnIndex: 2, operator: '<', value: 5 },
+    { type: 'sort', column: 'test', desc: true },
+    { type: 'filter', column: 'test', operator: '<', value: 5 },
   ];
   testCases.forEach((testCase) => {
     test(`State is update: ${testCase.type}-${testCase.columnIndex}`, () => {
@@ -20,13 +20,13 @@ describe('Test .add()', () => {
     const transform1 = Private.simpleSort();
     const transform2: Transform.Sort = {
       type: 'sort',
-      columnIndex: transform1.columnIndex + 1,
+      column: 'test2',
       desc: true,
     };
     tsm.add(transform1);
     tsm.add(transform2);
     // @ts-ignore
-    expect(tsm._state[transform1.columnIndex][transform1.type]).toBeUndefined();
+    expect(tsm._state[transform1.column][transform1.type]).toBeUndefined();
   });
   test('Clear state on error', () => {
     const tsm = new TransformStateManager();
@@ -69,7 +69,7 @@ describe('Test .replace()', () => {
     const state = Private.simpleState();
     const transform3: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: 2,
+      column: 'test',
       operator: '=',
       value: 765,
     };
@@ -131,36 +131,36 @@ describe('Test .remove()', () => {
     const state = Private.simpleState();
     const tsm = new TransformStateManager();
     tsm.replace([state.sort!, state.filter!]);
-    tsm.remove(state.filter!.columnIndex, state.filter!.type);
+    tsm.remove(state.filter!.column, state.filter!.type);
     expect(tsm.activeTransforms).toEqual([state.sort]);
   });
   test('Remove filter transform', () => {
     const state = Private.simpleState();
     const tsm = new TransformStateManager();
     tsm.replace([state.sort!, state.filter!]);
-    tsm.remove(state.filter!.columnIndex, state.filter!.type);
+    tsm.remove(state.filter!.column, state.filter!.type);
     expect(tsm.activeTransforms).toEqual([state.sort]);
   });
   test('State cleared after error', () => {
     const state = Private.simpleState();
     const tsm = new TransformStateManager();
     tsm.replace([state.sort!, state.filter!]);
-    tsm.remove(state.filter!.columnIndex, 'transformThatDoesntExist');
+    tsm.remove(state.filter!.column, 'transformThatDoesntExist');
     expect(tsm.activeTransforms).toEqual([]);
   });
   test('State entry cleared if no sort or filter', () => {
     const transform1 = Private.simpleSort();
     const tsm = new TransformStateManager();
     tsm.add(transform1);
-    tsm.remove(transform1.columnIndex, transform1.type);
+    tsm.remove(transform1.column, transform1.type);
     // @ts-ignore
-    expect(tsm._state[transform1.columnIndex]).toBeUndefined();
+    expect(tsm._state[transform1.column]).toBeUndefined();
   });
   test('No state change on invalid column', () => {
     const state = Private.simpleState();
     const tsm = new TransformStateManager();
     tsm.replace([state.sort!, state.filter!]);
-    tsm.remove(state.filter!.columnIndex + 1, state.filter!.type);
+    tsm.remove(state.filter!.column + 1, state.filter!.type);
     expect(tsm.activeTransforms).toEqual([state.sort!, state.filter!]);
   });
 });
@@ -171,16 +171,16 @@ describe('Test .metadata()', () => {
     const tsm = new TransformStateManager();
     tsm.add(transform1);
     const test = { filter: undefined, sort: transform1 };
-    expect(tsm.metadata(transform1.columnIndex)).toEqual(test);
-    expect(tsm.metadata(transform1.columnIndex + 1)).toBeUndefined();
+    expect(tsm.metadata(transform1.column)).toEqual(test);
+    expect(tsm.metadata(transform1.column + 1)).toBeUndefined();
   });
   test('Get metadata for column - filter', () => {
     const transform1 = Private.simpleFilter();
     const tsm = new TransformStateManager();
     tsm.add(transform1);
     const test = { filter: transform1, sort: undefined };
-    expect(tsm.metadata(transform1.columnIndex)).toEqual(test);
-    expect(tsm.metadata(transform1.columnIndex + 1)).toBeUndefined();
+    expect(tsm.metadata(transform1.column)).toEqual(test);
+    expect(tsm.metadata(transform1.column + 1)).toBeUndefined();
   });
 });
 
@@ -219,14 +219,14 @@ namespace Private {
    * Returns a simple sort transform.
    */
   export function simpleSort(): Transform.Sort {
-    return { type: 'sort', columnIndex: 1, desc: true };
+    return { type: 'sort', column: 'test', desc: true };
   }
 
   /**
    * Returns a simple filter transform.
    */
   export function simpleFilter(): Transform.Filter {
-    return { type: 'filter', columnIndex: 1, operator: '<', value: 0 };
+    return { type: 'filter', column: 'test', operator: '<', value: 0 };
   }
 
   /**

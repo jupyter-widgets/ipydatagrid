@@ -138,7 +138,7 @@ describe('Test trait: data', () => {
     const testData = Private.createBasicTestData();
     const transform: Transform.TransformSpec = {
       type: 'sort',
-      columnIndex: 0,
+      column: 'index',
       desc: true,
     };
     const grid = await Private.createGridWidget({
@@ -149,11 +149,11 @@ describe('Test trait: data', () => {
       },
     });
     const oldTransforms = grid.model.data_model.transformMetadata(
-      transform.columnIndex,
+      transform.column,
     );
     grid.model.set('_data', testData.set2.data);
     expect(
-      grid.model.data_model.transformMetadata(transform.columnIndex),
+      grid.model.data_model.transformMetadata(transform.column),
     ).toEqual(oldTransforms);
   });
 

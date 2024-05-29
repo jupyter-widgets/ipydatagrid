@@ -290,8 +290,10 @@ export class HeaderRenderer extends TextRenderer {
         config.column,
       );
 
+      const column = this.model.currentView.dataset.columns[schemaIndex];
+
       const colMetaData: TransformStateManager.IColumn | undefined =
-        this.model.transformMetadata(schemaIndex);
+        this.model.transformMetadata(column);
 
       // Fill filter icon if filter applied
       if (colMetaData && colMetaData['filter']) {

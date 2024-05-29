@@ -44,7 +44,7 @@ describe('Test interactions with TransformStateManager', () => {
     let mock = jest.spyOn(TransformStateManager.prototype, 'add');
     const transform: Transform.TransformSpec = {
       type: 'sort',
-      columnIndex: 0,
+      column: 'index',
       desc: true,
     };
     model.addTransform(transform);
@@ -53,8 +53,8 @@ describe('Test interactions with TransformStateManager', () => {
   test('.removeTransform()', () => {
     const model = Private.createSimpleModel();
     let mock = jest.spyOn(TransformStateManager.prototype, 'remove');
-    model.removeTransform(0, 'sort');
-    expect(mock).toBeCalledWith(0, 'sort');
+    model.removeTransform('index', 'sort');
+    expect(mock).toBeCalledWith('index', 'sort');
   });
   test('.replaceTransform()', () => {
     const model = Private.createSimpleModel();
@@ -62,7 +62,7 @@ describe('Test interactions with TransformStateManager', () => {
     const transforms: Transform.TransformSpec[] = [
       {
         type: 'sort',
-        columnIndex: 0,
+        column: 'index',
         desc: true,
       },
     ];
@@ -78,8 +78,8 @@ describe('Test interactions with TransformStateManager', () => {
   test('.transformMetadata()', () => {
     const model = Private.createSimpleModel();
     let mock = jest.spyOn(TransformStateManager.prototype, 'metadata');
-    model.transformMetadata(0);
-    expect(mock).toBeCalledWith(0);
+    model.transformMetadata('index');
+    expect(mock).toBeCalledWith('index');
   });
 });
 
@@ -135,7 +135,7 @@ describe('Test .uniqueValues()', () => {
   });
   const testModel = new ViewBasedJSONModel(testData.data);
   test('cellregion-column-header-0', () => {
-    expect(testModel.uniqueValues('column-header', 0)).toEqual([
+    expect(testModel.uniqueValues('column-header', 'col1')).toEqual([
       10,
       20,
       30,
@@ -144,20 +144,20 @@ describe('Test .uniqueValues()', () => {
     ]);
   });
   test('cellregion-column-header-1', () => {
-    expect(testModel.uniqueValues('column-header', 1)).toEqual([
+    expect(testModel.uniqueValues('column-header', 'col2')).toEqual([
       true,
       false,
     ]);
   });
   test('cellregion-column-header-2', () => {
-    expect(testModel.uniqueValues('column-header', 2)).toEqual([
+    expect(testModel.uniqueValues('column-header', 'col3')).toEqual([
       100,
       200,
       300,
     ]);
   });
   test('cellregion-corner-header-0', () => {
-    expect(testModel.uniqueValues('corner-header', 0)).toEqual([
+    expect(testModel.uniqueValues('corner-header', 'index')).toEqual([
       'A',
       'C',
       'B',

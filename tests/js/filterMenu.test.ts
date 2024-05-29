@@ -31,18 +31,17 @@ describe('Test .hasValidFilterValue()', () => {
 describe('Test .applyFilter()', () => {
   test('.addTransform() is called', () => {
     const dialog = Private.createSimpleDialog();
-    const colIndex = 0;
 
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: colIndex + 1,
+      column: 'test',
       operator: '=',
       value: 6,
     };
 
     Private.setDialogState({
       dialog: dialog,
-      columnIndex: colIndex,
+      column: transform.column,
       mode: 'condition',
       operator: transform.operator,
       region: 'body',
@@ -55,18 +54,17 @@ describe('Test .applyFilter()', () => {
   });
   test('condition transform is added', () => {
     const dialog = Private.createSimpleDialog();
-    const colIndex = 0;
 
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: colIndex + 1,
+      column: 'test',
       operator: '=',
       value: 6,
     };
 
     Private.setDialogState({
       dialog: dialog,
-      columnIndex: colIndex,
+      column: transform.column,
       mode: 'condition',
       operator: transform.operator,
       region: 'body',
@@ -74,25 +72,24 @@ describe('Test .applyFilter()', () => {
     });
 
     dialog.applyFilter();
-    const addedTransform = dialog.model.transformMetadata(colIndex + 1)![
+    const addedTransform = dialog.model.transformMetadata(transform.column)![
       'filter'
     ];
     expect(addedTransform).toEqual(transform);
   });
   test('value transform is added', () => {
     const dialog = Private.createSimpleDialog();
-    const colIndex = 0;
 
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: colIndex + 1,
+      column: 'test',
       operator: 'in',
       value: [],
     };
 
     Private.setDialogState({
       dialog: dialog,
-      columnIndex: colIndex,
+      column: transform.column,
       mode: 'value',
       operator: transform.operator,
       region: 'body',
@@ -100,7 +97,7 @@ describe('Test .applyFilter()', () => {
     });
     dialog.userInteractedWithDialog = true;
     dialog.applyFilter();
-    const addedTransform = dialog.model.transformMetadata(colIndex + 1)![
+    const addedTransform = dialog.model.transformMetadata(transform.column)![
       'filter'
     ];
     expect(addedTransform).toEqual(transform);
@@ -115,7 +112,7 @@ describe('Test .updateDialog()', () => {
       dialog: dialog,
       region: 'body',
       value: 6,
-      columnIndex: 0,
+      column: 'test',
       mode: 'value',
       operator: '<',
     });
@@ -133,12 +130,13 @@ describe('Test .updateDialog()', () => {
     const dialog = Private.createSimpleDialog();
     const transform: Transform.TransformSpec = {
       type: 'filter',
-      columnIndex: 1,
+      column: 'test',
       operator: '>=',
       value: 6,
     };
     dialog.model.addTransform(transform);
     dialog.open({
+      column: 'test',
       columnIndex: 0,
       region: 'body',
       mode: 'condition',
@@ -156,7 +154,8 @@ describe('.open()', () => {
   test('open event updates state', () => {
     const dialog = Private.createSimpleDialog();
     const openOptions: InteractiveFilterDialog.IOpenOptions = {
-      columnIndex: 0,
+      column: 'test',
+      columnIndex: 1,
       forceX: false,
       forceY: false,
       mode: 'condition',
@@ -165,12 +164,8 @@ describe('.open()', () => {
       y: 0,
     };
     dialog.open(openOptions);
-    expect(dialog.columnIndex).toBe(openOptions.columnIndex);
-    expect(dialog.columnDType).toBe(
-      dialog.model.metadata(openOptions.region, 0, openOptions.columnIndex)[
-      'type'
-      ],
-    );
+    expect(dialog.column).toBe(openOptions.column);
+    expect(dialog.columnDType).toBe('number');
   });
 });
 
@@ -214,7 +209,7 @@ namespace Private {
     // @ts-ignore
     dialog._filterValue = options.value;
     // @ts-ignore
-    dialog._columnIndex = options.columnIndex;
+    dialog._column = options.column;
     // @ts-ignore
     dialog._mode = options.mode;
     // @ts-ignore
@@ -276,8 +271,8 @@ namespace Private {
     mode: InteractiveFilterDialog.FilterMode;
 
     /**
-     * The active column index to set.
+     * The active column to set.
      */
-    columnIndex: number;
+    column: string;
   }
 }
