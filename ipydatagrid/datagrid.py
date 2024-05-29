@@ -3,6 +3,7 @@
 
 import datetime
 import decimal
+import warnings
 from collections.abc import Iterator
 from copy import deepcopy
 from math import floor
@@ -825,8 +826,22 @@ class DataGrid(DOMWidget):
         transforms = proposal["value"]
         field_len = len(self._data["schema"]["fields"])
         for transform in transforms:
-            if transform["columnIndex"] > field_len:
-                raise ValueError("Column index is out of bounds.")
+            if "columnIndex" in transform:
+                warnings.warn(
+                    "Applying transforms on columnIndex is deprecated, "
+                    "please provide the column name instead",
+                    DeprecationWarning,
+                    stacklevel=4,
+                )
+
+                if "column" not in transform:
+                    transform["column"] = self._data["schema"]["fields"][
+                        transform["columnIndex"]
+                    ]["name"]
+
+                if transform["columnIndex"] > field_len:
+                    raise ValueError("Column index is out of bounds.")
+
         return transforms
 
     @validate("_data")

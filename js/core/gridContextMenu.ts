@@ -212,7 +212,10 @@ export class FeatherGridContextMenu extends GridContextMenu {
     // Jupyter Lab, Notebook < 7, NbClassic and Voila. Until this is available in lumino/widgets,
     // detach and reattach the menu here.
     const bodyFirstChild = document.body.firstElementChild;
-    if (this._menu.node.parentElement == document.body && bodyFirstChild != this._menu.node) {
+    if (
+      this._menu.node.parentElement == document.body &&
+      bodyFirstChild != this._menu.node
+    ) {
       Widget.detach(this._menu);
       Widget.attach(this._menu, document.body, bodyFirstChild as HTMLElement);
     }

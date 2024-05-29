@@ -16,7 +16,13 @@ export namespace Transform {
     /**
      * The column in the data schema to apply the transformation to.
      */
-    columnIndex: number;
+    column: string;
+
+    /**
+     * (deprecated)
+     * The column in the data schema to apply the transformation to.
+     */
+    columnIndex?: number;
 
     /**
      * Indicates if the sort should be performed descending or ascending.
@@ -36,7 +42,13 @@ export namespace Transform {
     /**
      * The column in the data schema to apply the transformation to.
      */
-    columnIndex: number;
+    column: string;
+
+    /**
+     * (deprecated)
+     * The column in the data schema to apply the transformation to.
+     */
+    columnIndex?: number;
 
     /**
      * The operator for this transformation.

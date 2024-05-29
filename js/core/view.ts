@@ -158,11 +158,10 @@ export class View {
    * Returns a Promise that resolves to an array of unique values contained in
    * the provided column index.
    *
-   * @param columnIndex - The index to retrieve unique values for.
+   * @param column - The column to retrieve unique values for.
    */
-  uniqueValues(region: DataModel.CellRegion, columnIndex: number): any[] {
-    const columnName = this.metadata(region, 0, columnIndex)['name'];
-    return Array.from(new Set(this.dataset.data[columnName]));
+  uniqueValues(region: DataModel.CellRegion, column: string): any[] {
+    return Array.from(new Set(this.dataset.data[column]));
   }
 
   private readonly _data: DataSource | Readonly<DataSource>;

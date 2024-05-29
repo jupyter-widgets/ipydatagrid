@@ -32,6 +32,10 @@ export class DataSource {
     return this._schema;
   }
 
+  get columns(): string[] {
+    return this._columns;
+  }
+
   get length(): number {
     if (this._columns.length == 0) {
       return 0;

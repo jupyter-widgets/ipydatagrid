@@ -21,8 +21,8 @@ import { DataSource } from '../datasource';
 export class TransformStateManager {
   protected _add(transform: Transform.TransformSpec): void {
     // Add column to state if not already present
-    if (!this._state.hasOwnProperty(transform.columnIndex)) {
-      this._state[transform.columnIndex] = {
+    if (!this._state.hasOwnProperty(transform.column)) {
+      this._state[transform.column] = {
         sort: undefined,
         filter: undefined,
       };
@@ -36,10 +36,10 @@ export class TransformStateManager {
         for (const key of Object.keys(this._state)) {
           this._state[key]['sort'] = undefined;
         }
-        this._state[transform.columnIndex]['sort'] = transform;
+        this._state[transform.column]['sort'] = transform;
         break;
       case 'filter':
-        this._state[transform.columnIndex]['filter'] = transform;
+        this._state[transform.column]['filter'] = transform;
         break;
       default:
         throw 'unreachable';
@@ -111,21 +111,36 @@ export class TransformStateManager {
     const sortExecutors: SortExecutor[] = [];
     const filterExecutors: FilterExecutor[] = [];
 
-    Object.keys(this._state).forEach((columnIndex) => {
-      const transform: TransformStateManager.IColumn = this._state[columnIndex];
+    Object.keys(this._state).forEach((column) => {
+      const transform: TransformStateManager.IColumn = this._state[column];
 
       if (transform.sort) {
+        let dType = '';
+        for (const field of data.schema.fields) {
+          if (field.name === transform.sort.column) {
+            dType = field.type;
+          }
+        }
+
         const executor = new SortExecutor({
-          field: data.schema.fields[transform.sort.columnIndex]['name'],
-          dType: data.schema.fields[transform.sort.columnIndex]['type'],
+          field: transform.sort.column,
+          dType,
           desc: transform.sort.desc,
         });
         sortExecutors.push(executor);
       }
+
       if (transform.filter) {
+        let dType = '';
+        for (const field of data.schema.fields) {
+          if (field.name === transform.filter.column) {
+            dType = field.type;
+          }
+        }
+
         const executor = new FilterExecutor({
-          field: data.schema.fields[transform.filter.columnIndex]['name'],
-          dType: data.schema.fields[transform.filter.columnIndex]['type'],
+          field: transform.filter.column,
+          dType,
           operator: transform.filter.operator,
           value: transform.filter.value,
         });
@@ -140,18 +155,18 @@ export class TransformStateManager {
   /**
    * Removes the provided transformation from the active state.
    *
-   * @param columnIndex - The index of the column state to be removed.
+   * @param column - The index of the column state to be removed.
    *
    * @param transformType - The type of the transform to be removed from state.
    */
-  remove(columnIndex: number, transformType: string): void {
+  remove(column: string, transformType: string): void {
     // Return immediately if the key is not in the state
-    if (!this._state.hasOwnProperty(columnIndex)) {
+    if (!this._state.hasOwnProperty(column)) {
       return;
     }
 
     try {
-      const columnState = this._state[columnIndex];
+      const columnState = this._state[column];
       if (transformType === 'sort') {
         columnState.sort = undefined;
       } else if (transformType === 'filter') {
@@ -160,7 +175,7 @@ export class TransformStateManager {
         throw 'unreachable';
       }
       if (!columnState.sort && !columnState.filter) {
-        delete this._state[columnIndex];
+        delete this._state[column];
       }
       this._changed.emit({
         type: 'transforms-updated',
@@ -174,13 +189,13 @@ export class TransformStateManager {
   /**
    * Returns the transform metadata for the provided column.
    *
-   * @param columnIndex - The column index of the metadata to be retrieved.
+   * @param column - The column index of the metadata to be retrieved.
    */
-  metadata(columnIndex: number): TransformStateManager.IColumn | undefined {
-    if (!this._state.hasOwnProperty(columnIndex)) {
+  metadata(column: string): TransformStateManager.IColumn | undefined {
+    if (!this._state.hasOwnProperty(column)) {
       return undefined;
     } else {
-      return this._state[columnIndex];
+      return this._state[column];
     }
   }
 
@@ -218,12 +233,12 @@ export class TransformStateManager {
     return transforms;
   }
 
-  getFilterTransform(columnIndex: number): Transform.TransformSpec | undefined {
-    if (!this._state.hasOwnProperty(columnIndex)) {
+  getFilterTransform(column: string): Transform.TransformSpec | undefined {
+    if (!this._state.hasOwnProperty(column)) {
       return undefined;
     }
 
-    return this._state[columnIndex].filter;
+    return this._state[column].filter;
   }
 
   private _state: TransformStateManager.IState = {};

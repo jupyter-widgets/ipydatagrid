@@ -105,15 +105,16 @@ export namespace ArrayUtils {
         const curVal = data[primaryKey[i]][j];
         // if (curMergedRange.length == 0 || prevVal == curVal) {
         const [parentGroupStart, parentGroupEnd] = getParentGroupPosition(
-            retArr,
-            j,
-            i,
-          );
+          retArr,
+          j,
+          i,
+        );
         if (
-            curMergedRange.length == 0 || (prevVal == curVal) &&
+          curMergedRange.length == 0 ||
+          (prevVal == curVal &&
             curMergedRange[0][0] >= parentGroupStart &&
-            j <= parentGroupEnd
-          ) {
+            j <= parentGroupEnd)
+        ) {
           curMergedRange.push([j, i]);
         } else {
           curCol.push(curMergedRange);
@@ -142,10 +143,12 @@ export namespace ArrayUtils {
     rowNum: number,
     colNum: number,
   ): number[] {
-    if (colNum === 0) {return [0, rowNum]};
-    for (let i = 0; i < retArr[colNum-1].length; i++) {
+    if (colNum === 0) {
+      return [0, rowNum];
+    }
+    for (let i = 0; i < retArr[colNum - 1].length; i++) {
       // iterate mergegroups of previous row
-      const curMergedGroup = retArr[colNum-1][i];
+      const curMergedGroup = retArr[colNum - 1][i];
       const curMergedGroupLen = curMergedGroup.length;
       const firstRow = curMergedGroup[0][0];
       const lastRow = curMergedGroup[curMergedGroupLen - 1][0];

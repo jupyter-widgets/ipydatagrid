@@ -140,7 +140,7 @@ export class FilterValueRenderer extends TextRenderer {
     return (
       this._stateManager.has(
         this._dialog.region,
-        this._dialog.columnIndex,
+        this._dialog.column,
         config.value,
       ) ||
       (!this._dialog.hasFilter && !this._dialog.userInteractedWithDialog)
