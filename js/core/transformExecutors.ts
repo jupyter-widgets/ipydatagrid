@@ -35,9 +35,10 @@ export class HideExecutor extends TransformExecutor {
   public apply(input: TransformExecutor.IData): TransformExecutor.IData {
     const newSchema = { ...input.schema };
 
+    console.log('input.schema', input.schema);
     if (this._options.hideAll) {
       newSchema.fields = newSchema.fields.filter(
-        (field) => field.name === 'key',
+        (field) => field.name === 'index_column',
       );
     } else {
       newSchema.fields = newSchema.fields.filter(
