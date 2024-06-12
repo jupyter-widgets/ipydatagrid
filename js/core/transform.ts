@@ -50,7 +50,7 @@ export namespace Transform {
     /**
      * The column in the data schema to apply the transformation to.
      */
-    columnIndex: number;
+    columnIndex?: number;
 
     /**
      * Boolean indicating if all columns should be hidden
