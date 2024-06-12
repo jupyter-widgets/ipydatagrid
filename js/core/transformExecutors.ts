@@ -65,6 +65,11 @@ export namespace HideExecutor {
     field: string;
 
     /**
+     * The data type of the column associated with this transform.
+     */
+    dType: string;
+
+    /**
      * Boolean indicating if all columns should be hidden
      */
     hideAll: boolean;

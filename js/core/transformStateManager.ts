@@ -44,7 +44,7 @@ export class TransformStateManager {
         this._state[transform.column]['filter'] = transform;
         break;
       case 'hide':
-        this._state[transform.columnIndex]['hide'] = transform;
+        this._state[transform.column]['hide'] = transform;
         break;
       default:
         throw 'unreachable';
@@ -153,8 +153,16 @@ export class TransformStateManager {
         filterExecutors.push(executor);
       }
       if (transform.hide) {
+        let dType = '';
+        for (const field of data.schema.fields) {
+          if (field.name === transform.hide.column) {
+            dType = field.type;
+          }
+        }
+
         const executor = new HideExecutor({
-          field: data.schema.fields[transform.hide.columnIndex]['name'],
+          field: transform.hide.column,
+          dType,
           hideAll: transform.hide.hideAll,
         });
         hideExecutors.push(executor);

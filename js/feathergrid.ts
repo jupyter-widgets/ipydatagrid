@@ -1074,14 +1074,20 @@ export class FeatherGrid extends Widget {
       label: 'Hide Column',
       mnemonic: -1,
       execute: (args) => {
-        const cellClick: FeatherGridContextMenu.CommandArgs =
+        const command: FeatherGridContextMenu.CommandArgs =
           args as FeatherGridContextMenu.CommandArgs;
+
         const colIndex = this._dataModel.getSchemaIndex(
-          cellClick.region,
-          cellClick.columnIndex,
+          command.region,
+          command.columnIndex,
         );
+
+        const column =
+          this.dataModel.currentView.dataset.schema.fields[colIndex];
+
         this._dataModel.addTransform({
           type: 'hide',
+          column: column.name,
           columnIndex: colIndex,
           hideAll: false,
         });
@@ -1097,8 +1103,13 @@ export class FeatherGrid extends Widget {
           cellClick.region,
           cellClick.columnIndex,
         );
+
+        const column =
+          this.dataModel.currentView.dataset.schema.fields[colIndex];
+
         this._dataModel.addTransform({
           type: 'hide',
+          column: column.name,
           columnIndex: colIndex,
           hideAll: true,
         });
@@ -1110,14 +1121,10 @@ export class FeatherGrid extends Widget {
       execute: () => {
         const activeTransforms: Transform.TransformSpec[] =
           this._dataModel.activeTransforms;
-        console.log(
-          'this._dataModel.activeTransforms',
-          this._dataModel.activeTransforms,
-        );
+
         const newTransforms = activeTransforms.filter(
           (val) => val.type !== 'hide',
         );
-        console.log('newTransforms', newTransforms);
         this._dataModel.replaceTransforms(newTransforms);
       },
     });

@@ -38,9 +38,14 @@ export namespace Transform {
    */
   export type Hide = {
     /**
-     * A type alias for this trasformation.
+     * A type alias for this transformation.
      */
     type: 'hide';
+
+    /**
+     * The column in the data schema to apply the transformation to.
+     */
+    column: string;
 
     /**
      * The column in the data schema to apply the transformation to.
