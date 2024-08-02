@@ -954,21 +954,21 @@ export class InteractiveFilterDialog extends BoxPanel {
       h.option(
         {
           value: '<=',
-          ...(op === '<' && { selected: '' }),
+          ...(op === '<=' && { selected: '' }),
         },
         'Date is on or before:',
       ),
       h.option(
         {
           value: '>=',
-          ...(op === '>' && { selected: '' }),
+          ...(op === '>=' && { selected: '' }),
         },
         'Date is on or after:',
       ),
       h.option(
         {
           value: 'isOnSameDay',
-          ...(op === 'between' && { selected: '' }),
+          ...(op === 'isOnSameDay' && { selected: '' }),
         },
         'Date is exactly:',
       ),
