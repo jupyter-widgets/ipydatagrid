@@ -17,9 +17,9 @@
     "dist/*.png",
     "style/**/*.*"
   ],
-  "homepage": "https://github.com/Bloomberg/ipydatagrid",
+  "homepage": "https://github.com/jupyter-widgets/ipydatagrid",
   "bugs": {
-    "url": "https://github.com/Bloomberg/ipydatagrid/issues"
+    "url": "https://github.com/jupyter-widgets/ipydatagrid/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
