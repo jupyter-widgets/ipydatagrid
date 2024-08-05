@@ -16,7 +16,7 @@ keywords = [
   "Widgets",
 ]
 authors = [
-    { name = "Bloomberg" },
+    { name = "NumFOCUS" },
 ]
 requires-python = ">=3.8"
 classifiers = [
