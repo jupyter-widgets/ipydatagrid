@@ -23,7 +23,7 @@
   },
   "license": "BSD-3-Clause",
   "author": {
-    "name": "Bloomberg",
+    "name": "NumFOCUS",
     "email": ""
   },
   "main": "lib/index.js",

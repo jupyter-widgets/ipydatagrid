@@ -1,4 +1,4 @@
-# Copyright (c) Bloomberg.
+# Copyright (c) NumFOCUS.
 # Distributed under the terms of the Modified BSD License.
 
 # Dependency to bqplot is temporary, we should remove this
