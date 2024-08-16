@@ -1,6 +1,6 @@
 # ipydatagrid
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/bloomberg/ipydatagrid/HEAD?urlpath=lab%2Ftree%2Fexamples%2FDataGrid.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyter-widgets/ipydatagrid/HEAD?urlpath=lab%2Ftree%2Fexamples%2FDataGrid.ipynb)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -21,19 +21,19 @@ Fast Datagrid widget for the Jupyter Notebook and JupyterLab
 ## Usage and Examples
 
 A fully-featured DataGrid interface
-[![DataGrid](./static/ipydatagrid_1.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/DataGrid.ipynb)
+[![DataGrid](./static/ipydatagrid_1.gif)](https://github.com/jupyter-widgets/ipydatagrid/blob/main/examples/DataGrid.ipynb)
 
 Highly performant and fully integrated with ipywidgets
-[![DataGrid](./static/ipydatagrid_2.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/DataGrid.ipynb)
+[![DataGrid](./static/ipydatagrid_2.gif)](https://github.com/jupyter-widgets/ipydatagrid/blob/main/examples/DataGrid.ipynb)
 
 Customize the way data is represented in your grid using a variety of renderers
-[![DataGrid](./static/ipydatagrid_3.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/DataGrid.ipynb)
+[![DataGrid](./static/ipydatagrid_3.gif)](https://github.com/jupyter-widgets/ipydatagrid/blob/main/examples/DataGrid.ipynb)
 
 Enjoy a sophisticated selections model with two-way data binding
-[![DataGrid](./static/ipydatagrid_4.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/Selections.ipynb)
+[![DataGrid](./static/ipydatagrid_4.gif)](https://github.com/jupyter-widgets/ipydatagrid/blob/main/examples/Selections.ipynb)
 
 Conditional formatting powered by Vega Expressions
-[![DataGrid](./static/ipydatagrid_5.gif)](https://github.com/bloomberg/ipydatagrid/blob/main/examples/ConditionalFormatting.ipynb)
+[![DataGrid](./static/ipydatagrid_5.gif)](https://github.com/jupyter-widgets/ipydatagrid/blob/main/examples/ConditionalFormatting.ipynb)
 
 Tutorial and example notebooks can be found in the `/examples` directory.
 
@@ -69,7 +69,7 @@ NOTE: For examples using Scales from bqplot to work as intended, the bqplot note
 For a development installation:
 
 ```bash
-git clone https://github.com/Bloomberg/ipydatagrid.git
+git clone https://github.com/jupyter-widgets/ipydatagrid.git
 cd ipydatagrid
 conda install ipywidgets=8 jupyterlab
 pip install -ve .
@@ -117,7 +117,7 @@ Please read the [LICENSE](LICENSE.txt) file.
 
 ## Code of Conduct
 
-This project has adopted a [Project Jupyter's Code of Conduct](https://github.com/jupyter/governance/blob/master/conduct/code_of_conduct.md)bloo.
+This project has adopted a [Project Jupyter's Code of Conduct](https://github.com/jupyter/governance/blob/master/conduct/code_of_conduct.md).
 
 ## Security Vulnerability Reporting
 

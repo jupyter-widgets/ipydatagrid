@@ -30,7 +30,7 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Bloomberg/ipydatagrid"
+    "url": "https://github.com/jupyter-widgets/ipydatagrid"
   },
   "scripts": {
     "build": "jlpm run build:lib && jlpm run build:nbextension && jlpm run build:labextension",

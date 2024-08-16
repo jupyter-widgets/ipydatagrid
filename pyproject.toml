@@ -43,7 +43,7 @@ optional-dependencies.test = [
   "pytest>=7.4",
   "pytest-cov>=4.1",
 ]
-urls.Homepage = "https://github.com/bloomberg/ipydatagrid"
+urls.Homepage = "https://github.com/jupyter-widgets/ipydatagrid"
 project.license = {file = "LICENSE.txt"}
 
 [tool.hatch.build]
