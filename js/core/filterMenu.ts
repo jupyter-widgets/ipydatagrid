@@ -287,26 +287,29 @@ export class InteractiveFilterDialog extends BoxPanel {
    * "Select all" button should be ticked when
    * opening the filter by value menu.
    */
-  updateSelectAllCheckboxState() {
+  async updateSelectAllCheckboxState() {
     if (!this.userInteractedWithDialog && !this.hasFilter) {
       this._selectAllCheckbox.checked = true;
       return;
     }
 
-    this._model.uniqueValues(this._region, this._column).then((uniqueVals) => {
-      let showAsChecked = true;
-      for (const value of uniqueVals) {
-        // If there is a unique value which is not present in the state then it is
-        // not ticked, and therefore we should not tick the "Select all" checkbox.
-        if (
-          !this._uniqueValueStateManager.has(this._region, this._column, value)
-        ) {
-          showAsChecked = false;
-          break;
-        }
+    const uniqueVals = await this._model.uniqueValues(
+      this._region,
+      this._column,
+    );
+
+    let showAsChecked = true;
+    for (const value of uniqueVals) {
+      // If there is a unique value which is not present in the state then it is
+      // not ticked, and therefore we should not tick the "Select all" checkbox.
+      if (
+        !this._uniqueValueStateManager.has(this._region, this._column, value)
+      ) {
+        showAsChecked = false;
+        break;
       }
-      this._selectAllCheckbox.checked = showAsChecked;
-    });
+    }
+    this._selectAllCheckbox.checked = showAsChecked;
   }
 
   /**
@@ -1128,20 +1131,18 @@ export class InteractiveFilterDialog extends BoxPanel {
     ];
   }
 
-  addRemoveAllUniqueValuesToState(add: boolean) {
-    this.model.uniqueValues(this._region, this._column).then((uniqueVals) => {
-      for (const value of uniqueVals) {
-        if (add) {
-          this._uniqueValueStateManager.add(this._region, this._column, value);
-        } else {
-          this._uniqueValueStateManager.remove(
-            this._region,
-            this._column,
-            value,
-          );
-        }
+  async addRemoveAllUniqueValuesToState(add: boolean) {
+    const uniqueVals = await this.model.uniqueValues(
+      this._region,
+      this._column,
+    );
+    for (const value of uniqueVals) {
+      if (add) {
+        this._uniqueValueStateManager.add(this._region, this._column, value);
+      } else {
+        this._uniqueValueStateManager.remove(this._region, this._column, value);
       }
-    });
+    }
   }
 
   /**
@@ -1510,7 +1511,7 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
         this._uniqueValuesSelectionState.add(region, colIndex, value);
       }
 
-      // Updating the "Select all" chexboox if needed
+      // Updating the "Select all" checkbox if needed
       this._filterDialog.updateSelectAllCheckboxState();
     };
 
@@ -1519,9 +1520,10 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
       !this._filterDialog.hasFilter &&
       !this._filterDialog.userInteractedWithDialog
     ) {
-      this._filterDialog.addRemoveAllUniqueValuesToState(true);
-      this._filterDialog.userInteractedWithDialog = true;
-      updateCheckState();
+      this._filterDialog.addRemoveAllUniqueValuesToState(true).then(() => {
+        this._filterDialog.userInteractedWithDialog = true;
+        updateCheckState();
+      });
     } else {
       updateCheckState();
     }
