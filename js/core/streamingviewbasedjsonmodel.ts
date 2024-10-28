@@ -1,5 +1,5 @@
-import { PromiseDelegate } from '@lumino/coreutils';
 import { DataModel } from '@lumino/datagrid';
+import { deserialize_data_simple } from './deserialize';
 import { StreamingView } from './streamingview';
 import { TransformStateManager } from './transformStateManager';
 import { ViewBasedJSONModel } from './viewbasedjsonmodel';
@@ -64,22 +64,30 @@ export class StreamingViewBasedJSONModel extends ViewBasedJSONModel {
       return Promise.resolve(this._unique.values);
     }
 
-    const promiseDelegate = new PromiseDelegate<any[]>();
-    this._dataModel.on('msg:custom', (content) => {
-      // when message received, want to drop this handler...
-      // Or keep it going but need a way of identifying where to put the received data??????
-      if (content.event_type === 'unique-values-reply') {
-        this._unique = { region, column, values: content.values };
-        promiseDelegate.resolve(this._unique.values);
-      }
+    const promise = new Promise<any>(resolve => {
+      this._dataModel.once('msg:custom', (content, buffers) => {
+        if (content.event_type === 'unique-values-reply') {
+          const { value } = content;
 
-      // Do I need to cancel this callback?????????
+          // Bring back buffers at their original position in the data structure
+          for (const col of Object.keys(value.data)) {
+            if (value.data[col].type !== 'raw') {
+              value.data[col].value = buffers[value.data[col].value];
+            }
+          }
+
+          const deserialized = deserialize_data_simple(value, null);
+          const values = deserialized[content.column];
+
+          this._unique = { region, column: content.column, values };
+          resolve(this._unique.values);
+        }
+      });
     });
 
     const msg = { type: 'unique-values-request', column: column };
     this._dataModel.send(msg);
-
-    return promiseDelegate.promise;
+    return promise;
   }
 
   updateDataset(options: StreamingViewBasedJSONModel.IOptions): void {
