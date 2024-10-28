@@ -1072,6 +1072,7 @@ class StreamingDataGrid(DataGrid):
                 elif operator == "notempty":
                     dataframe = dataframe[dataframe[column].notna()]
                 elif operator == "in":
+                    value = pd.Series(value, dtype=dataframe[column].dtype)
                     dataframe = dataframe[dataframe[column].isin(value)]
                 elif operator == "between":
                     dataframe = dataframe[
@@ -1121,22 +1122,7 @@ class StreamingDataGrid(DataGrid):
 
             value = value.iloc[r1 : r2 + 1, c1 : c2 + 1]
 
-            # Primary key used
-            index_key = self.get_dataframe_index(value)
-
-            serialized = _data_serialization_impl(
-                self.generate_data_object(value, "ipydguuid", index_key), None
-            )
-
-            # Extract all buffers
-            buffers = []
-            for column in serialized["data"].keys():
-                if (
-                    not isinstance(serialized["data"][column], list)
-                    and not serialized["data"][column]["type"] == "raw"
-                ):
-                    buffers.append(serialized["data"][column]["value"])
-                    serialized["data"][column]["value"] = len(buffers) - 1
+            serialized, buffers = self._serialize_helper(value)
 
             answer = {
                 "event_type": "data-reply",
@@ -1151,14 +1137,15 @@ class StreamingDataGrid(DataGrid):
 
         elif event_type == "unique-values-request":
             column = content.get("column")
-            unique = (
-                self.__dataframe_reference[column].drop_duplicates().to_numpy()
-            )
+            original = self.__dataframe_reference[column].drop_duplicates()
+            serialized, buffers = self._serialize_helper(pd.DataFrame(original))
+
             answer = {
                 "event_type": "unique-values-reply",
-                "values": unique,
+                "column": column,
+                "value": serialized,
             }
-            self.send(answer)
+            self.send(answer, buffers)
 
     @observe("_transforms")
     def _on_transforms_changed(self, change):
@@ -1178,3 +1165,21 @@ class StreamingDataGrid(DataGrid):
 
         # Should only request a tick if the transforms have changed.
         self.tick()
+
+    def _serialize_helper(self, dataframe):
+        # Primary key used
+        index_key = self.get_dataframe_index(dataframe)
+
+        serialized = _data_serialization_impl(
+            self.generate_data_object(dataframe, "ipydguuid", index_key), None
+        )
+
+        # Extract all buffers
+        buffers = []
+        for column in serialized["data"].keys():
+            col = serialized["data"][column]
+            if not isinstance(col, list) and col["type"] != "raw":
+                buffers.append(col["value"])
+                col["value"] = len(buffers) - 1
+
+        return serialized, buffers
