@@ -1006,13 +1006,6 @@ class StreamingDataGrid(DataGrid):
 
         self.on_msg(self._handle_comm_msg)
 
-    def transform(self, _):
-        # TODO Implement sorting and filtering backend-side?
-        raise RuntimeError(
-            "Setting filters and sorting rules to a "
-            "StreamingDataGrid is not supported."
-        )
-
     @property
     def data(self):
         return super().data
