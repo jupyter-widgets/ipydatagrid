@@ -181,7 +181,7 @@ namespace Private {
   export function createSimpleModel(
     data: DataGenerator.ISingleColOptions,
   ): ViewBasedJSONModel {
-    const model = new ViewBasedJSONModel(DataGenerator.singleCol(data).data);
+    const model = new ViewBasedJSONModel({ datasource: DataGenerator.singleCol(data).data });
     return model;
   }
 

@@ -251,30 +251,33 @@ export class InteractiveFilterDialog extends BoxPanel {
    * Displays the unique values of a column.
    */
   _renderUniqueVals() {
-    const uniqueVals = this._model.uniqueValues(this._region, this._column);
-    const data = new DataSource(
-      { index: [...uniqueVals.keys()], uniqueVals },
-      [{ index: null }, { uniqueVals: null }],
-      {
-        fields: [
-          { name: 'index', type: 'integer', rows: [] },
-          { name: 'uniqueVals', type: 'number', rows: [] },
-        ],
-        primaryKey: ['index'],
-        primaryKeyUuid: 'index',
-      },
-    );
-    this._uniqueValueGrid.dataModel = new ViewBasedJSONModel(data);
-    const sortTransform: Transform.Sort = {
-      type: 'sort',
-      column: 'uniqueVals',
-      columnIndex: this.model.getSchemaIndex(this._region, 0),
-      desc: false,
-    };
-    // Sort items in filter-by-value menu in ascending order
-    (<ViewBasedJSONModel>this._uniqueValueGrid.dataModel).addTransform(
-      sortTransform,
-    );
+    this._model.uniqueValues(this._region, this._column).then((uniqueVals) => {
+      const data = new DataSource(
+        { index: [...uniqueVals.keys()], uniqueVals },
+        [{ index: null }, { uniqueVals: null }],
+        {
+          fields: [
+            { name: 'index', type: 'integer', rows: [] },
+            { name: 'uniqueVals', type: 'number', rows: [] },
+          ],
+          primaryKey: ['index'],
+          primaryKeyUuid: 'index',
+        },
+      );
+      this._uniqueValueGrid.dataModel = new ViewBasedJSONModel({
+        datasource: data,
+      });
+      const sortTransform: Transform.Sort = {
+        type: 'sort',
+        column: 'uniqueVals',
+        columnIndex: this.model.getSchemaIndex(this._region, 0),
+        desc: false,
+      };
+      // Sort items in filter-by-value menu in ascending order
+      (<ViewBasedJSONModel>this._uniqueValueGrid.dataModel).addTransform(
+        sortTransform,
+      );
+    });
   }
 
   /**
@@ -284,13 +287,16 @@ export class InteractiveFilterDialog extends BoxPanel {
    * "Select all" button should be ticked when
    * opening the filter by value menu.
    */
-  updateSelectAllCheckboxState() {
+  async updateSelectAllCheckboxState() {
     if (!this.userInteractedWithDialog && !this.hasFilter) {
       this._selectAllCheckbox.checked = true;
       return;
     }
 
-    const uniqueVals = this._model.uniqueValues(this._region, this._column);
+    const uniqueVals = await this._model.uniqueValues(
+      this._region,
+      this._column,
+    );
 
     let showAsChecked = true;
     for (const value of uniqueVals) {
@@ -712,7 +718,11 @@ export class InteractiveFilterDialog extends BoxPanel {
    * values of a column.
    */
   protected async createUniqueValueNodes(): Promise<VirtualElement> {
-    const uniqueVals = this._model.uniqueValues(this._region, this._column);
+    const uniqueVals = await this._model.uniqueValues(
+      this._region,
+      this._column,
+    );
+
     const optionElems = uniqueVals.map((val) => {
       return h.option({ value: val }, String(val));
     });
@@ -1121,9 +1131,11 @@ export class InteractiveFilterDialog extends BoxPanel {
     ];
   }
 
-  addRemoveAllUniqueValuesToState(add: boolean) {
-    const uniqueVals = this.model.uniqueValues(this._region, this._column);
-
+  async addRemoveAllUniqueValuesToState(add: boolean) {
+    const uniqueVals = await this.model.uniqueValues(
+      this._region,
+      this._column,
+    );
     for (const value of uniqueVals) {
       if (add) {
         this._uniqueValueStateManager.add(this._region, this._column, value);
@@ -1499,7 +1511,7 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
         this._uniqueValuesSelectionState.add(region, colIndex, value);
       }
 
-      // Updating the "Select all" chexboox if needed
+      // Updating the "Select all" checkbox if needed
       this._filterDialog.updateSelectAllCheckboxState();
     };
 
@@ -1508,9 +1520,10 @@ class UniqueValueGridMouseHandler extends BasicMouseHandler {
       !this._filterDialog.hasFilter &&
       !this._filterDialog.userInteractedWithDialog
     ) {
-      this._filterDialog.addRemoveAllUniqueValuesToState(true);
-      this._filterDialog.userInteractedWithDialog = true;
-      updateCheckState();
+      this._filterDialog.addRemoveAllUniqueValuesToState(true).then(() => {
+        this._filterDialog.userInteractedWithDialog = true;
+        updateCheckState();
+      });
     } else {
       updateCheckState();
     }

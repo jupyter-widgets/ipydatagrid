@@ -51,7 +51,7 @@ describe('Test multi index array utilities', () => {
   );
 
   // Creating a model
-  const testModel = new ViewBasedJSONModel(testData.data);
+  const testModel = new ViewBasedJSONModel({ datasource: testData.data });
   // Generating an array with location of nested level headers
   const mutltiIndexArrayLocations =
     ArrayUtils.generateMultiIndexArrayLocations(testModel);

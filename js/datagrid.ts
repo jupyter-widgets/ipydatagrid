@@ -26,49 +26,25 @@ import {
   resolvePromisesDict,
   unpack_models,
   WidgetModel,
+  WidgetView,
 } from '@jupyter-widgets/base';
 
 import { array_or_json_serializer } from 'bqplot';
 
+import { deserialize_data } from './core/deserialize';
 import { ViewBasedJSONModel } from './core/viewbasedjsonmodel';
+import { StreamingViewBasedJSONModel } from './core/streamingviewbasedjsonmodel';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
 import { CellRendererModel, CellRendererView } from './cellrenderer';
 import { FeatherGrid } from './feathergrid';
+import { StreamingFeatherGrid } from './streamingfeathergrid';
 import { Theme } from './utils';
 import { DataSource } from './datasource';
 
 // Import CSS
 import '../style/jupyter-widget.css';
-
-function unpack_raw_data(
-  value: any | Dict<unknown> | string | (Dict<unknown> | string)[],
-): any {
-  if (Array.isArray(value)) {
-    const unpacked: any[] = [];
-    value.forEach((sub_value, key) => {
-      unpacked.push(unpack_raw_data(sub_value));
-    });
-    return unpacked;
-  } else if (value instanceof Object && typeof value !== 'string') {
-    const unpacked: { [key: string]: any } = {};
-    Object.keys(value).forEach((key) => {
-      unpacked[key] = unpack_raw_data(value[key]);
-    });
-    return unpacked;
-  } else if (value === '$NaN$') {
-    return Number.NaN;
-  } else if (value === '$Infinity$') {
-    return Number.POSITIVE_INFINITY;
-  } else if (value === '$NegInfinity$') {
-    return Number.NEGATIVE_INFINITY;
-  } else if (value === '$NaT$') {
-    return new Date('INVALID');
-  } else {
-    return value;
-  }
-}
 
 function serialize_data(data: DataSource, manager: any): any {
   const serialized_data: any = {};
@@ -79,66 +55,6 @@ function serialize_data(data: DataSource, manager: any): any {
     );
   }
   return { data: serialized_data, fields: data.fields, schema: data.schema };
-}
-
-function deserialize_data(data: any, manager: any): DataSource {
-  const deserialized_data: any = {};
-
-  // Backward compatibility for when data.data was an array of rows
-  // (should be removed in ipydatagrid 2.x?)
-  if (Array.isArray(data.data)) {
-    if (data.data.length === 0) {
-      return new DataSource(deserialized_data, data.fields, data.schema, true);
-    }
-
-    const unpacked = unpack_raw_data(data.data);
-    // Turn array of rows (old approach) into a dictionary of columns as arrays (new approach)
-    for (const column of Object.keys(unpacked[0])) {
-      const columnData = new Array(unpacked.length);
-      let rowIdx = 0;
-
-      for (const row of unpacked) {
-        columnData[rowIdx++] = row[column];
-      }
-
-      deserialized_data[column] = columnData;
-    }
-
-    return new DataSource(deserialized_data, data.fields, data.schema, true);
-  }
-
-  for (const column of Object.keys(data.data)) {
-    deserialized_data[column] = [];
-
-    if (Array.isArray(data.data[column])) {
-      deserialized_data[column] = data.data[column];
-      continue;
-    }
-
-    if (data.data[column].type == 'raw') {
-      deserialized_data[column] = unpack_raw_data(data.data[column].value);
-    } else {
-      if (data.data[column].value.length !== 0) {
-        let deserialized_array = array_or_json_serializer.deserialize(
-          data.data[column],
-          manager,
-        );
-
-        // Turning back float32 dates into isoformat
-        if (deserialized_array.type === 'date') {
-          const float32Array = deserialized_array;
-          deserialized_array = [];
-
-          for (let i = 0; i < float32Array.length; i++) {
-            deserialized_array[i] = new Date(float32Array[i]).toISOString();
-          }
-        }
-
-        deserialized_data[column] = deserialized_array;
-      }
-    }
-  }
-  return new DataSource(deserialized_data, data.fields, data.schema, true);
 }
 
 export class DataGridModel extends DOMWidgetModel {
@@ -169,6 +85,7 @@ export class DataGridModel extends DOMWidgetModel {
       column_widths: {},
       horizontal_stripes: false,
       vertical_stripes: false,
+      _transform_on_backend: false,
     };
   }
 
@@ -239,12 +156,12 @@ export class DataGridModel extends DOMWidgetModel {
     const data = this.data;
 
     if (this.data_model) {
-      this.data_model.updateDataset(data);
+      this.data_model.updateDataset({ datasource: data });
       this.data_model.transformStateChanged.disconnect(this.syncTransformState);
       this.data_model.dataSync.disconnect(this.updateDataSync);
     }
 
-    this.data_model = new ViewBasedJSONModel(this.data);
+    this.data_model = new ViewBasedJSONModel({ datasource: data });
 
     this.data_model.transformStateChanged.connect(this.syncTransformState);
     this.data_model.dataSync.connect(this.updateDataSync);
@@ -255,10 +172,13 @@ export class DataGridModel extends DOMWidgetModel {
   }
 
   updateTransforms() {
-    if (this.selectionModel) {
-      this.selectionModel.clear();
+    const transforms = this.get('_transforms');
+    if (!this.get('_transform_on_backend')) {
+      if (this.selectionModel) {
+        this.selectionModel.clear();
+      }
     }
-    this.data_model.replaceTransforms(this.get('_transforms'));
+    this.data_model.replaceTransforms(transforms);
   }
 
   updateSelectionModel() {
@@ -382,13 +302,13 @@ export class DataGridModel extends DOMWidgetModel {
     grid_style: { deserialize: unpack_style as any },
   };
 
-  static model_name = 'DataGridModel';
-  static model_module = MODULE_NAME;
-  static model_module_version = MODULE_VERSION;
+  static readonly model_name: string = 'DataGridModel';
+  static readonly model_module = MODULE_NAME;
+  static readonly model_module_version = MODULE_VERSION;
 
-  static view_name = 'DataGridView';
-  static view_module = MODULE_NAME;
-  static view_module_version = MODULE_VERSION;
+  static readonly view_name: string = 'DataGridView';
+  static readonly view_module = MODULE_NAME;
+  static readonly view_module_version = MODULE_VERSION;
 
   data_model: ViewBasedJSONModel;
   selectionModel: BasicSelectionModel | null;
@@ -494,29 +414,8 @@ export class DataGridView extends DOMWidgetView {
     this._processLuminoMessage(msg, super.processPhosphorMessage);
   }
 
-  render(): Promise<void> {
-    this.el.classList.add('datagrid-container');
-    window.addEventListener('resize', this.manageResizeEvent);
-    this.once('remove', () => {
-      window.removeEventListener('resize', this.manageResizeEvent);
-    });
-
-    const grid_style = this.model.get('grid_style');
-    if (
-      this.model.get('horizontal_stripes') ||
-      this.model.get('vertical_stripes')
-    ) {
-      const index = this.model.get('horizontal_stripes')
-        ? 'rowBackgroundColor'
-        : 'columnBackgroundColor';
-      grid_style[index] = (index: number): string => {
-        return index % 2 === 0
-          ? Theme.getBackgroundColor(1)
-          : Theme.getBackgroundColor(2);
-      };
-    }
-
-    this.grid = new FeatherGrid({
+  protected _createGrid(): FeatherGrid {
+    return new FeatherGrid({
       defaultSizes: {
         rowHeight: this.model.get('base_row_size'),
         columnWidth: this.model.get('base_column_size'),
@@ -524,8 +423,18 @@ export class DataGridView extends DOMWidgetView {
         columnHeaderHeight: this.model.get('base_column_header_size'),
       },
       headerVisibility: this.model.get('header_visibility'),
-      style: grid_style,
+      style: this.model.get('grid_style'),
     });
+  }
+
+  render(): Promise<void> {
+    this.el.classList.add('datagrid-container');
+    window.addEventListener('resize', this.manageResizeEvent);
+    this.once('remove', () => {
+      window.removeEventListener('resize', this.manageResizeEvent);
+    });
+
+    this.grid = this._createGrid();
 
     this.grid.columnWidths = this.model.get('column_widths');
     this.grid.editable = this.model.get('editable');
@@ -890,4 +799,124 @@ namespace Private {
     // @ts-ignore needed for ipywidget 7.x compatibility
     return JupyterLuminoPanelWidget ?? JupyterPhosphorPanelWidget;
   }
+}
+
+export class StreamingDataGridModel extends DataGridModel {
+  defaults() {
+    return {
+      ...super.defaults(),
+      _model_name: StreamingDataGridModel.model_name,
+      _view_name: StreamingDataGridModel.view_name,
+      _row_count: 0,
+      _data: {},
+      _debounce_delay: 160,
+      _transform_on_backend: true,
+    };
+  }
+
+  initialize(attributes: any, options: any) {
+    super.initialize(attributes, options);
+    this.on('change:_row_count', () => {
+      const newRowCount = this.get('_row_count');
+      const oldRowCount = this.data_model.rowCount('body');
+      if (newRowCount != oldRowCount) {
+        const currentView = this.data_model.currentView;
+        currentView.setRowCount(newRowCount);
+        this.data_model.currentView = currentView;
+      }
+    });
+
+    this.on('msg:custom', (content, buffers) => {
+      if (content.event_type === 'data-reply') {
+        // Bring back buffers at their original position in the data structure
+        for (const column of Object.keys(content.value.data)) {
+          if (content.value.data[column].type !== 'raw') {
+            content.value.data[column].value =
+              buffers[content.value.data[column].value];
+          }
+        }
+
+        const deserialized = deserialize_data(content.value, null);
+        this.data_model.setModelRangeData(
+          content.r1,
+          content.r2,
+          content.c1,
+          content.c2,
+          deserialized,
+        );
+      }
+    });
+  }
+
+  updateData() {
+    const data = this.data;
+
+    if (this.data_model) {
+      this.data_model.updateDataset({
+        dataModel: this,
+        datasource: data,
+        rowCount: this.get('_row_count'),
+      });
+      this.data_model.transformStateChanged.disconnect(this.syncTransformState);
+      this.data_model.dataSync.disconnect(this.updateDataSync);
+    }
+
+    this.data_model = new StreamingViewBasedJSONModel({
+      dataModel: this,
+      datasource: this.data,
+      rowCount: this.get('_row_count'),
+    });
+
+    this.data_model.transformStateChanged.connect(this.syncTransformState);
+    this.data_model.dataSync.connect(this.updateDataSync);
+
+    this.updateTransforms();
+    this.trigger('data-model-changed');
+    this.updateSelectionModel();
+  }
+
+  requestData(r1: number, r2: number, c1: number, c2: number) {
+    this.send({ type: 'data-request', r1, r2, c1, c2 });
+  }
+
+  static readonly model_name: string = 'StreamingDataGridModel';
+  static readonly view_name: string = 'StreamingDataGridView';
+
+  data_model: StreamingViewBasedJSONModel;
+}
+
+export class StreamingDataGridView extends DataGridView {
+  initialize(parameters: WidgetView.IInitializeParameters<WidgetModel>): void {
+    super.initialize(parameters);
+
+    this.model.on('msg:custom', (content, _) => {
+      if (content.event_type === 'tick') {
+        this.grid.tick();
+
+        return;
+      }
+    });
+  }
+
+  protected _createGrid(): StreamingFeatherGrid {
+    return new StreamingFeatherGrid({
+      defaultSizes: {
+        rowHeight: this.model.get('base_row_size'),
+        columnWidth: this.model.get('base_column_size'),
+        rowHeaderWidth: this.model.get('base_row_header_size'),
+        columnHeaderHeight: this.model.get('base_column_header_size'),
+      },
+      headerVisibility: this.model.get('header_visibility'),
+      style: this.model.get('grid_style'),
+      debounceDelay: this.model.get('_debounce_delay'),
+      requestData: this.requestData.bind(this),
+    });
+  }
+
+  private requestData(r1: number, r2: number, c1: number, c2: number) {
+    this.model.requestData(r1, r2, c1, c2);
+  }
+
+  model: StreamingDataGridModel;
+  grid: StreamingFeatherGrid;
 }
