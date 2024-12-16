@@ -1017,6 +1017,9 @@ class StreamingDataGrid(DataGrid):
         # Not making a copy in the streaming grid
         self.__dataframe_reference = dataframe
 
+        # TODO support column indices being integers
+        dataframe.columns = dataframe.columns.map(str)
+
         # Primary key used
         index_key = self.get_dataframe_index(dataframe)
 
